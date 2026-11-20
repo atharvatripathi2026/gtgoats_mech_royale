@@ -198,11 +198,11 @@ class Loadout:
         self.last_target = None
         return None, 0, False
 
-    def can_charge(self, obs, target, dist, evade):
+    @staticmethod
+    def safe_zone_time(obs):
         me, zone = obs["self"], obs.get("zone", {})
         pos = me["pos"]
-        arc_range = self.weapons.get("lightning", {}).get("range", 45)
-        if not me.get("in_zone", True) or ("lightning" in target.get("weapons", []) and dist < arc_range + 3):
+        if not me.get("in_zone", True):
             return False
         if "next_center" in zone:
             walk = me.get("stats", {}).get("walk_speed", 11.7)
@@ -210,13 +210,10 @@ class Loadout:
             time_left = zone.get("shrink_end", 480) - obs.get("t", 0)
             if outside_next > 2 and outside_next / max(1, walk) + 2 > time_left:
                 return False
-        if not evade or obs.get("alive", 16) <= 2:
-            return True
-        health = me.get("hp", 1) / max(1, me.get("max_hp", 1))
-        if health < .6 and dist < 40:
-            return False
-        # A half-speed charge remains viable in a duel. Against a group, use
-        # the gun while sprinting until the secondary lines of fire break.
+        return True
+
+    def single_opponent(self, obs, target):
+        pos = obs["self"]["pos"]
         t = obs.get("t", 0)
         for enemy in obs.get("mechs", []):
             if enemy.get("kind") != "mech" or enemy.get("id") == target.get("id"):
@@ -227,6 +224,20 @@ class Loadout:
             if cache is None or cache[0] < t or cache[1] is not None:
                 return False
         return True
+
+    def can_charge(self, obs, target, dist, evade):
+        me = obs["self"]
+        arc_range = self.weapons.get("lightning", {}).get("range", 45)
+        if not self.safe_zone_time(obs) or ("lightning" in target.get("weapons", []) and dist < arc_range + 3):
+            return False
+        if not evade or obs.get("alive", 16) <= 2:
+            return True
+        health = me.get("hp", 1) / max(1, me.get("max_hp", 1))
+        if health < .6 and dist < 40:
+            return False
+        # A half-speed charge remains viable in a duel. Against a group, use
+        # the gun while sprinting until the secondary lines of fire break.
+        return self.single_opponent(obs, target)
 
     def quiet_aim(self, obs, travel_yaw):
         t = obs.get("t", 0)
@@ -282,7 +293,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None):
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -326,8 +337,11 @@ class Loadout:
                 elif kind == "gun" and (w.get("reload", 0) > .01 or w.get("ammo", 1) <= 0):
                     continue
                 elif kind == "lightning":
+                    if dist > ws.get("range", 45) - 1:
+                        continue
                     reserve = 30 if evade or ent.get("kind") != "mech" else 12
-                    if ent.get("charging"):
+                    if (ent.get("kind") == "mech" and not climbing and self.safe_zone_time(obs)
+                            and (ent.get("charging") or self.single_opponent(obs, ent))):
                         reserve = 0
                     if energy < ws.get("energy", 3) + reserve:
                         continue

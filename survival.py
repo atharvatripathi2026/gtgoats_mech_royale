@@ -1,5 +1,6 @@
 """Placement-oriented navigation objectives for the Mech Royale game."""
 import math
+import random
 
 
 def distance(a, b):
@@ -23,6 +24,12 @@ class Survival:
         self.rules = hello.get("config", {})
         self.nav = nav
         self.turn_side = 1 if hello.get("seed", 0) % 2 else -1
+        self.rng = random.Random(hello.get("seed", 0))
+        self.weave_side = self.turn_side
+        self.reverse_at = 0.7
+        self.check_cover_at = -1
+        self.open_ground = False
+        self.pursuer = None
         self.last_contact = (-100.0, 0.0, 0.0)
         self.sight = {}
         self.loot = {}
@@ -80,6 +87,7 @@ class Survival:
         spotted = []
         strongest = 0.0
         bearing = None
+        self.pursuer = None
         for d, enemy in threats[:5]:
             p = enemy["pos"]
             yaw = math.atan2(p[1] - pos[1], p[0] - pos[0])
@@ -99,6 +107,10 @@ class Survival:
                 power = max(power, 0.98)
             if not visible:
                 power *= 0.45 if d < 30 else 0.10
+            elif (30 < d < 160 and facing > 0.92 and not enemy.get("charging")
+                  and "gun" in (enemy.get("weapons") or ())
+                  and (len(threats) == 1 or threats[1][0] > 160)):
+                self.pursuer = p
             if power > strongest:
                 strongest, bearing = power, yaw
             spotted.append((p, power, d, visible))
@@ -147,7 +159,7 @@ class Survival:
                 landing = x + sx * eta, y + sy * eta
                 if not (0 <= eta < 1.45) or distance(landing, (pos[0] + vx * eta, pos[1] + vy * eta)) > mortar.get("splash_radius", 7) + radius + 3:
                     continue
-                item = ("blast", landing)
+                item = ("blast", landing, eta, 0)
             else:
                 ax, ay = sx - vx, sy - vy
                 speed2 = ax * ax + ay * ay
@@ -158,7 +170,9 @@ class Survival:
                 if not -1 < height < h + 1:
                     continue
                 angle = math.atan2(sy, sx)
-                item = ("line", (-math.sin(angle), math.cos(angle)))
+                normal = (-math.sin(angle), math.cos(angle))
+                offset = (dx + ax * eta) * normal[0] + (dy + ay * eta) * normal[1]
+                item = ("line", normal, eta, offset)
             priority = (2 if item[0] == "blast" else 1) - eta * 0.5
             if priority > best:
                 best, dodge = priority, item
@@ -269,7 +283,7 @@ class Survival:
             if self.evade_goal:
                 score += max(0, step - distance(end, self.evade_goal)) * 0.14
             if dodge:
-                kind, vector = dodge
+                kind, vector = dodge[:2]
                 if kind == "blast":
                     score += 2 * (distance(end, vector) - distance(pos, vector))
                 else:
@@ -325,6 +339,71 @@ class Survival:
         self.cover_goal, self.cover_until = best, now + 4.5
         return best
 
+    def _weave(self, obs, goal, radius, height, dodge):
+        """Vary transverse velocity against a lone gun tracking us in the open."""
+        pos, shooter, now = obs["self"]["pos"], self.pursuer, obs.get("t", 0)
+        d = distance(pos, shooter)
+        bx, by = (shooter[0] - pos[0]) / d, (shooter[1] - pos[1]) / d
+        dx, dy = goal[0] - pos[0], goal[1] - pos[1]
+        travel = math.hypot(dx, dy)
+        if travel < 5:
+            return goal
+        radial = (dx * bx + dy * by) / travel
+        lateral = abs(dy * bx - dx * by) / travel
+        if lateral < 0.20:
+            return goal
+        if self.nav:
+            origin = (*shooter[:2], shooter[2] + 7)
+            if now >= self.check_cover_at:
+                self.check_cover_at = now + 0.35
+                self.open_ground = True
+                for i in range(8):
+                    angle = math.tau * i / 8
+                    xy = (pos[0] + 19 * math.cos(angle), pos[1] + 19 * math.sin(angle))
+                    if self.nav.walkable(*xy, radius) and not self.nav.line_clear(
+                            origin, (*xy, self.nav.ground(*xy) + height * 0.75)):
+                        self.open_ground = False
+                        break
+            if not self.open_ground:
+                return goal
+        if now >= self.reverse_at:
+            self.weave_side *= -1
+            self.reverse_at = now + self.rng.uniform(0.48, 1.12)
+        if self.weave_side * (dy * bx - dx * by) >= 0:
+            return goal
+        ux = radial * bx - self.weave_side * lateral * by
+        uy = radial * by + self.weave_side * lateral * bx
+        reach = min(15, travel)
+        end = pos[0] + ux * reach, pos[1] + uy * reach
+        if dodge:
+            # Both sides of a bullet's flight line can be safe. Predict how
+            # far our legs can actually deflect before it crosses our path.
+            _, normal, eta, offset = dodge
+            me = obs["self"]
+            stats = me.get("stats") or {}
+            vx, vy = (me.get("vel") or (0, 0))[:2]
+            speed = stats.get("boost_speed", 19.5) if self.boosting else stats.get("walk_speed", 11.7)
+            accel = max(1.0, stats.get("ground_accel", 58.5))
+
+            def miss(ax, ay):
+                dvx, dvy = ax * speed - vx, ay * speed - vy
+                ramp = max(0.001, math.hypot(dvx, dvy) / accel)
+                factor = eta - ramp * 0.5 if eta >= ramp else 0.5 * eta * eta / ramp
+                return abs(offset - (dvx * normal[0] + dvy * normal[1]) * factor)
+
+            if miss(ux, uy) + 0.05 < min(radius + 0.5, miss(dx / travel, dy / travel)):
+                return goal
+        if self.nav:
+            # Test the whole proposed maneuver at ground-grid resolution. A
+            # narrow gap or a nearby landing must take precedence over a jink.
+            for step in (0.25, 0.5, 0.75, 1.0):
+                if not self.nav.walkable(pos[0] + ux * reach * step,
+                                         pos[1] + uy * reach * step, radius):
+                    return goal
+            if not self.nav.line_clear(origin, (*goal[:2], self.nav.ground(*goal[:2]) + height * 0.75)):
+                return goal
+        return end
+
     def decide(self, obs):
         me, t = obs["self"], obs.get("t", 0)
         pos = me["pos"]
@@ -351,6 +430,11 @@ class Survival:
             mode = "evade"
         if mode != "evade":
             self.evade_until = -1
+        if (self.pursuer and (not dodge or dodge[0] == "line")
+                and mode in ("evade", "zone") and urgency < 0.3
+                and me.get("grounded", True) and me.get("in_zone", True)
+                and circle[1] - distance(pos, circle[0]) > 19 + radius and len(goal) == 2):
+            goal = self._weave(obs, goal, radius, stats.get("height", 9), dodge)
         if mode not in ("hold", "shelter"):
             self.cover_until = -1
         # Hysteresis leaves energy for jumping obstacles, and lets regeneration

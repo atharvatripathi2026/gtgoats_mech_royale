@@ -48,7 +48,8 @@ class Bot:
             "jump": bool(jet and grounded and energy > 7),
             "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
         }
-        action.update(self.loadout.decide(obs, yaw, evade=evade, target_id=plan["target_id"]))
+        action.update(self.loadout.decide(obs, yaw, evade=evade,
+                                          target_id=plan["target_id"], climbing=jet))
         if self.trace:
             elapsed = (time.perf_counter() - start) * 1000
             mechfight.log(f'tick={obs["tick"]} hp={me["hp"]} mode={plan["mode"]} '

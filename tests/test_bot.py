@@ -69,6 +69,31 @@ class DecisionTests(unittest.TestCase):
         self.assertGreater(action["aim"][0], 0.02)
         self.assertLess(action["aim"][0], 0.15)
 
+    def test_lightning_uses_remaining_energy_only_in_a_safe_close_duel(self):
+        self.obs["zone"].update(center=[0, 0], next_center=[0, 0], next_radius=300)
+        self.me.update(energy=4, in_zone=True)
+        self.me["weapons"][1] = {"kind": "lightning", "stats": {}, "cooldown": 0}
+        pursuer = {"id": 4, "kind": "mech", "pos": [34, 0, 0], "aim": [math.pi, 0],
+                   "vel": [0, 0, 0], "weapons": ["gun", "lightning"]}
+        self.obs["mechs"] = [pursuer]
+        for distance, climb, shoot in [(34, False, True), (34, True, False), (48, False, False)]:
+            with self.subTest(distance=distance, climbing=climb):
+                pursuer["pos"][0] = distance
+                action = Loadout(self.hello).decide(self.obs, 0, evade=True, climbing=climb)
+                self.assertEqual(action.get("fire", [False, False])[1], shoot)
+
+    def test_laser_charges_then_releases_while_kiting(self):
+        self.obs.update(alive=2)
+        self.obs["zone"].update(center=[0, 0], next_center=[0, 0], next_radius=300)
+        self.obs["mechs"] = [{"id": 7, "kind": "mech", "pos": [90, 0, 0],
+                              "aim": [math.pi, 0], "weapons": ["gun"], "vel": [0, 0, 0]}]
+        laser = {"kind": "laser", "cooldown": 0, "charge": 0, "stats": {}}
+        self.me["weapons"][1] = laser
+        loadout = Loadout(self.hello)
+        self.assertTrue(loadout.decide(self.obs, 0, evade=True)["fire"][1])
+        laser["charge"] = self.hello["config"]["weapons"]["laser"]["charge"]
+        self.assertFalse(loadout.decide(self.obs, 0, evade=True)["fire"][1])
+
     def test_live_offer_uses_effects_and_current_choice_order(self):
         # New upgrade IDs and ordering force the policy to use the live definitions.
         upgrades = [
