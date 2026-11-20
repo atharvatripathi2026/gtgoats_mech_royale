@@ -45,6 +45,32 @@ class DecisionTests(unittest.TestCase):
         goal = Survival(self.hello).decide(self.obs)["goal"]
         self.assertLess(math.hypot(*goal[:2]), 65)
 
+    def test_isolated_finisher_requires_health_and_room(self):
+        policy = Survival(self.hello)
+        enemy = {"kind": "mech", "pos": [73, 0, 0], "hp": 400, "max_hp": 1400}
+        self.obs["mechs"] = [enemy]
+        foe = (enemy["pos"], .72, 73, True)
+        fallback = (-20, 0)
+        def goal(foes, circle=([0, 0], 150)):
+            return policy._finish_goal(self.obs, foes, circle, 2.5, .8, fallback)
+
+        flank = goal([foe])
+        self.assertGreater(flank[0], 0)
+        self.assertGreater(abs(flank[1]), flank[0])
+        self.assertEqual(goal([foe, foe]), fallback)
+        self.assertEqual(goal([foe], ([0, 0], 10)), fallback)
+        enemy["hp"] = 1200
+        self.assertEqual(goal([foe]), fallback)
+        enemy.pop("hp")
+        self.assertEqual(goal([foe]), fallback)
+
+    def test_first_weapon_worth_a_safe_detour(self):
+        self.obs["pickups"] = [{"id": 8000, "kind": "laser", "pos": [88, 0, 0]}]
+        self.obs["zone"] = {"center": [0, 0], "radius": 300,
+                            "next_center": [0, 0], "next_radius": 230,
+                            "shrink_start": 65, "shrink_end": 100, "dps": 20}
+        self.assertEqual(Survival(self.hello).decide(self.obs)["target_id"], 8000)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,

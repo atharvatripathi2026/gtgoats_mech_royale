@@ -183,8 +183,8 @@ class Survival:
         held = {w.get("kind") for w in me.get("weapons", []) if w}
         cap = self.rules.get("cubes", {}).get("stat_cap", 10)
         power = me.get("cubes", 0)
-        table = (("cubes", 35 if power < cap else 15),
-                 ("pickups", 28 if len(held) < 2 else 0),
+        table = (("cubes", 52 if power < cap else 15),
+                 ("pickups", 50 if len(held) < 2 else 0),
                  ("crates", 17 if health >= 0.78 and power < cap else 0))
         for field, value in table:
             if not value:
@@ -198,7 +198,7 @@ class Survival:
         best_score, best = 0, None
         options = []
         for key, (seen, p, field, value) in list(self.loot.items()):
-            if (now - seen > 4.5 or (now > seen and distance(p, pos) < 5)
+            if (now - seen > (8 if field in ("pickups", "cubes") else 4.5) or (now > seen and distance(p, pos) < 5)
                     or (field == "pickups" and len(held) >= 2)):
                 del self.loot[key]
                 continue
@@ -221,7 +221,7 @@ class Survival:
             if now < self.skip_until.get(key, -1):
                 continue
             d = distance(p, pos)
-            if d > (100 if field == "drop" else 72) or distance(p, circle[0]) > max(0, circle[1] - min(radius + 3, circle[1]*0.25)):
+            if d > (100 if field in ("drop", "pickups", "cubes") else 72) or distance(p, circle[0]) > max(0, circle[1] - min(radius + 3, circle[1]*0.25)):
                 continue
             # A cube on a roof is unreachable from directly below. A long
             # roof climb costs both time and the reserve for the next escape.
@@ -305,6 +305,37 @@ class Survival:
             self.evade_goal = anchor
         self.evade_until = now + 0.50
         return self.evade_goal
+
+    def _finish_goal(self, obs, foes, circle, radius, health, fallback):
+        """Strafe inward for a finishing shot on one exposed, badly hurt opponent."""
+        if len(foes) != 1 or health <= .60:
+            return fallback
+        pos, _, d, visible = foes[0]
+        me = obs["self"]
+        here = me["pos"]
+        if not visible or not 30 < d < 105:
+            return fallback
+        enemy = next(e for e in obs["mechs"] if e.get("kind") == "mech")
+        if "hp" not in enemy or "max_hp" not in enemy:
+            return fallback
+        enemy_health = enemy["hp"] / max(1, enemy["max_hp"])
+        if enemy_health >= .5 * health or enemy.get("charging"):
+            return fallback
+        dx, dy = (pos[0] - here[0]) / d, (pos[1] - here[1]) / d
+        side = 1 if me["id"] % 2 else -1
+        for sign in (side, -side):
+            end = (here[0] + 13 * (.62 * dx - .78 * dy * sign),
+                   here[1] + 13 * (.62 * dy + .78 * dx * sign))
+            if distance(end, circle[0]) > circle[1] - radius - 7:
+                continue
+            if self.nav:
+                if not self.nav.walkable(*end, radius):
+                    continue
+                sight = (*end, self.nav.ground(*end) + me.get("stats", {}).get("eye_height", 8))
+                if not self.nav.line_clear(sight, (*pos[:2], pos[2] + 4.5)):
+                    continue
+            return end
+        return fallback
 
     def _shelter(self, now, pos, radius, height, final):
         """Wait behind nearby cover facing the crowded side of the circle."""
@@ -443,5 +474,8 @@ class Survival:
         stress = max(urgency, pressure, 1 if dodge else 0)
         self.boosting = (stress > 0.66 and distance(pos, goal) > 5
                          and energy > (reserve if self.boosting else reserve + 0.19))
+        if (urgency < .35 and mode not in ("loot", "capture") and me.get("grounded", True)
+                and not (dodge and dodge[0] == "blast")):
+            goal = self._finish_goal(obs, foes, circle, radius, hp, goal)
         return {"goal": goal, "mode": mode, "urgency": max(urgency, pressure),
                 "boost": self.boosting, "threat_yaw": bearing, "target_id": target}
