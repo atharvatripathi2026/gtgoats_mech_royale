@@ -1,7 +1,12 @@
-"""Astra's placement-first policy for the Builders Mech Royale game."""
+"""Astra's mechfight/1 entry point."""
 import math
+import os
+import time
 
 import mechfight
+from loadout import Loadout
+from navigation import Navigator
+from survival import Survival
 
 
 class Bot:
@@ -10,44 +15,44 @@ class Bot:
     def __init__(self, hello):
         if hello.get("protocol") != "mechfight/1":
             raise ValueError("Unsupported protocol")
-        self.config = hello["config"]
-        self.side = 1 if hello["slot"] % 2 else -1
+        self.slot = hello["slot"]
+        self.nav = Navigator(hello["map"]["dir"], hello["config"])
+        self.survival = Survival(hello, self.nav)
+        self.loadout = Loadout(hello, self.nav)
+        self.trace = os.environ.get("MECHFIGHT_TRACE") == "1"
+        self.scan_yaw = (self.slot % 16) * math.tau / 16
 
     def act(self, obs):
-        me, zone = obs["self"], obs["zone"]
-        x, y, z = me["pos"]
-        zx, zy = zone["next_center"]
-        gx, gy = zx - x, zy - y
-        travel = math.atan2(gy, gx)
-        space = zone["next_radius"] - math.hypot(gx, gy)
-        enemies = [a for a in obs.get("mechs", []) if a.get("kind") == "mech"]
-        enemy = min(enemies, key=lambda a: math.dist(a["pos"], me["pos"]), default=None)
-        yaw, pitch = travel, 0
-        aim_ok = False
-        if enemy:
-            ex, ey, ez = enemy["pos"]
-            distance = math.hypot(ex - x, ey - y)
-            lead = distance / self.config["weapons"]["gun"]["speed"]
-            vx, vy, vz = enemy.get("vel", (0, 0, 0))
-            yaw = math.atan2(ey + vy * lead - y, ex + vx * lead - x)
-            pitch = math.atan2(ez - z - 2.5 + vz * lead, max(1, distance))
-            aim_ok = abs(math.remainder(yaw - me["aim"][0], math.tau)) < 0.10 and abs(pitch - me["aim"][1]) < 0.12
-            if distance < 120 and space > 15:
-                travel = yaw + self.side * (2.0 if distance < 45 else 1.45)
-        move = [math.cos(travel), math.sin(travel)] if space < 20 or enemy else [0, 0]
-        action = {"move": move, "aim": [yaw, pitch], "boost": not me["in_zone"] and me["energy"] > 8,
-                  "fire": [aim_ok, aim_ok and enemy is not None and distance < 40]}
-        offer = obs.get("offer")
-        if offer and offer.get("choices"):
-            choices = [c["id"] for c in offer["choices"]]
-            action["pick"] = next((choices.index(k) for k in ("armor", "walk_speed", "gun_rate") if k in choices), 0)
-        if not all(me["weapons"]):
-            held = {w["kind"] for w in me["weapons"] if w}
-            for item in obs.get("pickups", []):
-                px, py, pz = item["pos"]
-                if item["kind"] not in held and abs(pz - z) <= 4 and math.hypot(px-x, py-y) <= self.config["loot"]["pickup_radius"]:
-                    action["take"] = item["id"]
-                    break
+        if self.trace:
+            start = time.perf_counter()
+        me = obs["self"]
+        pos = me["pos"]
+        stats = me.get("stats", {})
+        plan = self.survival.decide(obs)
+        goal = plan["goal"]
+        ux, uy, jet = self.nav.steer(pos, goal, obs["tick"], radius=stats.get("radius", 2.5))
+        move = [ux, uy]
+        distance = math.dist(pos[:2], goal[:2])
+        if distance < 4 and not jet:
+            # A full-speed approach can carry the mech through a small final circle.
+            scale = distance / 4
+            move = [ux * scale, uy * scale]
+        if ux or uy:
+            self.scan_yaw = math.atan2(uy, ux)
+        yaw = plan["threat_yaw"] if plan["threat_yaw"] is not None else self.scan_yaw
+        evade = plan["mode"] == "evade"
+        grounded = me.get("grounded", True)
+        energy = me.get("energy", 0)
+        action = {
+            "move": move,
+            "jump": bool(jet and grounded and energy > 7),
+            "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
+        }
+        action.update(self.loadout.decide(obs, yaw, evade=evade, target_id=plan["target_id"]))
+        if self.trace:
+            elapsed = (time.perf_counter() - start) * 1000
+            mechfight.log(f'tick={obs["tick"]} hp={me["hp"]} mode={plan["mode"]} '
+                          f'goal={goal} action={action} decision_ms={elapsed:.3f}')
         return action
 
 

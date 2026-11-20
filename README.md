@@ -1,10 +1,16 @@
 # Astra
 
-A Python bot for the Builders Mech Royale competition. Astra aims for placement in a 16-mech free-for-all. Its initial policy heads inside the next safe circle, strafes around nearby attackers, and picks up weapons within reach. It can move and aim independently.
+Astra pilots one mech in the Builders Mech Royale competition. It starts moving toward the next circle before the current one closes, looks for cover while healing, and keeps its torso on an attacker while its legs move independently.
+
+## How it plays
+
+- **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and jumps or jets to escape obstructions and reach a late circle on a roof.
+- **Survival.** The bot estimates travel time to the next circle, reserves energy for escapes, and uses nearby cover to break a pursuer’s line of sight. It looks for accessible cubes, weapon pickups and uncontested supply drops and evaluates upgrade offers using the live rule definitions.
+- **Combat.** Astra leads moving targets and tracks the actual torso angle before firing. It can keep shooting while retreating, time a charged laser release, lob mortar shells, and conserve lightning energy when a target is outside the cone. A wounded mech can disengage long enough to regenerate.
 
 ## Runtime and attribution
 
-The root Dockerfile pins CPython 3.13.18 on Debian Trixie by digest. The bot uses only the Python standard library. The JSON-lines transport and type definitions in `mechfight.py` come from the official Builders starter kit. The kit's example and Dockerfile supplied the starting layout. The referee mounts the organizer's map at runtime.
+The root Dockerfile pins CPython 3.13.18 on Debian Trixie by digest. The bot uses only the Python standard library. The JSON-lines transport and type definitions in `mechfight.py` come from the official Builders starter kit. The kit's example and Dockerfile supplied the starting layout. The policy, navigation and tests were developed for this competition. The referee mounts the organizer's map at runtime.
 
 [Organizer’s starter kit and protocol](https://www.joinbuilders.org/buildathon/tracks/builders)
 
@@ -17,6 +23,13 @@ chmod -R a+rX arena
 python3 check/check.py -- python3 -u "$BOT/bot.py"
 docker build --platform linux/amd64 -t mech-royale-bot "$BOT"
 python3 check/check.py --map-dir /arena -- docker run --rm -i --network none --cpus 1 --memory 512m --read-only --tmpfs /tmp:rw,size=64m --user 65534:65534 -v "$PWD/arena:/arena:ro" mech-royale-bot
+```
+
+From the bot checkout, run the focused checks against the same starter kit. Set the optional trace flag only when inspecting individual decisions locally.
+
+```sh
+MECHFIGHT_KIT=/path/to/mechfight-kit python3 -m unittest discover -s tests
+MECHFIGHT_TRACE=1 python3 /path/to/mechfight-kit/check/check.py -- python3 -u bot.py
 ```
 
 The checker replays 300 observations and measures response timing. The competition site runs the 48 matches that determine a practice score. Use `git rev-parse HEAD` to identify the candidate for submission.
