@@ -4,7 +4,7 @@ Astra pilots one mech in the Builders Mech Royale competition. It starts moving 
 
 ## How it plays
 
-- **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and jumps or jets to escape obstructions and reach a late circle on a roof.
+- **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and jets onto reachable roofs when they offer shelter inside the forecast circle. It can move to a firing position along a roof, leave under crossfire, and descend before the zone closes.
 - **Survival.** The bot estimates travel time to the next circle, reserves energy for escapes, and uses nearby cover to break a pursuer’s line of sight. It looks for accessible cubes, weapon pickups and uncontested supply drops and evaluates upgrade offers using the live rule definitions.
 - **Combat.** Astra leads moving targets and tracks the actual torso angle before firing. It can keep shooting while retreating, time a charged laser release, lob mortar shells, and conserve lightning energy when a target is outside the cone. A wounded mech can disengage long enough to regenerate.
 
@@ -33,3 +33,11 @@ MECHFIGHT_TRACE=1 python3 /path/to/mechfight-kit/check/check.py -- python3 -u bo
 ```
 
 The checker replays 300 observations and measures response timing. The competition site runs the 48 matches that determine a practice score. Use `git rev-parse HEAD` to identify the candidate for submission.
+
+## Official practice runs
+
+The house squad cooperates in practice. The top 16 finalists play one another on new seeds. Each match awards `16 - place` points.
+
+| Tested commit | Mean placement points | Matches |
+| --- | ---: | ---: |
+| [`4cb4a9e`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/4cb4a9ea753e8df3744a9ba8d44053068e64e535) | 3.60 | 48 |
