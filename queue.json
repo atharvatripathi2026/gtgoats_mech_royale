@@ -762,6 +762,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "a8543c76bb20d8efb712f1fffd05e0fc95b41690",
+      "summary": "Spend less energy reserve on added lightning edge shots when observed target separation is increasing. Restores the closing-target replay, preserves three directed one-place gains, and ties 92 fresh paired placements with one earlier kill. 22 units and 300 timed responses passed.",
+      "created_at": "2026-11-21T10:42:22Z",
+      "parents": [
+        "ab2c1bee649c3dfa29ec6280ceb848f61306d909"
+      ],
+      "reviews": {
+        "commit": "a8543c76bb20d8efb712f1fffd05e0fc95b41690",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Correct relative separation restores the closing-target replay and preserves three earlier hits. Fresh 1061542 kills the same target 0.2 seconds earlier and avoids 45 early damage. All 92 placements tie and exact unit and replay checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The guard restores the closing regression and exactly preserves all three directed added hits and one-place gains. All 92 fresh placements tie. Instantaneous range direction can change, so the directed gains establish hit value without fresh placement lift."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The same closing repair and useful opening hit reproduce under independently phased movement. The fresh earlier kill improves the first six seconds of trades at the same placing, and all 92 placements tie with a clean exact sandbox check."
+          }
+        }
+      }
     }
   ]
 }
