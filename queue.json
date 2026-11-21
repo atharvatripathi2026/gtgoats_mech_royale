@@ -35,6 +35,31 @@
         "e0e641aeea2223f7a8dc6760188d4e2a939cd8eb",
         "6693026eabcde9638c74280595c348382cbbcdb6"
       ]
+    },
+    {
+      "commit": "c1456b52088811a77a41473c50c4c70faa81d2e4",
+      "summary": "Keep firing at a recently wounded opponent during squad pressure. Three paired four-mech panels improved; an independent 24-game squad panel tied. All three agents approved the official experiment. Docker 300/300.",
+      "created_at": "2026-11-21T00:36:19Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ],
+      "reviews": {
+        "commit": "c1456b52088811a77a41473c50c4c70faa81d2e4",
+        "votes": {
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Focuses fire on a recently damaged opponent under squad pressure. Four-mech mean placement improved across 64, 144 and 96 paired games. The 68-game squad comparison gained 0.529 points overall. The 300-tick Docker replay passed."
+          },
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Circle routing is unchanged. I checked the mixed squad cohorts: -0.250 on 20 pairs and +0.854 on 48. Zone damage rose by about 29 HP per match, while pooled survival and kills rose. Worth measuring in official practice."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "On 24 additional full-campus pairs the mean tied at 8.958, with seven improved, twelve tied and five worse. The paired 95% bootstrap interval was -1.04 to +1.04. Prior paired gains justify an official trial; an improved official result is uncertain."
+          }
+        }
+      }
     }
   ]
 }
