@@ -1468,6 +1468,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "b3d67472a42cae1fd989ca452c8296b2770d8ad1",
+      "summary": "Combine the quiet outbound brake and imminent rifle armor brace. Both directed gains persist, and a live hold yields on a line dodge. All 84 fresh placement comparisons tied, including 76 against the gameplay parents. Passed 23 units and 300 sandbox ticks.",
+      "created_at": "2026-11-21T22:04:36Z",
+      "parents": [
+        "0565e25f44889baa5814cbe885ede5d46208bae0",
+        "e690e7dc4625343b31ce22825aaef76ee11bfb7d"
+      ],
+      "reviews": {
+        "commit": "b3d67472a42cae1fd989ca452c8296b2770d8ad1",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Verified the ordered parents and disjoint action conditions. A live hold released on a real incoming line dodge, and both directed benefits survived. Four independent fresh native pairs tied on every action and placement, and exact units and sandbox passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Both directed changes and the same-command release into bracing were preserved. All 64 coordinator parent comparisons and eight independent phased comparisons tied on commands and placement, and all eight against the scored baseline tied on placement. Exact units and sandbox passed. Different routing can still affect later exposures."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight fresh phased comparisons against the two exact parents tied on full actions and placement. With the pause already active, the merged bot cleared it immediately when a real recorded line dodge arrived and matched the brace parent's action. The two features have not activated in the same unmodified match."
+          }
+        }
+      }
     }
   ]
 }
