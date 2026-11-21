@@ -1,0 +1,9 @@
+# Combine simultaneous pack recovery and airborne rifle clearance
+
+Exact `742246aaa181b45d34e4e7ee5c6a8740e8130b35` has Git parents `2208a85cd117d37394ada52f681ce1a4b710cab1` and `2c56019db176a140a0ec30fa0d63463b396fe859`. It takes survival.py from the former and loadout.py from the latter without further gameplay edits. [Recovery review](2208a85-confirm-simultaneous-pack-pickups.md) · [Rifle review](2c56019-check-airborne-rifle-ray.md)
+
+Compared with the rifle parent in controlled pursuit 1065691, the merge stopped returning to the empty pack and survived 3.3 seconds longer at equal placement. The known missing-confirmation control matched every command. Compared with the recovery parent in campus seed 1067823, the merge landed the same extra 63-damage hit during a boosted dodge at equal incoming, lifetime, kills and placement. Against the rifle parent that replay matched every command.
+
+An independent staged same-command test combined a genuine recorded airborne observation with pending recovery confirmation. Exact merge cleared the recalled ID and sent the same legal rifle shot as the rifle-only parent. At the known blocked Campus translation it cleared recovery memory and withheld the shot. This isolates immediate control interaction. It leaves long-horizon interactions between changed movement and future shot opportunities open.
+
+All 124 fresh simulated pairs matched commands and placement, including 116 against direct parents and eight against the score-linked baseline. The set included four-mech, native campus, public-equipment campus, and independent phased comparisons. All 23 units and 300 networkless replies passed. All three reviewers approved the exact merge. It was appended as ledger entry 58. [Gameplay commit](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/742246aaa181b45d34e4e7ee5c6a8740e8130b35)
