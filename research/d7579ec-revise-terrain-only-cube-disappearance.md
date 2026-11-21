@@ -1,0 +1,5 @@
+# Revise terrain-only inference of a missing recovery cube
+
+Exact `d7579ecfdb520eb87e64b06e734ade2895184c39` against `1bb0b916781827814681c830172e2a31e2b0d944` cancels a recalled and still selected cube after two adjacent absent observations, with a grounded and nearby approach and three clear terrain rays. All 100 fresh simulated placements tied. The original pursuit1065691 tape was identical. Removing both cubes during the approach gained one directed place, and removing only the selected cube retained the remaining pickup and tied placement with a worse six-second incoming trade.
+
+A true kit-map trunk produced a false cancellation. A still-present cube 10 m away was behind a trunk of radius .62 m. The terrain-only navigator marked all three sample rays clear and deleted it after two observations. Survival, combat and validation voted revise. A new variant checks real map trunk metadata before treating absence as evidence. [Recovery parent review](1bb0b91-remember-the-selected-recovery-cube.md)
