@@ -110,6 +110,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "367287e08745649c728a9cbee2ad2311ac781156",
+      "summary": "Value the combined magazine and reload benefits of gun upgrades when healthy. Three realistic-offer campus panels gained 0.375 placement points per game across 64 fresh pairs (7 gains, 1 loss). All 48 legacy four-mech pairs tied. Docker 300/300.",
+      "created_at": "2026-11-21T02:39:02Z",
+      "parents": [
+        "489c7211da0f707e27bba0741abf487fe084871e"
+      ],
+      "reviews": {
+        "commit": "367287e08745649c728a9cbee2ad2311ac781156",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "All three public-upgrade panels were positive, with seven gains, 56 ties and one loss. In independent seed 965204 the bot dealt 210.6 more damage in one second from the same position against the same target while the parent reloaded. The four-mech model tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The bounded healthy pre-endgame credit reflects the combined capacity and reload benefit. Three disjoint public-upgrade panels improved by 0.458, 0.563 and 0.167. Removing the largest gain still leaves a positive total over 63 pairs. Official transfer is uncertain."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Exact 64-pair public-upgrade results gained 0.375 points per match across three positive blocks, with seven gains and one loss. Trace inspection confirmed changed upgrade offers. All 48 legacy four-mech placements tied and the 300-observation Docker check passed."
+          }
+        }
+      }
     }
   ]
 }
