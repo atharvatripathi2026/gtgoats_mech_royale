@@ -42,6 +42,9 @@ class Bot:
 
         self.zone_anchor_fallback = None
         self.zone_anchor_retry = 0
+        self.ground_line_boost_tick = None
+        self.pending_ground_line_boost_tick = None
+        self.last_escape_grace = -math.inf
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -127,6 +130,56 @@ class Bot:
         scale = 1 / math.dist((x, y), (px, py))
         return [(px - x) * scale, (py - y) * scale]
 
+    def escape_boost_grace(self, obs, plan, action, jet):
+        """Carry a grounded sprint past line dodge while the rifle is firing."""
+        me = obs["self"]
+        tick = obs["tick"]
+        match = self.survival.rules.get("match", {})
+        stride = match.get("decide_every", 2)
+        duration = self.loadout.step * stride
+        if (self.ground_line_boost_tick != tick - stride or obs["t"] - self.last_escape_grace < .7
+                or jet or action["boost"] or action["jump"] or plan["dodge"] or plan["mode"] != "evade"
+                or plan["enemy_pressure"] <= .66 or not me.get("grounded") or not me.get("in_zone")
+                or not self.nav.loaded or any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
+            return False
+        # Keep enough rounds for follow-up pressure after this sprint.
+        gun = next((weapon for trigger, weapon in zip(action.get("fire", ()), me.get("weapons", ()))
+                    if trigger and weapon and weapon.get("kind") == "gun" and weapon.get("ammo", 0) > 1), None)
+        if gun is None:
+            return False
+        target_id = self.loadout.last_decision.get("target_id")
+        target = next((ent for ent in obs.get("mechs", ())
+                       if ent.get("kind") == "mech" and ent.get("id") == target_id), None)
+        if target is None:
+            return False
+        stats = self.survival.rules.get("mech", {}) | (me.get("stats") or {})
+        radius = stats.get("radius", 2.5)
+        gun_stats = self.loadout.weapons.get("gun", {}) | gun.get("stats", {})
+        reach = duration * gun_stats.get("speed", 252) + radius + .5 + self.loadout.dimensions(target)[0]
+        # Leave the native muzzle position in place for close, immediate hits.
+        if math.dist(me["pos"][:2], target["pos"][:2]) <= reach:
+            return False
+        reserve = .36 * me.get("max_energy", 100)
+        cost = duration * stats.get("boost_drain", 17)
+        if me["energy"] < reserve - 2 * cost - 1e-6 or me["energy"] > reserve:
+            return False
+        x, y, z = me["pos"]
+        ux, uy = action["move"]
+        vx, vy = me["vel"][:2]
+        speed = math.hypot(vx, vy)
+        magnitude = math.hypot(ux, uy)
+        if (speed < 1.3 * stats.get("walk_speed", 11.7) or magnitude < .9
+                or vx * ux + vy * uy < .95 * speed * magnitude
+                or math.dist((x, y), plan["goal"][:2]) < 5):
+            return False
+        advance = duration * stats.get("boost_speed", 19.5) + .25
+        end = (x + advance * ux / magnitude, y + advance * uy / magnitude)
+        zone = obs["zone"]
+        if math.dist(end, zone["center"]) + radius > zone["radius"]:
+            return False
+        return (abs(self.nav.surface(*end) - z) < .25
+                and self.nav._ground_segment(x, y, *end, *self.nav._dimensions(radius)))
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -170,7 +223,15 @@ class Bot:
                 # recovery hops only at the reached quiet ground waypoint.
                 action["jump"] = False
                 self.nav.anchor = None
+        escape_grace = self.escape_boost_grace(obs, plan, action, jet)
+        if escape_grace:
+            action["boost"] = True
+            self.last_escape_grace = obs["t"]
         shell_steer = self.survival.airborne_mortar_step(obs, action, plan["dodge"])
+        self.pending_ground_line_boost_tick = (
+            obs["tick"] if grounded and plan["dodge"] == "line" and action["boost"] and not action["jump"]
+            else None
+        )
         reason = "reachable_zone_anchor" if quiet_move is not None else base["reason"]
         if shell_steer is not None:
             action["move"], shell_id = shell_steer
@@ -185,6 +246,8 @@ class Bot:
         }
         if shell_steer is not None:
             self.last_decision["airborne_shell"] = shell_id
+        if escape_grace:
+            self.last_decision["escape_boost_grace"] = True
         if self.trace:
             elapsed = (time.perf_counter() - start) * 1000
             mechfight.log(f'tick={obs["tick"]} hp={me["hp"]} mode={plan["mode"]} '
@@ -193,6 +256,8 @@ class Bot:
 
     def sent(self, tick, action, on_time=True, applied=False):
         self.adaptation.sent(tick, action, on_time=on_time, applied=applied)
+        if on_time and self.pending_ground_line_boost_tick == tick and action.get("boost"):
+            self.ground_line_boost_tick = tick
 
 
 if __name__ == "__main__":
