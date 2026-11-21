@@ -45,6 +45,7 @@ class Survival:
         self.recalled_rivals = None
         self.recalled_pickup = None
         self.recalled_pack = None
+        self.recalled_collectors = None
         self.chase_id = None
         self.chase_record = (0, 0)
         self.skip_until = {}
@@ -326,6 +327,58 @@ class Survival:
         return bool(missing and candidate is not None and candidate[:2] == (key, tick - stride)
                     and any(inside.get(ident) == count for ident, count in candidate[2].items()))
 
+    def _rivals_split_recovery(self, obs, key, pack, visible_pack):
+        previous, self.recalled_collectors = self.recalled_collectors, None
+        tick = obs["tick"]
+        stride = self.rules.get("match", {}).get("decide_every", 2)
+        radius = self.rules.get("cubes", {}).get("pickup_radius", 3.5)
+        rivals = {
+            rival["id"]: (rival["cubes"], rival["pos"])
+            for rival in obs.get("mechs") or ()
+            if rival.get("kind") == "mech" and type(rival.get("cubes")) is int
+            and any(distance(rival["pos"], point) < radius + 3
+                    and abs(rival["pos"][2] - point[2]) <= 2 for point in pack.values())
+        }
+        last, pending, pair = {}, None, None
+        if previous is not None and previous[:2] == (key, tick - stride):
+            last, pending, pair = previous[2:]
+        if visible_pack or (pair is not None and tick - pair[0] > 3 * stride):
+            pending, pair = None, None
+
+        def footprint(pos, points, margin):
+            return {ident for ident in points if distance(pos, pack[ident]) < radius - margin
+                    and abs(pos[2] - pack[ident][2]) <= 2}
+
+        if pending is not None:
+            ident, count, covered = pending
+            if ident in rivals and rivals[ident][0] == count and covered <= footprint(rivals[ident][1], pack, .25):
+                if pair is not None:
+                    return True
+                pair = tick, ident, covered
+
+        next_pending = None
+        if not visible_pack:
+            remaining = set(pack) if pair is None else set(pack) - pair[2]
+            delta = 2 if pair is None else 1
+            arrivals = []
+            for ident, (count, pos) in rivals.items():
+                if ident not in last or (pair is not None and ident == pair[1]):
+                    continue
+                prior_count, prior_pos = last[ident]
+                if count - prior_count != delta:
+                    continue
+                covered = footprint(pos, remaining, .25)
+                if (len(covered) == delta and covered == footprint(pos, remaining, 0.)
+                        and not covered & footprint(prior_pos, remaining, 0.)
+                        and not any(cube.get("id") not in pack and "pos" in cube
+                                    and distance(pos, cube["pos"]) <= radius
+                                    and abs(pos[2] - cube["pos"][2]) <= 4 for cube in obs["cubes"] or ())):
+                    arrivals.append((ident, count, covered))
+            if len(arrivals) == 1:
+                next_pending = arrivals[0]
+        self.recalled_collectors = key, tick, rivals, next_pending, pair
+        return False
+
     def _forget_recalled_cube(self, key):
         self.loot.pop(key, None)
         self.recovery_cubes.pop(key, None)
@@ -333,29 +386,40 @@ class Survival:
         self.recalled_rivals = None
         self.recalled_pickup = None
         self.recalled_pack = None
+        self.recalled_collectors = None
 
     def _cancel_missing_recovery(self, obs, pos, stats):
         key = self.recalled_cube
         previous, self.recalled_absence = self.recalled_absence, None
         if key is None or key != self.chase_id:
             self.recalled_pack = None
+            self.recalled_collectors = None
             return
         record = self.loot.get(key)
         if record is None or "cubes" not in obs:
             self.recalled_rivals = None
             self.recalled_pickup = None
+            self.recalled_collectors = None
             return
         point = record[1]
         # Preserve distinct pack members seen across the active chase.
         visible_pack = [cube for cube in obs["cubes"] or ()
                         if cube.get("id") == key
                         or ("pos" in cube and math.dist(point, cube["pos"]) <= RECOVERY_PACK_SPACING)]
-        last_key, known_ids = self.recalled_pack or (None, ())
-        if last_key != key:
-            known_ids = ()
-        known_pack = {key, *known_ids}
-        known_pack.update(cube["id"] for cube in visible_pack if "id" in cube)
+        last_key, remembered = self.recalled_pack or (None, {})
+        known_pack = remembered.copy() if last_key == key else {}
+        known_pack[key] = point
+        known_pack.update((cube["id"], tuple(cube["pos"])) for cube in visible_pack
+                          if "id" in cube and "pos" in cube)
         self.recalled_pack = key, known_pack
+        if len(known_pack) != 3:
+            self.recalled_collectors = None
+        elif self._rivals_split_recovery(obs, key, known_pack, visible_pack):
+            for cube_id in known_pack.keys() - {key}:
+                self.loot.pop(cube_id, None)
+                self.recovery_cubes.pop(cube_id, None)
+            self._forget_recalled_cube(key)
+            return
         if self._rival_collected_recovery(obs, key, point, not visible_pack, len(known_pack)):
             self._forget_recalled_cube(key)
             return
@@ -474,7 +538,7 @@ class Survival:
             self.recalled_cube = key
             if self.recalled_pack is None or self.recalled_pack[0] != key:
                 recent_pack = {
-                    cube_id for cube_id, (_, location) in self.recovery_cubes.items()
+                    cube_id: location for cube_id, (_, location) in self.recovery_cubes.items()
                     if math.dist(p, location) <= RECOVERY_PACK_SPACING
                 }
                 # Extend the witness to admission only while the pack has a visible member.
