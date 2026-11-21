@@ -261,6 +261,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "c0727065234f3aa6f87f014e24a3c2c4ed5ac0f3",
+      "summary": "Cuts optional late-fight jet thrust when altitude prevents a valid return shot. Earlier same-target lightning in replay, +3 placement points across 72 fresh campus pairs, no placement losses, 48 four-mech ties, 23 unit tests and 300 starter ticks passed.",
+      "created_at": "2026-11-21T05:39:53Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ],
+      "reviews": {
+        "commit": "c0727065234f3aa6f87f014e24a3c2c4ed5ac0f3",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Two fresh gains and zero placement losses across 120 pairs. Earlier same-target lightning in the larger gain and unchanged incoming damage corroborate the return-fire window. The limited jet override can still worsen incoming damage in an individual tie."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The fresh standard and joint samples gained two and one places respectively, and the other sets tied. Same-target lightning landed earlier and added 45 damage over three seconds without adding incoming damage in the standard gain. Directed placement ties demonstrate the descent tradeoff."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Sealed results gained three placement points across 72 fresh campus pairs, with zero losses and 48 four-mech ties. The fresh primary fixture regained arc and gun fire for 45 extra effective damage at equal incoming damage. A directed unsafe-descent tie limits confidence. All 23 tests and the 300-tick sandbox passed."
+          }
+        }
+      }
     }
   ]
 }
