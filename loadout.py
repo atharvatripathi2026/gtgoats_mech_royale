@@ -1,6 +1,8 @@
 """Weapon, sensing and upgrade policy for the mechfight/1 game."""
 import math
 
+from survival import SUSTAINED_BOOST_RESERVE
+
 
 def angle_delta(goal, actual):
     return (goal - actual + math.pi) % math.tau - math.pi
@@ -400,7 +402,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats):
+    def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats, *, reserve_boost=False):
         """Use an idle arc against a close aimed rival on the existing line."""
         if not self.nav or not self.nav.loaded:
             return None
@@ -416,8 +418,19 @@ class Loadout:
             return None
         index, weapon = arc
         ws = self.weapons.get("lightning", {}) | weapon.get("stats", {})
-        if weapon.get("cooldown", 0) > self.step or me.get("energy", 0) < ws.get("energy", 3) + 30:
+        energy = me.get("energy", 0)
+        cost = ws.get("energy", 3)
+        if weapon.get("cooldown", 0) > self.step or energy < cost + 30:
             return None
+        if reserve_boost and any(w and w.get("kind") == "gun" and w.get("ammo", 1) > 0
+                                 and w.get("reload", 0) <= .01 and w.get("cooldown", 0) <= 6 * self.step
+                                 for w in slots):
+            # If the loaded rifle will be ready shortly, leave enough power
+            # for the ordinary boost reserve and two held movement commands.
+            drain = stats.get("boost_drain", self.mech.get("boost_drain", 17))
+            floor = SUSTAINED_BOOST_RESERVE * me.get("max_energy", 100)
+            if floor < energy <= floor + 4 * self.step * drain + cost:
+                return None
         current = me.get("aim", aim)
         turn = self.step * stats.get("turn_rate", 4)
         tilt = self.step * stats.get("pitch_rate", 3)
@@ -596,7 +609,9 @@ class Loadout:
                         fire[i] = hit
                 action["fire"] = fire
             if engage and not any(action.get("fire", ())):
-                backup = self.direct_lightning_on_threat(obs, ent, aim, muzzle, offset, stats)
+                backup = self.direct_lightning_on_threat(
+                    obs, ent, aim, muzzle, offset, stats, reserve_boost=evade and not line_dodge,
+                )
                 if backup is not None:
                     fire = action.setdefault("fire", [False, False])
                     fire[backup] = True

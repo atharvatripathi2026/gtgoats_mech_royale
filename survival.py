@@ -3,6 +3,9 @@ import math
 import random
 
 
+SUSTAINED_BOOST_RESERVE = .36
+
+
 def distance(a, b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
@@ -576,7 +579,7 @@ class Survival:
             self.cover_until = -1
         # Hysteresis leaves energy for jumping obstacles, and lets regeneration
         # restart between escape bursts instead of toggling boost every frame.
-        reserve = 0.10 if urgency >= 0.9 or dodge else 0.36
+        reserve = 0.10 if urgency >= 0.9 or dodge else SUSTAINED_BOOST_RESERVE
         stress = max(urgency, pressure, 1 if dodge else 0)
         self.boosting = (stress > 0.66 and distance(pos, goal) > 5
                          and energy > (reserve if self.boosting else reserve + 0.19))
