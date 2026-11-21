@@ -4,6 +4,7 @@ import random
 
 
 SUSTAINED_BOOST_RESERVE = .36
+RECOVERY_PACK_SPACING = 2.
 
 
 def distance(a, b):
@@ -43,6 +44,7 @@ class Survival:
         self.recalled_absence = None
         self.recalled_rivals = None
         self.recalled_pickup = None
+        self.recalled_pack = None
         self.chase_id = None
         self.chase_record = (0, 0)
         self.skip_until = {}
@@ -294,7 +296,7 @@ class Survival:
         self.recovery_cubes.update((cube["id"], (now, tuple(cube["pos"])))
                                    for cube in (obs.get("cubes") or ()) if "id" in cube and "pos" in cube)
 
-    def _rival_collected_recovery(self, obs, key, point, missing):
+    def _rival_collected_recovery(self, obs, key, point, missing, known_pack_size):
         previous, self.recalled_rivals = self.recalled_rivals, None
         candidate, self.recalled_pickup = self.recalled_pickup, None
         tick = obs["tick"]
@@ -318,7 +320,8 @@ class Survival:
                 gained[ident] = count
         if close:
             self.recalled_rivals = key, tick, close
-        if gained:
+        # A two-cube gain cannot account for a larger observed pack.
+        if gained and known_pack_size <= 2:
             self.recalled_pickup = key, tick, gained
         return bool(missing and candidate is not None and candidate[:2] == (key, tick - stride)
                     and any(inside.get(ident) == count for ident, count in candidate[2].items()))
@@ -329,25 +332,34 @@ class Survival:
         self.recalled_cube = self.chase_id = None
         self.recalled_rivals = None
         self.recalled_pickup = None
+        self.recalled_pack = None
 
     def _cancel_missing_recovery(self, obs, pos, stats):
         key = self.recalled_cube
         previous, self.recalled_absence = self.recalled_absence, None
         if key is None or key != self.chase_id:
+            self.recalled_pack = None
             return
         record = self.loot.get(key)
         if record is None or "cubes" not in obs:
             self.recalled_rivals = None
+            self.recalled_pickup = None
             return
         point = record[1]
-        missing = not any(cube.get("id") == key for cube in (obs["cubes"] or ()))
-        pack_missing = missing and not any(
-            "pos" in cube and math.dist(point, cube["pos"]) <= 2.
-            for cube in (obs["cubes"] or ()))
-        if self._rival_collected_recovery(obs, key, point, pack_missing):
+        # Preserve distinct pack members seen across the active chase.
+        visible_pack = [cube for cube in obs["cubes"] or ()
+                        if cube.get("id") == key
+                        or ("pos" in cube and math.dist(point, cube["pos"]) <= RECOVERY_PACK_SPACING)]
+        last_key, known_ids = self.recalled_pack or (None, ())
+        if last_key != key:
+            known_ids = ()
+        known_pack = {key, *known_ids}
+        known_pack.update(cube["id"] for cube in visible_pack if "id" in cube)
+        self.recalled_pack = key, known_pack
+        if self._rival_collected_recovery(obs, key, point, not visible_pack, len(known_pack)):
             self._forget_recalled_cube(key)
             return
-        if not missing or not self.nav or not self.nav.loaded or not obs["self"].get("grounded"):
+        if visible_pack or not self.nav or not self.nav.loaded or not obs["self"].get("grounded"):
             return
         near = self.rules.get("vision", {}).get("near_range", 45)
         if distance(pos, point) > .8 * near or abs(pos[2] - point[2]) > 1.5:
@@ -376,7 +388,7 @@ class Survival:
         dimensions = self.nav._dimensions(radius)
         return {key: item for key, item in cubes.items()
                 if key not in visible and distance(pos, item[1]) < 55 and abs(pos[2] - item[1][2]) < 2
-                and any(other != key and math.dist(item[1], neighbor[1]) <= 2.
+                and any(other != key and math.dist(item[1], neighbor[1]) <= RECOVERY_PACK_SPACING
                         for other, neighbor in cubes.items())
                 and self.nav._ground_segment(*pos[:2], *item[1][:2], *dimensions)}
 
