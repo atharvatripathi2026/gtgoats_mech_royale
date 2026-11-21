@@ -1115,6 +1115,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "6a9e8bedb98563aa6b2fbcf1bb136a053c355777",
+      "summary": "Merge idle arc energy reserve with loaded-rifle boost carry scoped to longer shots. Close-regression replay restored in two models. 112 fresh pairs had 110 ties, one gain and one loss. Three exact approvals and all 300 timed checks.",
+      "created_at": "2026-11-21T14:44:28Z",
+      "parents": [
+        "6112dd04b2f6ac7d591b51788d51d2c73002e1b0",
+        "ca47e8f72e7814debca23fc8eff3213964482828"
+      ],
+      "reviews": {
+        "commit": "6a9e8bedb98563aa6b2fbcf1bb136a053c355777",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Restores close adverse parity in both actor orders and preserves all three directed effects, including the independent floor-snap trade improvement. Fresh112 is neutral net. Both signed holdout results invert their early damage-trade direction and should be recorded. End-to-end tests and timing passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The planar shot-travel scope restores the close regression in two phases without losing three far directed controls. Across 112 fresh pairs the gain and loss offset. Both carry risks remain visible in early trade and life, especially generated pursuit1065691. Unit and timed replay pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The repeatable close −4 disappears in both actor orders and all eight independent deferred fresh wires tie. The three directed effects survive. Later results of the two new longer-shot divergences offset, with an opposite immediate trade, so 112 fresh supports a practice trial and no aggregate placement gain."
+          }
+        }
+      }
     }
   ]
 }
