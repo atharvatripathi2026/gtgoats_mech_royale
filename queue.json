@@ -939,6 +939,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "e35d7d070e8d0ee8736769e8592b9d162b2f5380",
+      "summary": "Keep one prepared gun shot on a just-hit rival when a near-tie challenger needs a substantial turn and has shown no immediate aimed threat. Repeated real same-target hits in directed tests, prior adverse exact, 100 fresh placements tied. 23 units and 300 timed replies.",
+      "created_at": "2026-11-21T13:12:34Z",
+      "parents": [
+        "38f245c6d6bc3da212560066cf0d635195c5a769"
+      ],
+      "reviews": {
+        "commit": "e35d7d070e8d0ee8736769e8592b9d162b2f5380",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Repeated same-target hits are directly observed, including an added 67.5 hit under the quicker house. All 100 fresh placements tie. The narrow aim and cooldown conditions and one-use hit record preserve the earlier aimed challenger regression action for action. Exact timed rerun passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Five distinct directed seeds add real same-rival hits at equal early incoming and gain one to eight places. The older aimed-winner loss is fully wire-identical. Faster-house 1063170 adds 135 outgoing by six seconds at equal incoming and gains eight. All fresh placements tie and exact timed rerun passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "One retained observation in the faster-house replay adds a real 67.5 hit against the same #8 at zero incoming. Stock directed gains and the preserved adverse control corroborate this narrow effect. All 100 fresh comparisons tie. The exact timed rerun passed."
+          }
+        }
+      }
     }
   ]
 }
