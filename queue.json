@@ -1418,6 +1418,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "e690e7dc4625343b31ce22825aaef76ee11bfb7d",
+      "summary": "Brace toward an imminent rifle hit during a grounded line dodge with both arms unavailable. Projectile-path armor reproduced 67.5 to 45 damage. In 108 fresh comparisons, 107 placements tied and one improved. Passed 23 units and 300 sandbox ticks.",
+      "created_at": "2026-11-21T21:52:04Z",
+      "parents": [
+        "742246aaa181b45d34e4e7ee5c6a8740e8130b35"
+      ],
+      "reviews": {
+        "commit": "e690e7dc4625343b31ce22825aaef76ee11bfb7d",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Two directed native replays reduce actual rifle damage from 67.5 to 45. All 48 coordinator fresh placements tie. Projectile-path bearing can differ from live shooter bearing at the armor boundary. The exact sandbox passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The actual armor conversion holds in native and projectile-bearing tests. A fresh active match converted two rounds and improved placement by one point, with mixed subsequent offense and survival. There was no prospective placement loss, and the exact sandbox passed all 300 observations."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The protocol-path evaluator reproduces the same 67.5 to 45 rifle hit, while both bots win that replay. Twenty fresh native and twenty fresh path-bearing comparisons all tie on commands and placement. The evidence supports the narrow damage mechanic. The exact 300-tick sandbox passed."
+          }
+        }
+      }
     }
   ]
 }
