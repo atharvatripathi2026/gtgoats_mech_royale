@@ -1,0 +1,7 @@
+# Pre-aim only after a recent hit on the same target
+
+Exact `99f3918974b319992ea4bb00b0196332724204ba` revises direct parent `0e7668247d8d3db4d71bf72e065dcea8afc8f576` with effective queued comparator `02e756e`. It keeps the mortar pre-aim only if an actual mortar hit on the same target was recorded within a mortar cooldown. Splash can qualify, and the latest event need not be the selected victim of a multi-target shell. [Broad pre-aim review](0e76682-preaim-mortar-during-gun-reload.md)
+
+Directed 1060641 returned to every stock command and recovered the lost place. The earlier same-target contact and one-point gain remained in 1060646, with nearly equal early damage. Directed 1060025 fired sooner and tied placement. In 1060628 the initial pre-aim reconverged, while a later earlier shot and shared aim changed the cadence. It lost one place against the exact queued control even though the opening trades tied and the later rear hit dealt the same damage.
+
+All 48 fresh placements against `02e756e` and 12 against the direct predecessor tied. Eight verified-baseline pairs gained two points through an inherited legal gun trigger. All 22 units and 300 timed networkless Docker observations passed. Results were simulated. All three reviewers voted **revise**. Withheld. Compare the native aim at the actual ready tick and seek a fresh earlier impact that improves the exchange before testing another pre-aim policy.
