@@ -1216,6 +1216,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "758762f7f5fe6a0cadfc757e4fc1998e19e11d2d",
+      "summary": "Require a second rival pickup observation before abandoning a stale recovery route. Directed actual collection gains one simulated place, and the alternate collection-order false cancel is repaired. 76 fresh simulated pairs tied and 300 sandbox replies passed.",
+      "created_at": "2026-11-21T15:28:01Z",
+      "parents": [
+        "2633ab86c6628da4597b987fee7cc22544f1ce53"
+      ],
+      "reviews": {
+        "commit": "758762f7f5fe6a0cadfc757e4fc1998e19e11d2d",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact revision retains the near-side one-place gain and wire parity in the far and no-contest controls and all eight fresh native pairs. The extra inside observation preserves the still-existing trunk-hidden target under alternate phase. The redirect adds 388.8 incoming and 1177.8 outgoing in six seconds, with one extra kill and 0.65s shorter life."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The same rival still in pickup range with unchanged cargo on the next sample distinguishes the concrete pre-move unrelated-pair counterexample. The patch retains the directed near gain and far and native parity. Fresh results and the clean timed checker satisfy the stated conditions."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight fresh phased public-equipment pairs match commands and placement. The real near pickup retains its one-place gain, and the trunk-hidden false cancellation is repaired. Both independently withheld observations cause safe abstention. Omitting the confirmation sample gives up the original gain, an acceptable scope tradeoff."
+          }
+        }
+      }
     }
   ]
 }
