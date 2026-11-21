@@ -29,6 +29,7 @@ class Bot:
         if hello.get("protocol") != "mechfight/1":
             raise ValueError("Unsupported protocol")
         self.slot = hello["slot"]
+        self.match_rules = hello.get("config", {}).get("match", {})
         self.nav = Navigator(hello["map"]["dir"], hello["config"])
         settings = load_policy() if policy is None else policy
         self.survival = Survival(hello, self.nav, loot_priority=settings.get("loot_priority", 1.0))
@@ -39,6 +40,75 @@ class Bot:
         self.last_decision = {}
         self.trace = os.environ.get("MECHFIGHT_TRACE") == "1"
         self.scan_yaw = (self.slot % 16) * math.tau / 16
+
+    def storm_ingress(self, obs, plan, action, jet):
+        me = obs["self"]
+        zone = obs["zone"]
+        if (plan["mode"] != "zone" or obs.get("t", 0) < 175 or zone.get("dps", 0) < 55
+                or me.get("in_zone", True) or not me.get("grounded") or not self.nav.loaded
+                or jet or plan["dodge"] or any(action.get("fire", ()))
+                or math.hypot(*action["move"]) < .9
+                or any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
+            return None
+        x, y, z = me["pos"]
+        cx, cy = zone["center"]
+        radius = zone["radius"]
+        if not 0 < math.hypot(x - cx, y - cy) - radius < 20 or abs(z - self.nav.ground(x, y)) > 1:
+            return None
+        now = obs["t"]
+        wait = max(0, zone.get("shrink_start", now) - now)
+        duration = max(.001, zone.get("shrink_end", now) - now - wait)
+        nx, ny = zone.get("next_center", (cx, cy))
+        next_radius = zone.get("next_radius", radius)
+        step = 1 / self.match_rules.get("tick_hz", 20)
+        frames = self.match_rules.get("decide_every", 2)
+        ticks = int(1.25 / step + 1e-8)
+        stats = me.get("stats") or {}
+        speed = stats.get("boost_speed", 19.5) if action["boost"] else stats.get("walk_speed", 11.7)
+        acceleration = step * stats.get("ground_accel", 58.5)
+
+        def crossings(direction):
+            px, py = x, y
+            vx, vy = me["vel"][:2]
+            enter = None
+            path = []
+            for tick in range(1, ticks + 1):
+                dvx, dvy = speed * direction[0] - vx, speed * direction[1] - vy
+                scale = min(1., acceleration / max(.001, math.hypot(dvx, dvy)))
+                vx, vy = vx + scale * dvx, vy + scale * dvy
+                px, py = px + vx * step, py + vy * step
+                elapsed = tick * step
+                frac = max(0., min(1., (elapsed - wait) / duration))
+                center = cx + frac * (nx - cx), cy + frac * (ny - cy)
+                safe = radius + frac * (next_radius - radius) - .5
+                if math.dist((px, py), center) <= safe:
+                    if enter is None:
+                        enter = elapsed
+                else:
+                    enter = None
+                if tick % frames == 0 or tick == ticks:
+                    path.append((px, py))
+            return 1.5 if enter is None else enter, path
+
+        native, _ = crossings(action["move"])
+        if native < .65:
+            return None
+        clearance, height = self.nav._dimensions(stats.get("radius", 2.5))
+        start_floor = self.nav.ground(x, y)
+        bearing = math.atan2(cy - y, cx - x)
+        best, next_move = native - .25, None
+        for offset in (0, .45, -.45, .83, -.83, 1.1, -1.1):
+            direction = math.cos(bearing + offset), math.sin(bearing + offset)
+            eta, path = crossings(direction)
+            if eta >= best or eta > 1.25:
+                continue
+            if (not self.nav._ground_segment(x, y, *path[-1], clearance, height)
+                    or any(abs(self.nav.ground(*point) - start_floor) > 1
+                           or not self.nav._ground_segment(*previous, *point, clearance, height)
+                           for previous, point in zip(((x, y), *path), path))):
+                continue
+            best, next_move = eta, direction
+        return next_move
 
     def act(self, obs):
         if self.trace:
@@ -69,8 +139,13 @@ class Bot:
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet))
+        reason = base["reason"]
+        ingress = self.storm_ingress(obs, plan, action, jet)
+        if ingress is not None:
+            action["move"] = list(ingress)
+            reason = "earlier_legal_storm_ingress"
         self.last_decision = {
-            "mode": plan["mode"], "reason": base["reason"], "goal": list(goal),
+            "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
             "zone_urgency": round(base["zone_urgency"], 3),
             "enemy_pressure": round(base["enemy_pressure"], 3), "dodge": base["dodge"],

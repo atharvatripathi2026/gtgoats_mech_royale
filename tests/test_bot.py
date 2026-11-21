@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 import mechfight
 
+from bot import Bot
 from loadout import Loadout
 from navigation import Navigator
 from survival import Survival
@@ -35,6 +36,20 @@ class DecisionTests(unittest.TestCase):
         self.me = self.obs["self"]
         self.me.update(pos=[0, 0, 0], aim=[0, 0], vel=[0, 0, 0])
         self.obs["offer"] = None
+
+    def test_storm_ingress_supersedes_slow_tangent_only_without_dodge(self):
+        controller = Bot(self.hello)
+        controller.nav = unittest.mock.Mock(loaded=True)
+        controller.nav.ground.return_value = 0
+        controller.nav._dimensions.return_value = (2, 9)
+        controller.nav._ground_segment.return_value = True
+        self.me.update(pos=[0, 0, 0], vel=[0, 0, 0], grounded=True, in_zone=False)
+        self.obs.update(t=280, zone={"center": [10, 0], "radius": 9, "dps": 100})
+        plan = {"mode": "zone", "dodge": None}
+        action = {"move": [0, 1], "boost": False}
+        self.assertEqual(controller.storm_ingress(self.obs, plan, action, False), (1., 0.))
+        plan["dodge"] = "line"
+        self.assertIsNone(controller.storm_ingress(self.obs, plan, action, False))
 
     def test_future_zone_overrides_loot_outside(self):
         self.obs.update(t=100, zone={"center": [0, 0], "radius": 50,
