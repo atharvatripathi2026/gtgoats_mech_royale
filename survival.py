@@ -39,6 +39,8 @@ class Survival:
         self.loot = {}
         self.recent_player_kill = -math.inf
         self.recovery_cubes = {}
+        self.recalled_cube = None
+        self.recalled_absence = None
         self.chase_id = None
         self.chase_record = (0, 0)
         self.skip_until = {}
@@ -290,6 +292,35 @@ class Survival:
         self.recovery_cubes.update((cube["id"], (now, tuple(cube["pos"])))
                                    for cube in (obs.get("cubes") or ()) if "id" in cube and "pos" in cube)
 
+    def _cancel_missing_recovery(self, obs, pos, stats):
+        key = self.recalled_cube
+        previous, self.recalled_absence = self.recalled_absence, None
+        if key is None or key != self.chase_id:
+            return
+        record = self.loot.get(key)
+        if (record is None or not self.nav or not self.nav.loaded or not obs["self"].get("grounded")
+                or "cubes" not in obs or any(cube.get("id") == key for cube in (obs["cubes"] or ()))):
+            return
+        point = record[1]
+        near = self.rules.get("vision", {}).get("near_range", 45)
+        if distance(pos, point) > .8 * near or abs(pos[2] - point[2]) > 1.5:
+            return
+        eye = (*pos[:2], pos[2] + stats.get("eye_height", 8.))
+        x, y, z = point
+        if not self.nav.trunk_sight_clear(eye, (x, y, z + .25)):
+            return
+        if not all(self.nav.line_clear(eye, (x + dx, y + dy, z + height))
+                   for dx, dy, height in ((0., 0., .25), (.35, 0., .5), (0., .35, .5))):
+            return
+        tick = obs["tick"]
+        stride = self.rules.get("match", {}).get("decide_every", 2)
+        if previous != (key, tick - stride):
+            self.recalled_absence = key, tick
+            return
+        self.loot.pop(key, None)
+        self.recovery_cubes.pop(key, None)
+        self.recalled_cube = self.chase_id = None
+
     def _recovery_pack(self, obs, pos, radius, foes):
         me = obs["self"]
         if (foes or not me.get("grounded") or not me.get("in_zone") or not self.nav or not self.nav.loaded
@@ -383,6 +414,7 @@ class Survival:
             return None
         if key in recovery:
             self.loot[key] = memory[key]
+            self.recalled_cube = key
         if kind == "drop":
             drop = next(o for o in obs["drops"] if o.get("id") == key)
             if d < max(1, drop.get("radius", 8) - 2.0):
@@ -578,6 +610,7 @@ class Survival:
         radius = stats.get("radius", mech.get("radius", 2.5))
         hp = clip(me.get("hp", 1) / max(1, me.get("max_hp", 1)))
         self._observe_recovery_cubes(obs, t, hp)
+        self._cancel_missing_recovery(obs, pos, stats)
         energy = clip(me.get("energy", 100) / max(1, me.get("max_energy", 100)))
         anchor, urgency, circle, final, until = self._zone(obs, pos, speed, radius)
         foes, pressure, bearing = self._enemies(obs, t, pos)

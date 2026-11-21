@@ -44,6 +44,17 @@ class Navigator:
     def _load(self, folder):
         with (folder / "world.json").open() as stream:
             world = json.load(stream)
+        trees = world.get("trees") or {}
+        fields = trees.get("fields") or ()
+        required = ("x", "y", "z", "height", "trunkR")
+        self.vision_trunks = []
+        if all(name in fields for name in required):
+            indices = tuple(fields.index(name) for name in required)
+            data = trees.get("data") or ()
+            width = len(fields)
+            self.vision_trunks = [tuple(data[first + i] for i in indices)
+                                  for first in range(0, len(data) - width + 1, width)
+                                  if data[first + indices[-1]] > 0]
         terrain = world["terrain"]
         self.tx, self.ty = terrain["minX"], terrain["minY"]
         self.tw, self.th = terrain["nx"], terrain["ny"]
@@ -188,6 +199,30 @@ class Navigator:
                 if low <= z <= high:
                     return False
             gx, gy, z = gx+sx, gy+sy, z+dz
+        return True
+
+    def trunk_sight_clear(self, start, end):
+        """Check tree trunks for proximity sensing. Projectiles ignore them."""
+        x, y, z = start
+        dx, dy, dz = end[0] - x, end[1] - y, end[2] - z
+        length2 = dx * dx + dy * dy
+        if length2 < 1e-8:
+            return False
+        left, right = sorted((x, end[0]))
+        bottom, top = sorted((y, end[1]))
+        for tx, ty, tz, height, radius in self.vision_trunks:
+            if tx + radius < left or tx - radius > right or ty + radius < bottom or ty - radius > top:
+                continue
+            along = ((tx - x) * dx + (ty - y) * dy) / length2
+            off2 = (x + along * dx - tx) ** 2 + (y + along * dy - ty) ** 2
+            if off2 > radius * radius:
+                continue
+            half = math.sqrt((radius * radius - off2) / length2)
+            entry, exit = max(0., along - half), min(1., along + half)
+            if entry <= exit:
+                low, high = sorted((z + entry * dz, z + exit * dz))
+                if low <= tz + height and high >= tz:
+                    return False
         return True
 
     def _snap(self, cell, clearance, height):
