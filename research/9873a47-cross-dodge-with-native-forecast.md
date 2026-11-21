@@ -1,0 +1,9 @@
+# Combine the crossfire dodge and next-shot forecast with the native pitch filter
+
+Candidate `9873a47b2c3c2ebcd85b3035d12a56c55373655c` descends from the full merge `f5e4dc0096160f9f5b64c933ce3354b283dee205`. It removes the inherited steep-angle gun branch. The crossfire dodge, equipment policy and ordinary-angle next-shot forecast remain. An added gun trigger still has priority over a same-frame dodge because dodge requires no fire.
+
+All 48 fresh campus pairs against the dodge and all 60 pairs against verified `03a8f93` tied for placement. The 24 fresh pairs against the direct merge parent tied in aggregate, with a two-point gain and a two-point loss. In 1048704 removing the early gun reduced first-second outgoing by 145.8. At six seconds it had 477.9 less outgoing and 90 more incoming. In 1048710 removing the trigger reduced six-second outgoing by 90 at equal incoming, before a later two-point gain. These matches show that the inherited branch can change either outcome.
+
+The revision reproduced the complete parent commands in both directed dodge successes and in the raw merge's six-point and seven-point regressions. The fixed observation still permitted the known extra 1043505 shot, but this policy reaches a different later match trajectory after omitting an earlier steep shot. Instrumentation found neither target activation nor shared contention in 36 fresh games. The 24 unit tests and all 300 timed Docker observations passed.
+
+Survival, combat and validation each voted revise. The directed repairs are real, but no new advantage over the approved dodge appeared and removing the scoped steep-angle feature costs real fire in some situations. Keep the approved policies available separately. A next combination should have a natural case where both features activate or a demonstrated gain over an existing parent.
