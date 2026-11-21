@@ -1545,6 +1545,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "3dd401585c16880fc49703ddcb950253da6a0eb6",
+      "summary": "Release a moving laser before cover only with extra projectile clearance, no active dodge, and no imminent rifle shot. Preserves both directed beam gains and four adverse controls. All 28 fresh parent placements tie. Passed 23 units and 300 sandbox observations.",
+      "created_at": "2026-11-21T23:07:10Z",
+      "parents": [
+        "45e7d6867c4842f7d557be98997183107390ddc1"
+      ],
+      "reviews": {
+        "commit": "3dd401585c16880fc49703ddcb950253da6a0eb6",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The expanded projectile margin restores the three prior movement-related adverse cases on all commands while retaining both directed beam hits and the one-place directed gain. Eight fresh native matches tie on commands and placement. The near pass is observable, although the later shooter is unseen at release. The exact sandbox passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Both confirmed beam gains remain. All three known projectile threat controls restore parent actions, and all eight native plus 16 four-mech fresh comparisons tie on actions and placement. All 300 sandbox observations passed. The added margin is a conservative veto for a real visible near pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All four known adverse controls restore the parent action sequence. Both native beam hits remain and phased public opposition independently reproduces the 270.816-damage beam and matching rifle hit. Four fresh phased pairs and the fresh main comparisons tie on actions and placement. The margin cannot identify a later unseen shooter."
+          }
+        }
+      }
     }
   ]
 }
