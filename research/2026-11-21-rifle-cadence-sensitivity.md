@@ -1,0 +1,9 @@
+# Check the held rifle cadence in the joint evaluator
+
+The starter kit describes a 0.24-second default cooldown for a held rifle. The joint simulator rounds that to 0.25 seconds on its 50 ms physics step. Validation evaluator `68ca64073ed1f519eb8f99d3dae1bcb105ea2382` carries the fractional overshoot only through continuous held rifle fire. It leaves laser and reload timers unchanged. Its 39 unit tests passed. An engine fixture measured 0.250 and 0.240 seconds respectively and verified that ending a held trigger resets the carried timing. This tests a public rule within the simulator.
+
+Under this cadence variant, directed seed 1062953 gave score 8 to both incumbent Lens `4bba0d7` and effective `75945a8`, with 176.05 seconds survival and identical actions. The earlier offer disagreement disappears as the opening fights change. The result limits transfer of that seed across house models while leaving the original same-state magazine repair observable.
+
+Exact new rifle-volume `a1806b3` matched the incumbent action for action on 16 standard public comparisons and 16 cadence-adjusted joint comparisons on fresh 1063140–1063155. No new choice activated. [Prior release and reload study](2026-11-21-confirmed-weapon-release-and-reload-demand.md)
+
+A matched model check isolated cadence from mortar cover. With the clean joint evaluator's original timing, the exact new candidate also recovers five places. Applying the same fractional timing on top of the mortar-cover overlay, exact evaluator `15ea1b32b0b776c7bba9bd7185c78cc7613544bb`, again yields 8–8. A separate counterfactual that immediately fills only newly added Drum capacity, evaluator `6540c697cf748418e82a6ee475643f59c00fbce9`, yields 10–11 at the same seed. The capacity benefit retains its sign while the size of the gain depends on the reload and travel trajectory.
