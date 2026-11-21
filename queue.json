@@ -511,6 +511,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "8c569b43ea3dfe6a41c989f7d35a0ebe890193af",
+      "summary": "Keep a recently effective mortar or laser if approaching opponents remain outside lightning range. Confirmed two directed ranged hits and one placement gain, while 88 fresh placements tied. Unit tests and all 300 timed Docker observations passed.",
+      "created_at": "2026-11-21T08:38:02Z",
+      "parents": [
+        "08f3a69150895622e401fc90c1fe60d45a26d0e8"
+      ],
+      "reviews": {
+        "commit": "8c569b43ea3dfe6a41c989f7d35a0ebe890193af",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Directed controls distinguish useful recent laser and mortar retention from an unchanged genuine later lightning pickup. The approved ranged mortar swap is retained. One directed match gained one point, while all 88 fresh placements tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact guard retains mortar in 1051313 and hits the current target 8.7 seconds before the first native lightning hit, with one more placement point and 1653.3 less incoming damage. It also lands a retained laser hit in 1040010. All 88 fresh placements tie, and the actual beneficial lightning control retains all 2351 actions."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Both retained sidearms land real additional hits in the directed cases, with a one-point mortar gain and tied laser win. The genuine lightning control and verified forward mortar behavior are preserved. All 88 fresh placement ties limit the measured frequency."
+          }
+        }
+      }
     }
   ]
 }
