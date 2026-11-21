@@ -25,6 +25,7 @@ class Loadout:
         self.last_swap = -100
         self.last_target = None
         self.sight = {}
+        self.last_sight_recheck = -math.inf
 
     def pickup(self, obs, action):
         me = obs["self"]
@@ -122,22 +123,27 @@ class Loadout:
         shape = self.config.get("npc" if kind == "npc" else "crates", {})
         return shape.get("radius", 1.5), shape.get("height", 3)
 
-    def sight_height(self, origin, entity, t):
+    def sight_height(self, origin, entity, t, *, recheck_hidden=False):
         """Tracked mechs can be on the other side of a wall for five seconds."""
         _, height = self.dimensions(entity)
         if self.nav is None:
             return height * .5
         key = entity.get("id")
         cached = self.sight.get(key)
-        if cached and t < cached[0]:
-            return cached[1]
+        cached_hit = cached and t < cached[0]
+        if cached_hit:
+            if cached[1] is not None or not recheck_hidden or self.last_sight_recheck == t:
+                return cached[1]
+            self.last_sight_recheck = t
         x, y, z = entity["pos"]
         h = height * .49
         if not self.nav.line_clear(origin, (x, y, z + h)):
             h = height * .84
             if not self.nav.line_clear(origin, (x, y, z + h)):
                 h = None
-        self.sight[key] = (t + .22, h)
+        # A failed extra probe keeps the original expiry, so repeatedly
+        # peeking at a blocked target cannot prolong its negative cache.
+        self.sight[key] = (cached[0] if cached_hit and h is None else t + .22, h)
         return h
 
     def target(self, obs, origin, evade, target_id):
@@ -207,8 +213,11 @@ class Loadout:
             if self.last_target is not None and ent.get("id") == self.last_target:
                 score += 4
             priority.append((score, ent, fight))
-        for _, ent, fight in sorted(priority, key=lambda row: -row[0])[:4]:
-            h = self.sight_height(origin, ent, t)
+        for rank, (_, ent, fight) in enumerate(sorted(priority, key=lambda row: -row[0])[:4]):
+            recheck = (rank == 0 and fight and health > .56 and ent.get("kind") == "mech"
+                       and ent.get("hp", math.inf) < me.get("max_hp", 1400) * .23
+                       and math.dist(origin[:2], ent["pos"][:2]) < 185)
+            h = self.sight_height(origin, ent, t, recheck_hidden=recheck)
             if h is not None:
                 self.last_target = ent.get("id")
                 return ent, h, fight

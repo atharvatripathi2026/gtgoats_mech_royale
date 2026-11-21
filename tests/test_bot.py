@@ -85,6 +85,39 @@ class DecisionTests(unittest.TestCase):
                             "shrink_start": 65, "shrink_end": 100, "dps": 20}
         self.assertEqual(Survival(self.hello).decide(self.obs)["target_id"], 8000)
 
+    def test_wounded_target_rechecks_hidden_cache_once_without_extending_it(self):
+        class Visibility:
+            clear = False
+            calls = 0
+
+            def line_clear(self, origin, endpoint):
+                self.calls += 1
+                return self.clear
+
+        self.me.update(pos=[0, 0, 0], hp=self.me["max_hp"])
+        rival = {"id": 8, "kind": "mech", "hp": 90, "pos": [90, 0, 0],
+                 "vel": [0, 0, 0], "aim": [math.pi, 0]}
+        self.obs.update(t=30, alive=10, mechs=[rival])
+        self.obs["zone"]["radius"] = 200
+        visibility = Visibility()
+        policy = Loadout(self.hello, visibility)
+
+        def target():
+            return policy.target(self.obs, (0, 0, 7), False, None)[0]
+
+        self.assertIsNone(target())
+        self.assertEqual(visibility.calls, 2)
+        expiry = policy.sight[8][0]
+        self.obs["t"] = 30.1
+        self.assertIsNone(target())
+        self.assertIsNone(target())
+        self.assertEqual(visibility.calls, 4)
+        self.assertEqual(policy.sight[8][0], expiry)
+        self.obs["t"] = 30.2
+        visibility.clear = True
+        self.assertEqual(target(), rival)
+        self.assertEqual(visibility.calls, 5)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,
