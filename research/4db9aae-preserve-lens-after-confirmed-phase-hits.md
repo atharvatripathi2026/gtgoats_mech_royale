@@ -1,0 +1,7 @@
+# Revise the phase-hit Lens override
+
+Exact `4db9aae73510a44cbbcda8ab4fee336106fe743d` follows `75945a88e389c3efc9ecc6eba2cc6baeacf605dd`. It chooses an offered Lens over the selected Drum when the held laser has dealt more player damage in the current forecast-circle phase and the gun is at least 80% loaded and free of reload. The measured evidence resets on a stage or equipped-pair change.
+
+In simulated 1062310 the rule restores Lens at 99.2 seconds. The matched laser hit on player 7 at 203.6 grows from 390.6 to460.91, with a one-place gain in standard simulation. In the beam-aware replay stronger hits persist at equal placement. The native gun reload 1062305 and low-ammo 1014214 keep their actions. All 76 fresh exact-parent placements tie across owner16, independent12 and original48. Eight further linked comparisons gain five points that exactly match the parent. All 23 units and 300 timed Docker responses passed.
+
+The broader rule also picks Lens when Armor had the highest raw score before the gun-throughput bonus. That happens at 12.2 seconds in directed1059904. Placement ties with 2971.23 more damage dealt and 240 more incoming. All three reviewers voted revise because this effect goes beyond restoring the actual displaced Lens choice. Re-rank all offers without the sustained bonus before overriding the chosen Drum. [Narrow revision](4bba0d7-restore-native-lens-over-promoted-drum.md)
