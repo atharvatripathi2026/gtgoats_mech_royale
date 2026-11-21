@@ -1,0 +1,5 @@
+# Test tangential mortar lead along a resolved wall face
+
+Exact `8d3c3e213dcd4281a5b6323a922ac3ddd619dfdd` descends from `258d8c63654e9d24dacfa6c4c6a675e4b63b6e5f`. It adds tangent travel only if the three projected rays resolve to the same wall face. In 153 archived records with 638 native mortar launches, only two distinct eligible events had a clean common face. One real slide in 1051601 reversed direction before impact, and the revised shell still missed. In 1058104 the adjusted shot lost 772.83 outgoing by one second and 676.65 by six seconds at equal incoming. Placement tied. Both required positive controls preserved all their actions. All 12 fresh traced campus pairs tied action for action. The 24 units and local starter-kit 300-observation check passed. The separate Docker attempt could not access the mounted exact source.
+
+Combat and validation voted **reject**. Survival voted **revise**. The geometry detects room for sideways travel but cannot establish that the target will sustain it through impact. Withheld. Use observed short travel along a face as evidence and retain a safe fallback when a target can turn or the wall face cannot be resolved.
