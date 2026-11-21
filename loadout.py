@@ -293,6 +293,50 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
+    def laser_window_closing(self, obs, entity, beam_aim, remaining, beam_range):
+        """Check that the present beam intersects and the projected hull enters cover."""
+        if not self.nav or not self.nav.loaded:
+            return False
+        me = obs["self"]
+        velocity = me.get("vel", (0., 0., 0.))
+        target_velocity = entity.get("vel", (0., 0., 0.))
+        if (not me.get("grounded", True) or math.hypot(*velocity[:2]) > 3
+                or math.hypot(*target_velocity[:2]) < 4):
+            return False
+        stats = me.get("stats", {})
+        muzzle_height = stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
+        offset = stats.get("radius", self.mech.get("radius", 2.5)) + .5
+        yaw, pitch = beam_aim
+        ray = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+        horizontal = ray[0] ** 2 + ray[1] ** 2
+        if horizontal < .01:
+            return False
+        radius, height = self.dimensions(entity)
+
+        def at(delay):
+            muzzle = tuple(position + delay * speed + offset * component
+                           + (muzzle_height if i == 2 else 0)
+                           for i, (position, speed, component) in enumerate(zip(me["pos"], velocity, ray)))
+            feet = tuple(position + delay * speed
+                         for position, speed in zip(entity["pos"], target_velocity))
+            return muzzle, feet
+
+        for delay in (0., self.step):
+            muzzle, feet = at(delay)
+            depth = sum((feet[i] - muzzle[i]) * ray[i] for i in (0, 1)) / horizontal
+            point = tuple(component + depth * direction for component, direction in zip(muzzle, ray))
+            if (not 0 < depth < beam_range or math.dist(point[:2], feet[:2]) > radius * .8
+                    or not feet[2] + .15 * height <= point[2] <= feet[2] + .85 * height
+                    or not self.nav.line_clear(muzzle, point)
+                    or not self.nav.line_clear(muzzle, (feet[0], feet[1], feet[2] + height * .5))):
+                return False
+        for delay in (remaining, remaining + self.step):
+            muzzle, feet = at(delay)
+            for fraction in (.25, .5, .75):
+                if self.nav.line_clear(muzzle, (feet[0], feet[1], feet[2] + height * fraction)):
+                    return False
+        return True
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -404,6 +448,18 @@ class Loadout:
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
                         fire[i] = hit
+                if (primary[3] == "laser" and ent.get("kind") == "mech" and not climbing
+                        and sum(fire) == 1):
+                    for i, (_, _, _, weapon_kind, weapon_stats, weapon) in shots.items():
+                        if weapon_kind != "laser" or not fire[i]:
+                            continue
+                        full = weapon_stats.get("charge", .75)
+                        charge = weapon.get("charge", 0)
+                        remaining = full - charge
+                        if (.65 * full <= charge and .10 <= remaining <= .35
+                                and self.laser_window_closing(obs, ent, (yaw_next, pitch_next), remaining,
+                                                             weapon_stats.get("range", 280))):
+                            fire[i] = False
                 action["fire"] = fire
         for w in slots:
             if w and w.get("kind") == "gun" and not w.get("reload", 0):
