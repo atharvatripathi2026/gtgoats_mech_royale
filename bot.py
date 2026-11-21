@@ -40,6 +40,38 @@ class Bot:
         self.trace = os.environ.get("MECHFIGHT_TRACE") == "1"
         self.scan_yaw = (self.slot % 16) * math.tau / 16
 
+    def jet_obscures_return_fire(self, obs, plan, action, jet):
+        """Drop tactical thrust once a low rival falls below reachable pitch."""
+        me = obs["self"]
+        if (not action["boost"] or me.get("grounded", True) or jet or plan["dodge"]
+                or plan["mode"] not in ("evade", "zone") or len(plan["goal"]) != 2
+                or obs.get("t", 0) < 170 or obs.get("zone", {}).get("next_radius", 560) > 110
+                or not me.get("in_zone", True) or not self.nav.loaded
+                or any(action.get("fire", ()))):
+            return False
+        stats = me.get("stats", {})
+        if action["aim"][1] >= stats.get("min_pitch", -.7) - .06:
+            return False
+        if any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ())):
+            return False
+        target = self.loadout.last_decision.get("target_id")
+        opponent = next((e for e in obs.get("mechs", ()) if e.get("kind") == "mech"
+                         and e.get("id") == target), None)
+        if opponent is None:
+            return False
+        x, y, z = me["pos"]
+        distance = math.dist((x, y), opponent["pos"][:2])
+        if not 12 <= distance <= 115:
+            return False
+
+        # Brake only when the nearby surface stays well below the feet,
+        # so lowering altitude is compatible with the existing horizontal plan.
+        vx, vy = me.get("vel", (0, 0, 0))[:2]
+        ux, uy = action["move"]
+        walk = stats.get("walk_speed", 11.7)
+        points = ((x, y), (x + .3 * vx, y + .3 * vy), (x + .45 * walk * ux, y + .45 * walk * uy))
+        return all(z - self.nav.surface(*point) >= 5 for point in points)
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -69,8 +101,12 @@ class Bot:
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet))
+        reason = base["reason"]
+        if self.jet_obscures_return_fire(obs, plan, action, jet):
+            action["boost"] = False
+            reason = "descend_to_return_fire"
         self.last_decision = {
-            "mode": plan["mode"], "reason": base["reason"], "goal": list(goal),
+            "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
             "zone_urgency": round(base["zone_urgency"], 3),
             "enemy_pressure": round(base["enemy_pressure"], 3), "dodge": base["dodge"],

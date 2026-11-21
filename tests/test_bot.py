@@ -36,6 +36,22 @@ class DecisionTests(unittest.TestCase):
         self.me.update(pos=[0, 0, 0], aim=[0, 0], vel=[0, 0, 0])
         self.obs["offer"] = None
 
+    def test_tactical_jet_can_descend_to_restore_a_late_firing_angle(self):
+        from bot import Bot
+
+        bot = Bot(self.hello)
+        bot.loadout.last_decision = {"target_id": 4}
+        self.me.update(pos=[0, 0, 30], grounded=False, in_zone=True)
+        self.obs.update(t=340, mechs=[{"id": 4, "kind": "mech", "pos": [20, 0, 0]}])
+        self.obs["zone"]["next_radius"] = 25
+        plan = {"mode": "evade", "goal": [60, 0], "dodge": None}
+        action = {"move": [1, 0], "aim": [0, -.96], "boost": True, "fire": [False, False]}
+        with patch.object(bot.nav, "surface", return_value=17):
+            self.assertTrue(bot.jet_obscures_return_fire(self.obs, plan, action, False))
+            self.assertFalse(bot.jet_obscures_return_fire(self.obs, plan, action, True))
+            action["aim"][1] = -.1
+            self.assertFalse(bot.jet_obscures_return_fire(self.obs, plan, action, False))
+
     def test_future_zone_overrides_loot_outside(self):
         self.obs.update(t=100, zone={"center": [0, 0], "radius": 50,
                                     "next_center": [0, 0], "next_radius": 35,
