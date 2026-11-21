@@ -192,6 +192,7 @@ class Actor:
 
 class Episode:
     def __init__(self, hello, layout, seed, scenario):
+        self.opponents=(1,2,3)
         self.cfg, self.layout, self.seed, self.scenario = hello["config"], layout, seed, scenario
         self.rng = random.Random(f"episode/{seed}/{scenario}")
         self.dt = 1 / self.cfg["match"]["tick_hz"]
@@ -301,7 +302,7 @@ class Episode:
                                     charging=any(w and w.get("charge",0)>0 for w in a.weapons)))
         shots = [dict(id=s["id"],kind=s["kind"],pos=s["pos"],vel=s["vel"]) for s in self.shots
                  if s["owner"] != me.id and self.visible(me,s["pos"])]
-        obs = dict(type="obs",tick=tick,t=self.now,alive=4-len(self.dead),self=me.state(),
+        obs = dict(type="obs",tick=tick,t=self.now,alive=1+len(self.opponents)-len(self.dead),self=me.state(),
                    mechs=targets, projectiles=shots, crates=crates, drops=[], beams=[],
                    pickups=[p for p in self.pickups if self.visible(me,p["pos"])],
                    cubes=[c for c in self.cubes if self.visible(me,c["pos"])],
@@ -596,7 +597,9 @@ class Episode:
                 a.offer=None
 
     def drone(self):
-        a=self.actors[100]
+        self.drone_actor(self.actors[100])
+
+    def drone_actor(self,a):
         if a.hp<=0 or self.player.hp<=0:
             return
         cfg=self.cfg["npc"]
@@ -624,7 +627,7 @@ class Episode:
     def run(self, bot, trace):
         me=self.player
         tick=0
-        while self.now<self.duration and me.hp>0 and len(self.dead)<3:
+        while self.now<self.duration and me.hp>0 and len(self.dead)<len(self.opponents):
             self.update_zone()
             obs=self.obs(tick)
             start=time.perf_counter()
@@ -633,7 +636,7 @@ class Episode:
             action["tick"]=tick
             decision=copy.deepcopy(getattr(bot,"last_decision",None)) if trace else None
             before=(self.dealt,self.taken,self.zone_damage,self.kills,me.cubes)
-            house={i:self.house(a) for i,a in self.actors.items() if 0<i<4 and a.hp>0}
+            house={i:self.house(self.actors[i]) for i in self.opponents if self.actors[i].hp>0}
             for _ in range(self.stride):
                 alive=[a for a in self.actors.values() if a.kind=="mech" and a.hp>0]
                 for a in alive:
@@ -646,7 +649,7 @@ class Episode:
                 self.step_shots()
                 tick+=1
                 self.now=tick*self.dt
-                if me.hp<=0 or len(self.dead)>=3:
+                if me.hp<=0 or len(self.dead)>=len(self.opponents):
                     break
             if hasattr(bot,"sent"):
                 bot.sent(obs["tick"],action,on_time=True,applied=True)
@@ -656,13 +659,13 @@ class Episode:
                       damage_taken=self.taken-before[1],zone_damage=self.zone_damage-before[2],
                       kills=self.kills-before[3],cubes=me.cubes-before[4],events=copy.deepcopy(me.events)))
         if me.id in self.dead:
-            place=1+sum(i not in self.dead or self.dead[i]>self.dead[me.id] for i in (1,2,3))
+            place=1+sum(i not in self.dead or self.dead[i]>self.dead[me.id] for i in self.opponents)
         else:
-            place=1+sum(self.actors[i].hp>me.hp and i not in self.dead for i in (1,2,3))
+            place=1+sum(self.actors[i].hp>me.hp and i not in self.dead for i in self.opponents)
         end=dict(type="end",place=place,kills=self.kills)
         if hasattr(bot,"end"):
             bot.end(end)
-        return dict(score=4-place,place_proxy=place,kills=self.kills,survival_s=self.now,
+        return dict(score=1+len(self.opponents)-place,place_proxy=place,kills=self.kills,survival_s=self.now,
                     cubes=me.cubes,damage_dealt=self.dealt,damage_taken=self.taken,
                     zone_damage=self.zone_damage,armed=sum(w is not None for w in me.weapons)>1,
                     won=place==1,seed=self.seed,scenario=self.scenario,final_hp=max(0.,me.hp))

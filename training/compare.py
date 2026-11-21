@@ -1,9 +1,13 @@
-r"""Compare two local bot worktrees on paired seeds in the same four-mech arena.
+r"""Compare two bot worktrees on the same local scenarios and seeds.
 
     python3 -m training.compare --baseline /tmp/base --candidate /tmp/trial \
         --kit /tmp/mech-kit --seed-start 41001 --seeds 8 \
         --scenarios forage pursuit crossfire rotation --maps generated campus \
         --output-dir /tmp/paired-run --traces
+
+Use --squad16 to run the optional 16-mech campus diagnostic instead.
+This compares relative behaviors only. Its absolute scores are not calibrated to
+the official scorer, and its ordering is uncertain for closely matched bots.
 
 Each worktree must supply bot.py with Bot(hello). Each side has its own Python
 process, working directory, source imports and default policy.json. The arena,
@@ -12,8 +16,8 @@ command. Use trusted worktrees. The comparison evaluates their code locally.
 
 Per-game outcomes are in baseline/episodes.jsonl and candidate/episodes.jsonl.
 report.json summarizes local placement deltas. --traces also saves a complete
-compressed JSONL trajectory for each game alongside the outcome files. A point
-is one local placement (4 - place); the official 16-mech score is separate.
+compressed JSONL trajectory for each game alongside the outcome files. A point is one place in
+the chosen simulation (4 or 16 minus local place). Official scores come from Builders.
 """
 import argparse
 import hashlib
@@ -95,6 +99,8 @@ def worker(args):
     # before allowing the policy to import any modules with overlapping names.
     sys.path.insert(0, str(ROOT))
     from training.arena import Arena
+    if args.squad16:
+        from training.squad16 import SquadArena
     from recorder import MatchRecorder
     from training.tune import read_trace
 
@@ -117,7 +123,7 @@ def worker(args):
         traces.mkdir()
     with (directory / "episodes.jsonl").open("x", encoding="utf-8") as stream:
         for domain in args.maps:
-            arena = Arena(args.kit, campus=domain == "campus")
+            arena = SquadArena(args.kit) if args.squad16 else Arena(args.kit, campus=domain == "campus")
             try:
                 for seed in range(args.seed_start, args.seed_start + args.seeds):
                     for scenario in args.scenarios:
@@ -134,13 +140,13 @@ def worker(args):
                 arena.close()
 
 
-def read_rows(path):
+def read_rows(path, players=4):
     result = {}
     with path.open(encoding="utf-8") as stream:
         for line in stream:
             row = json.loads(line)
             key = (row["map_domain"], row["seed"], row["scenario"])
-            if key in result or not (1 <= row["place_proxy"] <= 4 and row["score"] == 4-row["place_proxy"]):
+            if key in result or not (1 <= row["place_proxy"] <= players and row["score"] == players - row["place_proxy"]):
                 raise ValueError(f"Invalid or duplicate outcome in {path}")
             result[key] = row
     return result
@@ -159,8 +165,9 @@ def contrast(keys, baseline, candidate):
 def compare(args):
     from training.arena import SCENARIOS
 
-    if args.seeds < 1 or not all(s in SCENARIOS for s in args.scenarios):
-        raise ValueError(f"Use a positive seed count and scenarios from {', '.join(SCENARIOS)}.")
+    allowed_scenarios = ("squad16",) if args.squad16 else SCENARIOS
+    if args.seeds < 1 or not all(s in allowed_scenarios for s in args.scenarios):
+        raise ValueError(f"Use a positive seed count and scenarios from {', '.join(allowed_scenarios)}.")
     if len(set(args.maps)) != len(args.maps) or len(set(args.scenarios)) != len(args.scenarios):
         raise ValueError("Specify each map domain and each scenario only once.")
     for worktree in (args.baseline, args.candidate):
@@ -180,6 +187,8 @@ def compare(args):
         before = {side: snapshot(getattr(args, side)) for side in SIDES}
         shared = {"arena": ROOT / "training/arena.py", "geometry": ROOT / "navigation.py",
                   "kit_stream": args.kit / "check/stream.jsonl.gz"}
+        if args.squad16:
+            shared["squad16"] = ROOT / "training/squad16.py"
         if "campus" in args.maps:
             shared.update(world=args.kit / "arena/v2/world.json", terrain=args.kit / "arena/v2/terrain.i16")
         pinned = {name: digest(path) for name, path in shared.items()}
@@ -191,8 +200,11 @@ def compare(args):
                        "--maps", *args.maps, "--output-dir", str(args.output_dir)]
             if args.traces:
                 command.append("--traces")
+            if args.squad16:
+                command.append("--squad16")
             subprocess.run(command, cwd=getattr(args, side), check=True)
-        rows = {side: read_rows(args.output_dir / side / "episodes.jsonl") for side in SIDES}
+        players = 16 if args.squad16 else 4
+        rows = {side: read_rows(args.output_dir / side / "episodes.jsonl", players) for side in SIDES}
         expected = [(domain, seed, scenario) for domain in args.maps
                     for seed in range(args.seed_start, args.seed_start + args.seeds) for scenario in args.scenarios]
         if any(set(side_rows) != set(expected) for side_rows in rows.values()):
@@ -202,7 +214,9 @@ def compare(args):
                 raise ValueError(f"The {side} worktree changed during evaluation; results remain in {args.output_dir}.")
         if pinned != {name: digest(path) for name, path in shared.items()}:
             raise ValueError("The shared arena or kit inputs changed during evaluation.")
-        report = {"score": "Local four-mech placement points: 4 minus local place, maximum 3",
+        score_label = ("Local 16-mech placement points (16 minus local place, maximum 15)" if args.squad16
+                       else "Local four-mech placement points: 4 minus local place, maximum 3")
+        report = {"score": score_label,
                   "seed_start": args.seed_start, "seed_count": args.seeds,
                   "scenarios": args.scenarios, "maps": args.maps, "snapshots": before,
                   "shared_input_sha256": pinned,
@@ -212,6 +226,9 @@ def compare(args):
             report["by_map_and_scenario"][domain] = {
                 sc: contrast([k for k in expected if k[0] == domain and k[2] == sc],
                              rows["baseline"], rows["candidate"]) for sc in args.scenarios}
+        if args.squad16:
+            report["interpretation"] = ("Diagnostic only. Absolute points are not calibrated to official practice. "
+                                        "Small paired gains may reverse on official house opponents.")
         target = args.output_dir / "report.json"
         temporary = target.with_suffix(".tmp")
         temporary.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
@@ -230,11 +247,20 @@ def main():
     parser.add_argument("--output-dir", required=True, type=Path, help="Empty directory for this comparison")
     parser.add_argument("--seed-start", type=int, default=41001, help="First matched simulation seed")
     parser.add_argument("--seeds", type=int, default=8, help="Number of consecutive seeds per scenario and map")
-    parser.add_argument("--scenarios", nargs="+", default=["forage", "pursuit", "crossfire", "rotation"])
-    parser.add_argument("--maps", nargs="+", choices=("generated", "campus"), default=["generated"])
+    parser.add_argument("--squad16", action="store_true", help="Optional 16-mech cooperative-squad campus diagnostic")
+    parser.add_argument("--scenarios", nargs="+")
+    parser.add_argument("--maps", nargs="+", choices=("generated", "campus"))
     parser.add_argument("--traces", action="store_true", help="Record and verify complete gzip JSONL trajectories")
     parser.add_argument("--worker", choices=SIDES, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.squad16:
+        if args.scenarios not in (None, ["squad16"]) or args.maps not in (None, ["campus"]):
+            parser.error("--squad16 uses one campus scenario; run four-mech comparisons separately.")
+        args.maps = ["campus"]
+        args.scenarios = ["squad16"]
+    else:
+        args.maps = args.maps or ["generated"]
+        args.scenarios = args.scenarios or ["forage", "pursuit", "crossfire", "rotation"]
     for key in ("baseline", "candidate", "kit", "output_dir"):
         setattr(args, key, getattr(args, key).expanduser().resolve())
     try:
