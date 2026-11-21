@@ -2,8 +2,10 @@
 
 Run from the checkout with an authenticated GitHub CLI:
 
-    python3 -m training.publish_candidate --commit FULL_SHA --summary 'Ground escape update' --dry-run
-    python3 -m training.publish_candidate --commit FULL_SHA --summary 'Ground escape update'
+    python3 -m training.publish_candidate --commit FULL_SHA --summary 'Ground escape update' --reviews votes.json
+
+For each new candidate, votes.json records the three agents' decisions for that
+exact commit. See the practice-submission section in README.md for the format.
 
 New entries record the submitted commit's Git parents. To track gameplay lineage
 across tooling-only commits or combined variants, provide --parent FULL_SHA once
@@ -23,6 +25,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 
 REPO = "atharvatripathi2026/gtgoats_mech_royale"
@@ -32,6 +35,7 @@ QUEUE_FILE = "queue.json"
 CUTOFF = datetime(2026, 11, 22, 16, tzinfo=timezone.utc)  # Sunday 11 a.m. Eastern.
 SHA = re.compile(r"[0-9a-f]{40}")
 MAX_ATTEMPTS = 5
+REVIEW_ROLES = {"survival", "combat", "validation"}
 
 
 class QueueError(Exception):
@@ -78,6 +82,20 @@ def get_optional(path):
 
 def full_sha(value):
     return isinstance(value, str) and SHA.fullmatch(value) is not None
+
+
+def validate_reviews(reviews, commit):
+    if not isinstance(reviews, dict) or reviews.get("commit") != commit:
+        raise QueueError("Provide the three agents' reviews of this exact candidate commit.")
+    votes = reviews.get("votes")
+    if not isinstance(votes, dict) or votes.keys() != REVIEW_ROLES:
+        raise QueueError("Reviews must include one vote each from survival, combat and validation.")
+    for role, vote in votes.items():
+        if not isinstance(vote, dict) or vote.get("decision") != "approve for practice":
+            raise QueueError(f"The {role} reviewer has not approved this candidate for practice.")
+        evidence = vote.get("reason")
+        if not isinstance(evidence, str) or not evidence.strip() or len(evidence) > 800:
+            raise QueueError(f"Record the {role} reviewer's reason in 1 to 800 characters.")
 
 
 def validate_parents(parents, commit):
@@ -141,6 +159,8 @@ def validate_queue(queue):
             raise QueueError(f"Invalid candidate in {QUEUE_FILE}.")
         if "parents" in entry:
             validate_parents(entry["parents"], entry["commit"])
+        if "reviews" in entry:
+            validate_reviews(entry["reviews"], entry["commit"])
         date = utc_date(entry.get("created_at"))
         if entry["commit"] in seen or (previous is not None and date < previous):
             raise QueueError(f"Queue already contains duplicate or out-of-order candidates.")
@@ -179,7 +199,7 @@ def read_queue(head):
     return queue, file["sha"]
 
 
-def publish_once(commit, summary, dry_run, parents):
+def publish_once(commit, summary, dry_run, parents, reviews=None):
     head = branch_head(BRANCH)
     create_branch = head is None
     if create_branch:
@@ -195,7 +215,9 @@ def publish_once(commit, summary, dry_run, parents):
         return {**receipt, "status": "already_queued", "position": entries.index(existing) + 1,
                 "queue_commit": head, "entry": existing}
     if not existing:
-        entry = {"commit": commit, "summary": summary, "created_at": stamp(now()), "parents": parents}
+        validate_reviews(reviews, commit)
+        entry = {"commit": commit, "summary": summary, "created_at": stamp(now()),
+                 "parents": parents, "reviews": reviews}
         entries.append(entry)
         # Stable sorting retains insertion order when multiple commits arrive in
         # the same second and handles clock skew across authorized producers.
@@ -233,7 +255,7 @@ def publish_once(commit, summary, dry_run, parents):
     raise ApiError(409, "The candidate was absent when verifying the published queue.")
 
 
-def publish(commit, summary, dry_run=False, *, parents=None):
+def publish(commit, summary, dry_run=False, *, parents=None, reviews=None):
     if not full_sha(commit):
         raise QueueError("Pass a full lowercase 40-character Git commit hash.")
     if parents is not None:
@@ -258,7 +280,7 @@ def publish(commit, summary, dry_run=False, *, parents=None):
                 lineage = parents
                 for sha in lineage:
                     verified_commit(sha)
-            return publish_once(commit, summary, dry_run, lineage)
+            return publish_once(commit, summary, dry_run, lineage, reviews)
         except ApiError as exc:
             # A conflicting writer may have published this same commit. Read the
             # latest queue before attempting another write, including after a
@@ -276,10 +298,12 @@ def main():
     parser.add_argument("--parent", dest="parents", action="append", metavar="FULL_SHA",
                         help="Gameplay parent in the same repository; repeat to replace Git parent lineage")
     parser.add_argument("--dry-run", action="store_true", help="Read GitHub and preview without publishing")
+    parser.add_argument("--reviews", type=Path, help="JSON file with all three agents' approvals for a new entry")
     args = parser.parse_args()
     try:
-        result = publish(args.commit, args.summary, args.dry_run, parents=args.parents)
-    except QueueError as exc:
+        reviews = json.loads(args.reviews.read_text(encoding="utf-8"), object_pairs_hook=unique_fields) if args.reviews else None
+        result = publish(args.commit, args.summary, args.dry_run, parents=args.parents, reviews=reviews)
+    except (QueueError, OSError, ValueError) as exc:
         parser.exit(1, f"Could not publish practice candidate: {exc}\n")
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

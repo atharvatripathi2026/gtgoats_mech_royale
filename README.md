@@ -83,10 +83,21 @@ The Chrome helper submits tested commits from this team's public candidate queue
 
 The helper reads the site's remaining allowance, waits for a previous run to finish, and spaces its own attempts at least 15 minutes apart. With several candidates available, it gives preference to changes based on higher-scoring entries. Every fourth attempt tries the oldest eligible candidate. Scores, receipts and scorer messages are kept in this Chrome profile and are available under **Export results**. If the site never acknowledges a click, the panel lets you check the official history, stop, and retire that commit before resuming.
 
-Candidates enter the queue after the bot passes local checks and its exact commit is public. From the current main checkout, run the publisher with a short summary of the test results.
+Three agents review each new candidate from the perspectives of survival and positioning, combat and equipment, and opponent modeling and validation. After they test a frozen commit, record each actual verdict and its evidence in `votes.json`. A revision gets a new review of its exact commit. The publisher requires all three approvals and stores them with the entry so later runs can read the reasons.
 
 ```sh
-python3 -m training.publish_candidate --commit FULL_SHA --summary 'Gameplay change and test results'
+python3 -m training.publish_candidate --commit FULL_SHA --reviews votes.json --summary 'Gameplay change and test results'
+```
+
+```json
+{
+  "commit": "FULL_SHA",
+  "votes": {
+    "survival": {"decision": "approve for practice", "reason": "Survival reviewer's finding"},
+    "combat": {"decision": "approve for practice", "reason": "Combat reviewer's finding"},
+    "validation": {"decision": "approve for practice", "reason": "Validation reviewer's finding"}
+  }
+}
 ```
 
 [Candidate queue](https://github.com/atharvatripathi2026/gtgoats_mech_royale/blob/practice-queue/queue.json)
