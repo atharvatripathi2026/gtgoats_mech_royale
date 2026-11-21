@@ -537,6 +537,66 @@ class Loadout:
             best = dist, solution, rival["id"]
         return (index, best[1], best[2]) if best else None
 
+    def brace_for_incoming_round(self, obs, action):
+        """Face the predicted contact at the edge of frontal armor."""
+        me = obs["self"]
+        if not me.get("grounded") or action.get("jump") or any(action.get("fire", ())):
+            return None
+        stride = self.config.get("match", {}).get("decide_every", 2)
+        hold = stride * self.step
+        for slot in me.get("weapons", ()):
+            if not slot:
+                continue
+            reload_left = slot.get("reload", 0)
+            if slot.get("charge", 0) > 0:
+                return None
+            if slot.get("kind") == "gun" and not slot.get("ammo") and not reload_left:
+                continue
+            if max(reload_left, slot.get("cooldown", 0)) < 2 * hold:
+                return None
+
+        stats = me.get("stats", {})
+        front = math.radians(stats.get("front_arc_deg", 180) / 2)
+        turn = self.step * stats.get("turn_rate", 4)
+        if turn <= 0 or front <= .08 or not self.nav or not self.nav.loaded:
+            return None
+        yaw = me.get("aim", (0., 0.))[0]
+        radius = stats.get("radius", 2.5) - .2
+        height = stats.get("height", 9)
+        threat = []
+        for shot in obs.get("projectiles", ()):
+            if shot.get("kind") != "gun":
+                continue
+            x, y, z = (p - q for p, q in zip(shot["pos"], me["pos"]))
+            vx, vy, vz = (p - q for p, q in zip(shot["vel"], me["vel"]))
+            speed2 = vx * vx + vy * vy
+            if speed2 <= 1:
+                continue
+            eta = -(x * vx + y * vy) / speed2
+            miss = math.hypot(x + vx * eta, y + vy * eta)
+            if not 0 < eta <= hold + self.step or miss >= radius:
+                continue
+            entry = max(0., eta - math.sqrt((radius ** 2 - miss ** 2) / speed2))
+            if entry > hold or not .15 <= z + vz * entry <= height - .15:
+                continue
+            endpoint = tuple(p + v * entry for p, v in zip(shot["pos"], shot["vel"]))
+            if not self.nav.line_clear(shot["pos"], endpoint):
+                continue
+            horizon = min(stride, max(1, math.ceil(entry / self.step))) * turn
+            bearing = math.atan2(-shot["vel"][1], -shot["vel"][0])
+            threat.append((bearing, horizon))
+        if not threat:
+            return None
+        bearing, horizon = threat[0]
+        if any(abs(angle_delta(other, bearing)) > .16 for other, _ in threat[1:]):
+            return None
+        horizon = min(h for _, h in threat)
+        gap = angle_delta(bearing, yaw)
+        natural = yaw + clamp(angle_delta(action["aim"][0], yaw), -horizon, horizon)
+        if not front < abs(gap) <= front - .08 + horizon or abs(angle_delta(bearing, natural)) <= front:
+            return None
+        return yaw + math.copysign(abs(gap) - front + .08, gap)
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
         t = obs.get("t", 0)
