@@ -1,0 +1,9 @@
+# Transfer the approved mortar swap onto the crossing dodge
+
+Exact `79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61` has parents `d8b45cd8cc1cb71077aa77f0c40f861744a0f92c` and `08f3a69150895622e401fc90c1fe60d45a26d0e8`. It transfers exactly the latter's mortar pickup patch onto the crossing-dodge and equipment base. The original gun pitch and firing policy of the dodge remain intact.
+
+Across 156 fresh simulated comparisons, the merge gained 26 placement points over 56 dodge-parent pairs, with three gains and zero losses. It gained 11 over 40 mortar-parent pairs, with six gains and two losses. All 60 verified native campus and four-mech placements tied. The 26 points came from standard 1053208 and 1053212 and joint 1053313. The first differences were confirmed mortar pickups, with extra outgoing through six seconds of 546.32, 396.82 and 405.44 respectively, at equal incoming in each pair. The fastest comparison against mortar lost seven points overall, with a nine-point loss starting at a gear choice. The largest ten-point gain against the mortar parent also started at an inherited gear choice.
+
+Both known dodge replays reproduced all parent actions. The 1040002 and 1051402 mortar controls matched exactly, and winning 1051603 kept its opening mortar output before going down a different gear path. In 116 traced candidate games there was one actual changed dodge action and no overlap with a take/drop command. That dodge did not change the match outcome. All 24 units and 300 timed Docker observations passed.
+
+All three Sol reviewers approved the exact commit based on fresh mortar benefits on the alternate base and preservation of the isolated dodge controls. There is no measured combined effect of the two features on one decision. The adverse gear outcome should remain a regression case.
