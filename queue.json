@@ -18,6 +18,14 @@
       "parents": [
         "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
       ]
+    },
+    {
+      "commit": "e0e641aeea2223f7a8dc6760188d4e2a939cd8eb",
+      "summary": "Forecast visible projectile crossings and sidestep when the mech can improve clearance. Mean placement increased 0.125 across 128 unseen generated and campus pairs. Docker 300/300.",
+      "created_at": "2026-11-21T00:21:41Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ]
     }
   ]
 }
