@@ -1166,6 +1166,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "2633ab86c6628da4597b987fee7cc22544f1ce53",
+      "summary": "Drop an empty recalled cube route after two nearby clear observations with terrain and tree-trunk checks. Preserved natural pickups and gained one directed place in full-removal controls. 80 fresh placement ties and 300 timely checks.",
+      "created_at": "2026-11-21T15:10:52Z",
+      "parents": [
+        "1bb0b916781827814681c830172e2a31e2b0d944"
+      ],
+      "reviews": {
+        "commit": "2633ab86c6628da4597b987fee7cc22544f1ce53",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The real kit trunk obstruction is preserved and the original pickup path stays wire-identical. Full removal and forced rival collection both give useful early alternatives and a directed placement gain at shorter life. Partial is empirically mixed. Fresh80 ties and unit23 pass. Exact sandbox required."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Preserves both original and trunk-covered cubes. Legally forced competitor pickup exercises the useful reroute and six-second trade improvement with shorter life. Partial loss produces a worse early trade at the same cube and placement. Fresh80 placement ties. Exact 300 timing required."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Trunk guard prevents actual terrain-ray false cancellation. Independent phased eight fresh wire tapes and normal known replay match parent. Full removal improves a directed place. Partial retains one cube and place with worse incoming in the early trade. Relevant check is recall only."
+          }
+        }
+      }
     }
   ]
 }
