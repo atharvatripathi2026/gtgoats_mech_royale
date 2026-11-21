@@ -1,0 +1,5 @@
+# Test two successive escape headings through a projectile's passage · withheld
+
+Validation replayed the current exact `45e7d6867c4842f7d557be98997183107390ddc1` in simulated 1068582. With a short forecast, 396 of 5,184 heading pairs appeared to avoid the selected round. One replay deferred the hit to a later rear impact. Extending the search through actual passage left one feasible pair at the first visible observation. In closed loop it avoided the selected 45-damage hit but exposed the bot to a different 67.5-damage rear hit. Final placement and incoming tied, with 54 less outgoing and 0.25s less survival.
+
+Two fresh 12-seed screens of the current bot found 7 and 13 terrain-classified selected threats in native and projectile-path modes, but only one alternate line candidate in the native cohort and none in the path cohort. No gameplay candidate was frozen. Validation withheld the staged route. Test clearance from the other observed gun bearings before promoting a multi-command dodge. [Earlier selection test](09668a6-revise-blocked-line-threat-selection.md)
