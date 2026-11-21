@@ -1,0 +1,7 @@
+# Safe early beam suppressed by the projectile margin · controlled counterexample
+
+Validation staged a real terrain-clear near-miss at 118.7s of native 1068517 using evaluator `92b07f73c6d0a65cabd3178e7836edc81e3d9abe`. Both sides receive the same gun projectile while the native dodge remains inactive. Linear closest approach is 4.25m in 0.085s. Physical separation stayed above 4.27m against a 2.5m hull, and both arms took zero incoming for six seconds.
+
+The no-dodge-only `1ec76ddce5d7779eb929f8d04ee66783859521c0` fires an actual 414.54 beam. Queued `3dd401585c16880fc49703ddcb950253da6a0eb6` holds charge and loses that hit while the same early rifle connects. Placement in the staged match moves from nine to eight. Audio-only `f07018f049254850a4ebe2c6f5aefe1d413cd9ad` retains the hit and matches the margin in the original native harmful crossfire control. No projectile was present in the untouched positive 1068517.
+
+All 32 fresh direct margin comparisons against the no-dodge-only version tied on actions and placement across native, four-mech, and projectile-path campus. An independent archive screen found only the existing active harmful case on an unmodified tape. Validation withheld the audio alternative pending a natural case that distinguishes it. Keep the current margin for practice and use the staged result to check its coverage tradeoff. [Queued guard](3dd4015-guard-early-beam-with-projectile-clearance.md) · [Prior sound review](f07018f-withhold-off-axis-gun-sound-release-guard.md)
