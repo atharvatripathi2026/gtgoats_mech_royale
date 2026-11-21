@@ -71,7 +71,29 @@ class Bot:
         ux, uy = action["move"]
         walk = stats.get("walk_speed", 11.7)
         points = ((x, y), (x + .3 * vx, y + .3 * vy), (x + .45 * walk * ux, y + .45 * walk * uy))
-        return all(z - self.nav.surface(*point) >= 5 for point in points)
+        if not all(z - self.nav.surface(*point) >= 5 for point in points):
+            return False
+        gun = next((w for w in me.get("weapons", ()) if w and w.get("kind") == "gun"), None)
+        if gun is None:
+            return True
+        # Releasing the jet helps only if the selected mech can enter a firing
+        # angle before an extended descent leaves the bot exposed.
+        horizon = 1.25
+        if gun.get("reload", 0) > horizon or gun.get("cooldown", 0) > horizon:
+            return False
+        sx = x + horizon * (vx + walk * ux) * .5
+        sy = y + horizon * (vy + walk * uy) * .5
+        own_z = max(self.nav.surface(sx, sy), z + horizon * me["vel"][2]
+                    - .5 * stats.get("gravity", 22) * horizon ** 2)
+        muzzle = (sx, sy, own_z + stats.get("muzzle_height", 7))
+        target = tuple(p + horizon * v for p, v in zip(opponent["pos"], opponent.get("vel", (0., 0., 0.))))
+        _, height = self.loadout.dimensions(opponent)
+        hull = (*target[:2], target[2] + .49 * height)
+        weapon = self.loadout.weapons.get("gun", {}) | gun.get("stats", {})
+        aim = self.loadout.solution("gun", muzzle, hull, opponent.get("vel", (0., 0., 0.)),
+                                    weapon, stats.get("radius", 2.5) + .5, stats.get("max_pitch", 1.3))
+        return bool(aim and stats.get("min_pitch", -.7) <= aim[1] <= stats.get("max_pitch", 1.3)
+                    and self.nav.line_clear(muzzle, hull))
 
     def act(self, obs):
         if self.trace:
