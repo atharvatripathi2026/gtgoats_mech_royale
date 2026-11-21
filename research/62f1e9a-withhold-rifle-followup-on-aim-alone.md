@@ -1,0 +1,7 @@
+# Rifle follow-up needs native target eligibility
+
+Exact `62f1e9a42eff8d26b529ac1953eb396cb506209b` directly follows `2633ab86c6628da4597b987fee7cc22544f1ce53`. It saves the last rifle round when the ready arc should kill the selected player and the torso should be able to align a follow-up shot on the nearest clear rival by the second command. [Earlier experiment](2026-11-21T1525Z-last-rifle-round-controlled-arc-finish.md)
+
+Exact current gameplay on 1025801 reproduced the arc kill and landed the spared round on a second rival for 45 more first-second damage, with equal incoming. Damage totals at three and six seconds and placement, kills and survival tied. The prior losing and neutral historical controls recovered complete command parity. All 88 fresh placement pairs and their commands tied. The 23 units and all 300 networkless sandbox replies passed.
+
+In an independent fixed-observation stress test, the aim predictor approved a geometrically reachable target, but native selection chose a different rival and did not engage. This isolates a policy mismatch. It carries no measured placement loss. The combat reviewer voted **approve for practice** on the directed hit and clean controls. Survival and validation voted **revise** because the predicted shot can be unavailable to the native policy. Withheld. The next test should require a follow-up that native targeting would actually engage and check that it preserves the archived hit.
