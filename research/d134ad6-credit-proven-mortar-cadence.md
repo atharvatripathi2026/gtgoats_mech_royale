@@ -1,0 +1,7 @@
+# Credit the autoloader after effective repeated mortar hits
+
+Candidate `d134ad62fa72f64afaf434d5bbf0efa913b737c3` descends from `79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61`. A bounded upgrade credit applies only in healthy pre-endgame play, with a mortar held and recent hits on player mechs totaling at least 300 damage and at least the output of all other arms. The qualifying hits must be separated in time. The detector measures recorded damage, which can include splash and overkill.
+
+In directed 1051313 the only difference until the first later aiming change was the autoloader pick over efficient jets. It fired earlier actual shells against the same opponent and gained one placement point. In fresh 1056805 the first mortar shot stayed identical, then the trial fired again 0.5 seconds sooner. That shell dealt 256 direct and 204.63 splash damage to the selected player. The parent's later shot missed. The match gained 623.99 total outgoing at equal incoming and placement, with 1.4 seconds less survival. Five known forward mortar swap controls retained their fixed-input commands.
+
+All 72 fresh simulated placements tied. The owner four-mech panel retained endpoints without full trajectory traces to conserve disk. The 24 unit tests and all 300 timed Docker observations passed. All three Sol reviewers approved the exact commit on replicated actual mortar contact. This choice can displace mobility or healing, and no fresh placement lift was measured.
