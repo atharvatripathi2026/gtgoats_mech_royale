@@ -26,6 +26,7 @@ class Loadout:
         self.last_arc_hit = -100
         self.last_target = None
         self.sight = {}
+        self.recent_arm_hits = []
 
     def mortar_replacement(self, obs, slots, target, engage, climbing):
         if (not engage or not target or target.get("kind") != "mech" or climbing
@@ -135,6 +136,13 @@ class Loadout:
         gun.update(self.weapons.get("gun", {}))
         gun.update(held.get("gun", {}))
         sustain = "gun" in held and not late and health >= .7
+        mortar_hits = [(t, damage) for t, kind, damage in self.recent_arm_hits if kind == "mortar"]
+        sustain_mortar = (
+            "mortar" in held and not late and health >= .7 and len(mortar_hits) >= 2
+            and mortar_hits[-1][0] - mortar_hits[0][0] >= 1.6
+            and sum(damage for _, damage in mortar_hits) >= max(
+                300, sum(damage for _, kind, damage in self.recent_arm_hits if kind != "mortar"))
+        )
 
         def sustained_damage(weapon):
             rounds = max(1, weapon["mag"])
@@ -165,6 +173,9 @@ class Loadout:
                 change = effect.get("mul", 1) - 1 + effect.get("add", 0) / scale
                 value = change * weight
                 total += value
+                if sustain_mortar and path[:2] == ["weapons", "mortar"] and field == "cooldown":
+                    new_cooldown = max(.05, current * effect.get("mul", 1) + effect.get("add", 0))
+                    total += clamp(.95 * (current / new_cooldown - 1) - value, 0, .12)
                 if sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
                     if upgraded_gun is None:
                         upgraded_gun = gun.copy()
@@ -363,7 +374,12 @@ class Loadout:
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
+        self.recent_arm_hits = [hit for hit in self.recent_arm_hits if t - hit[0] <= 12]
         for event in obs.get("events", []):
+            if (event.get("type") == "hit"
+                    and type(event.get("target")) is int
+                    and 0 <= event["target"] < self.config.get("match", {}).get("mechs", 16)):
+                self.recent_arm_hits.append((t, event.get("weapon"), event.get("amount", 0)))
             if (event.get("type") == "hit" and event.get("weapon") == "lightning"
                     and type(event.get("target")) is int
                     and 0 <= event["target"] < self.config.get("match", {}).get("mechs", 16)):
