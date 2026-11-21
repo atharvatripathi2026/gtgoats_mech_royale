@@ -436,6 +436,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "e87064a570567f6b47d37f4606bd3e843bb68f7e",
+      "summary": "Forecast the next native gun decision before granting an extra shot. Restored the archived nine-point loss, preserved a verified target-switch hit and added damage in two fresh matches. All 112 fresh placements tied. Unit tests and all 300 timed Docker ticks passed.",
+      "created_at": "2026-11-21T07:52:30Z",
+      "parents": [
+        "944ff81e89d4cdfb37da7d38c42ad87c2917f4ae"
+      ],
+      "reviews": {
+        "commit": "e87064a570567f6b47d37f4606bd3e843bb68f7e",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The forecast restores every action in the archived nine-point regression and keeps the useful distinct-target shot. Fresh tapes corroborate additional outgoing damage of 63 and 111.6 with equal incoming damage and survival. Fresh placement tied and the movement projection remains approximate."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "All 112 fresh placements tied. Independent 1044903 added 111.6 damage by six seconds and 1044908 added 63 through the first six seconds at equal incoming damage and survival. One projectile hit an intervening mech. The revision preserves true extra target-switch damage in 1043505 and restores the known loss in 1043311."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "It separates the same-target next native gun opportunity from a shot the bot would lose. It repairs the archived nine-point loss and retains a verified extra 63 damage after a target switch. Two fresh damage gains had equal incoming and survival. It vetoed all nine archived same-target next shots and admitted two of five actual alternatives."
+          }
+        }
+      }
     }
   ]
 }
