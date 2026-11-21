@@ -118,6 +118,14 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(target(), rival)
         self.assertEqual(visibility.calls, 5)
 
+        # An existing visible option always wins before the extra check.
+        alternative = dict(rival, id=9, hp=1400, pos=[80, 0, 0])
+        policy.sight[8] = (30.4, None)
+        policy.sight[9] = (30.4, 4.41)
+        self.obs.update(t=30.3, mechs=[rival, alternative])
+        self.assertEqual(target(), alternative)
+        self.assertEqual(visibility.calls, 5)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,

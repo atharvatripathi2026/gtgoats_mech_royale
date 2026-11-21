@@ -213,14 +213,23 @@ class Loadout:
             if self.last_target is not None and ent.get("id") == self.last_target:
                 score += 4
             priority.append((score, ent, fight))
+        blocked_top = None
         for rank, (_, ent, fight) in enumerate(sorted(priority, key=lambda row: -row[0])[:4]):
-            recheck = (rank == 0 and fight and health > .56 and ent.get("kind") == "mech"
-                       and ent.get("hp", math.inf) < me.get("max_hp", 1400) * .23
-                       and math.dist(origin[:2], ent["pos"][:2]) < 185)
-            h = self.sight_height(origin, ent, t, recheck_hidden=recheck)
+            if (rank == 0 and fight and health > .56 and ent.get("kind") == "mech"
+                    and ent.get("hp", math.inf) < me.get("max_hp", 1400) * .23
+                    and math.dist(origin[:2], ent["pos"][:2]) < 185):
+                cached = self.sight.get(ent.get("id"))
+                if cached and t < cached[0] and cached[1] is None:
+                    blocked_top = ent
+            h = self.sight_height(origin, ent, t)
             if h is not None:
                 self.last_target = ent.get("id")
                 return ent, h, fight
+        if blocked_top is not None:
+            h = self.sight_height(origin, blocked_top, t, recheck_hidden=True)
+            if h is not None:
+                self.last_target = blocked_top.get("id")
+                return blocked_top, h, True
         self.last_target = None
         return None, 0, False
 
