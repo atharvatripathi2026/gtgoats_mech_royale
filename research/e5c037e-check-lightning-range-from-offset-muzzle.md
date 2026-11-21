@@ -1,0 +1,5 @@
+# Check lightning reach from the physical muzzle origin
+
+Exact `e5c037e6841c6997507df1f774fe95b3609b419f` adds a lightning trigger to queued `02e756e` when the projected offset muzzle places the target safely inside the existing range and cone. It retains native movement and aim and requires the energy reserve. Directed 1060312 and 1060314 add actual 97.2 and 60 hits. Fresh joint 1061188 adds a real 84 hit and gains one placement point at equal early incoming.
+
+Among 104 fresh simulated pairs, the owner recorded a five-point loss in 1060940. The first altered trigger spent three energy and missed, with identical first-six-second player trades. Instrumentation confirmed the shot resolved before the opponent moved. The projected line was clear and the actual line to the present target was blocked. The linked comparator's net four-point loss included inherited gun differences. Units and timed Docker passed. All three roles voted **revise**. Withheld. Require actual observed target visibility and the official clear barrel-offset segment.
