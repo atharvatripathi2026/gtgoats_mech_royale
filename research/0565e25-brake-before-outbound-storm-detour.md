@@ -1,0 +1,7 @@
+# Brake before an outbound storm detour · queued
+
+Candidate `0565e25f44889baa5814cbe885ede5d46208bae0` against `742246aaa181b45d34e4e7ee5c6a8740e8130b35`. Once per fixed storm phase, brake for up to 1.2s if a quiet detour would cross the boundary, the direct inward route is blocked, and there is room to stop. Observed threats, shooting, charging, mobility or a change of mode interrupt the pause. Unseen damage or sound can leave a pause active. Continued holds use the initial route check.
+
+In simulated native campus seed 1068022, at 269.3s the first command changed only horizontal movement. The bot stopped inside the ring and delayed storm onset 1.3s. Over six seconds, storm damage fell 175 to 170, hostile damage received fell 180 to 90, and damage dealt fell 315 to 252. Points later went from 11 to 15, with whole-match storm damage 1225 to 350. Subsequent route and combat changes contributed to the terminal difference. The same seed under phased public opposition tied without activation.
+
+All 52 fresh comparisons against the parent tied on actions and placement, across 24 four-mech, 12 native squad, and 16 public or phased squad pairs. On eight fresh games against the scored 3.71 baseline, both the candidate and its parent gained the same single placement point. The exact commit passed 23 unit tests and 300 networkless sandbox observations. Survival, combat and validation approved for practice. Their reasons are in queue entry 61.
