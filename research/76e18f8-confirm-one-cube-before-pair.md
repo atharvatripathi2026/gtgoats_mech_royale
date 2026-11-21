@@ -1,0 +1,9 @@
+# Confirm a single pickup before a separate pair
+
+Exact `76e18f8913f47d0d6088394a5482078f09fd34de` directly follows `2208a85cd117d37394ada52f681ce1a4b710cab1`. It handles a remembered three-cube pack when a rival collects one cube and a different rival later collects the remaining two. The first pickup must show an immediate, unique boundary crossing and must be confirmed on the next observation. The second pickup accounts for the remaining positions and has its own confirmation. [Parent review](2208a85-confirm-simultaneous-pack-pickups.md)
+
+The controlled generated pursuit used moving rivals and native physical collection. One collected the distinct sibling at simulation time 20.15, and the other collected the pair at 20.25. In both canonical and alternate actor orders the revision held position rather than returning to the empty route. First-six-second outgoing increased by 248.4 and incoming fell by 230.9. Life rose from 28.4 to 31.7 seconds at tied placement. Over the full match incoming increased by 47.25.
+
+The earlier two-then-one and simultaneous behaviors matched parent commands. An isolated first pickup, missing confirmation, delayed unrelated gain, and an independent unrelated pickup followed by a genuine pair while the actual third cube survived all preserved the parent commands. The footprints and cargo establish bounded evidence about these visible collectors. Hidden pickup attribution remains uncertain.
+
+All 80 fresh simulated pairs matched commands and placements, including eight against the score-linked baseline. All 23 units and 300 networkless replies passed. All three reviewers approved the exact commit. It was appended as practice ledger entry 59. [Gameplay commit](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/76e18f8913f47d0d6088394a5482078f09fd34de)
