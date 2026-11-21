@@ -1494,6 +1494,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "10ac8ca8f303348c04aa1c91701774df488892b2",
+      "summary": "Keep an early laser charge during a brief occlusion in a stationary hold. A native replay recovered a confirmed 441-damage hit. All 32 fresh parent comparisons tied on actions and placement. Passed 23 unit tests and 300 sandbox observations.",
+      "created_at": "2026-11-21T22:23:29Z",
+      "parents": [
+        "b3d67472a42cae1fd989ca452c8296b2770d8ad1"
+      ],
+      "reviews": {
+        "commit": "10ac8ca8f303348c04aa1c91701774df488892b2",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The directed stationary charge hold restores a confirmed 441-damage beam at zero incoming over six seconds. Legs remain unchanged, both win, and the active-loot control retains the original commands. Fresh actions tie and the exact 300-tick sandbox passed. Later hold steps do not recheck sight."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Exact native replay reproduces the 441-damage hit at equal incoming in the first six seconds, and seven individual guard controls reject inappropriate holds. All 32 fresh comparisons against the parent tie on actions and placement. The alternate directed evaluator is inert. The exact unit suite and sandbox passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The native directed replay has a confirmed 441-damage hit and equal incoming through six seconds. Fresh public and four-mech comparisons tie, and my independent projectile-path replay did not activate the change. The short continuation and nearby-threat veto bound the intervention. Motion is command-based, and continued holds do not resample visibility."
+          }
+        }
+      }
     }
   ]
 }
