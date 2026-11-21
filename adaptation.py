@@ -333,6 +333,17 @@ class AdaptivePolicy:
                     self.reason = "unsafe_footing"
                     return plan
                 last_z = z
+            if plan["mode"] == "hold" and length < 2.5 and "gun" in (enemy.get("weapons") or ()):
+                origin = (*p[:2], p[2] + 7)
+                height = stats.get("height", 9)
+
+                def covered(point, floor):
+                    return all(not self.nav.line_clear(origin, (*point, floor + height * ratio))
+                               for ratio in (.43, .73))
+
+                if covered(pos[:2], pos[2]) and not covered(end, self.nav.ground(*end)):
+                    self.reason = "hold_protected_ground"
+                    return plan
         if probe:
             self.probed.add(context)
             self.arm, self.choose_at = arm, t + .6
