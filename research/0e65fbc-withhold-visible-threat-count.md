@@ -1,0 +1,7 @@
+# Test overlapping visible pressure as a rifle boost gate
+
+Exact `0e65fbc36099768e84d7056013fcc4a19c771678` against `6a9e8bedb98563aa6b2fbcf1bb136a053c355777` requires at least two nearby observed mechs to have cached clear LOS and an existing pressure score above .26 before the optional carry. This counts likely exposure and can include two mechs along the same bearing. It does not establish two active shooters.
+
+The three earlier directed benefits kept every wire. Both newer singleton divergences returned to `6112dd0` wire actions in original and phased models. Pursuit1065691 recovered two cubes and one place, while campus1065736 lost one place despite better early trades and 81.05 seconds more life.
+
+Across 112 fresh simulated pairs, 111 tied and one lost three points. Public1065860 removed one boost at t45.9 while keeping the native rifle trigger against its lone visible target 78.25 m away. First-one and six-second exchanges tied, then life fell 72.95 seconds, cubes fell 18 to 14, kills fell 9 to 7 and placement points fell 15 to 12. All 23 units and 300 timed networkless observations passed. Survival and validation voted revise and combat voted reject. The number of visible threats cannot distinguish the longer-run singleton outcomes. Explore resource acquisition directly while preserving the carry in that class. [Parent review](6a9e8be-combine-reserve-with-longer-shot-boost.md)
