@@ -461,6 +461,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "d8b45cd8cc1cb71077aa77f0c40f861744a0f92c",
+      "summary": "Choose a safer grounded dodge for the current two physics ticks when gun paths cross. Avoided an actual hit in two replays including a fresh match. All 124 fresh placements tied. Unit tests and all 300 timed Docker ticks passed.",
+      "created_at": "2026-11-21T07:54:48Z",
+      "parents": [
+        "8b9f76db264c8aa33e6c70b8ef67c741cb56f60d"
+      ],
+      "reviews": {
+        "commit": "d8b45cd8cc1cb71077aa77f0c40f861744a0f92c",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Fresh 1044006 changes only one held movement command and removes the actual 62.1 hit. The bot dealt 315 more damage and lived 0.75 seconds longer with tied final incoming damage and placement. Directed 970402 independently verifies an avoided hit. No fresh placement improvement was measured."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact directed replay avoids 41.4 incoming damage inside the two held ticks and then returns to the normal controller. Unit and Docker checks passed, and the fresh placement comparisons tie. The mechanism is a plausible one-command dodge with limited observed frequency."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact change avoids a verified hit in the known replay and in independent fresh 1044006. The fresh move removes immediate 62.1 damage, then produces 315 extra damage and 0.75 seconds of survival at equal final incoming damage and placement. Approximate geometry and rarity limit the conclusion."
+          }
+        }
+      }
     }
   ]
 }
