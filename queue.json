@@ -1040,6 +1040,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "7ab63671685c8c6edbb9e577e679ccfe71e12e99",
+      "summary": "Fire idle lightning on the second held physics step when one alternate conductor remains clear. A directed replay added a real 92.4 damage pulse while retaining rifle hits. All 64 fresh pairs tied placement. Three exact approvals and 300 timely sandbox replies.",
+      "created_at": "2026-11-21T13:56:13Z",
+      "parents": [
+        "45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555"
+      ],
+      "reviews": {
+        "commit": "7ab63671685c8c6edbb9e577e679ccfe71e12e99",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Verified the second-step cooldown boundary and actual extra 92.4 hit on #3 while retaining the three #12 rifle hits at equal incoming and placement. Another directed case advanced the same pulse. All 64 fresh placements tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "All 64 fresh placements tied. True .10 cooldown in 1064348 yields one extra 92.4 arc and preserves all three native rifle hits and incoming, life and place. 1063839 advances the same hit and faster-house 1064271 shows a mixed trade."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The actor-order geometry keeps the added pulse comfortably in range and cone. It preserves aim and adds 92.4 over six seconds in one directed replay with unchanged immediate incoming. All 64 fresh placements tied and the existing reserve remains."
+          }
+        }
+      }
     }
   ]
 }
