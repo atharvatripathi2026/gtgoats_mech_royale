@@ -416,21 +416,29 @@ class Loadout:
             return None
         index, weapon = arc
         ws = self.weapons.get("lightning", {}) | weapon.get("stats", {})
-        if weapon.get("cooldown", 0) > self.step or me.get("energy", 0) < ws.get("energy", 3) + 30:
+        cooldown = weapon.get("cooldown", 0)
+        if cooldown > 2 * self.step + 1e-8 or me.get("energy", 0) < ws.get("energy", 3) + 30:
             return None
+        second_step = cooldown > self.step
         current = me.get("aim", aim)
+        speed = me.get("vel", (0., 0., 0.))
         turn = self.step * stats.get("turn_rate", 4)
         tilt = self.step * stats.get("pitch_rate", 3)
-        yaw = current[0] + clamp(angle_delta(aim[0], current[0]), -turn, turn)
-        pitch = current[1] + clamp(aim[1] - current[1], -tilt, tilt)
-        direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
-        speed = me.get("vel", (0., 0., 0.))
-        projected = tuple(x + self.step * v for x, v in zip(origin, speed))
-        muzzles = [tuple(x + offset * v for x, v in zip(point, direction))
-                   for point in (origin, projected)]
-        if any(not self.nav.line_clear(point, muzzle)
-               for point, muzzle in zip((origin, projected), muzzles)):
-            return None
+        sample_steps = (0, 1, 2) if second_step else (0, 1)
+        samples = []
+        for step in sample_steps:
+            # Keep the exact native first-ready projection. If the arc can
+            # only fire on the second step, require a clear conductor at
+            # every sampled pose until that later fire.
+            slew_steps = max(1, step)
+            yaw = current[0] + clamp(angle_delta(aim[0], current[0]), -slew_steps * turn, slew_steps * turn)
+            pitch = current[1] + clamp(aim[1] - current[1], -slew_steps * tilt, slew_steps * tilt)
+            direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+            base = tuple(x + step * self.step * v for x, v in zip(origin, speed))
+            muzzle = tuple(x + offset * v for x, v in zip(base, direction))
+            if not self.nav.line_clear(base, muzzle):
+                return None
+            samples.append((step, yaw, base, muzzle))
         reach = ws.get("range", 45)
         cone = math.radians(ws.get("cone_deg", 30))
         hits = []
@@ -440,20 +448,24 @@ class Loadout:
                 continue
             _, height = self.dimensions(ent)
             body = (*pos[:2], pos[2] + .5 * height)
-            future = tuple(x + self.step * v for x, v in zip(body, ent.get("vel", (0., 0., 0.))))
+            velocity = ent.get("vel", (0., 0., 0.))
             bearing = math.atan2(pos[1] - origin[1], pos[0] - origin[0])
-            forecast_bearing = math.atan2(future[1] - projected[1], future[0] - projected[0])
-            errors = (abs(angle_delta(bearing, yaw)), abs(angle_delta(forecast_bearing, yaw)))
-            distances = (math.dist(muzzles[0], body), math.dist(muzzles[1], future))
+            projections = []
+            for step, yaw, base, muzzle in samples:
+                point = tuple(x + step * self.step * v for x, v in zip(body, velocity))
+                aim_error = abs(angle_delta(math.atan2(point[1] - base[1], point[0] - base[0]), yaw))
+                projections.append((math.dist(muzzle, point), aim_error, muzzle, point))
+            distances = tuple(sample[0] for sample in projections)
+            errors = tuple(sample[1] for sample in projections)
             if min(errors) > cone or min(distances) > reach:
                 continue
-            if not (self.nav.line_clear(muzzles[0], body) or self.nav.line_clear(muzzles[1], future)):
-                continue
-            hits.append((min(distances), max(distances), max(errors), bearing, ent, body, future))
+            clear = [self.nav.line_clear(muzzle, point) for _, _, muzzle, point in projections]
+            if any(clear):
+                hits.append((min(distances), max(distances), max(errors), bearing, ent, all(clear)))
         if not hits:
             return None
         nearest = min(hits, key=lambda hit: hit[0])
-        near, far, error, bearing, threat, body, future = nearest
+        near, far, error, bearing, threat, clear = nearest
         if (threat.get("kind") != "mech" or threat.get("id") == selected.get("id")
                 or far > reach - 2 or error > .8 * cone
                 or any(hit is not nearest and hit[0] <= far + 1 for hit in hits)):
@@ -463,9 +475,7 @@ class Loadout:
                 ("gun" not in threat.get("weapons", ()) or not facing
                  or abs(angle_delta(bearing + math.pi, facing[0])) > .43)):
             return None
-        if not (self.nav.line_clear(muzzles[0], body) and self.nav.line_clear(muzzles[1], future)):
-            return None
-        return index
+        return index if clear else None
 
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
