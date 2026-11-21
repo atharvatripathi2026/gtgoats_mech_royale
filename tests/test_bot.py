@@ -85,6 +85,25 @@ class DecisionTests(unittest.TestCase):
                             "shrink_start": 65, "shrink_end": 100, "dps": 20}
         self.assertEqual(Survival(self.hello).decide(self.obs)["target_id"], 8000)
 
+    def test_sustained_gun_upgrade_credit_keeps_defense_competitive(self):
+        self.me["weapons"] = [{"kind": "gun", "stats": self.hello["config"]["weapons"]["gun"]}, None]
+        self.me["hp"] = self.me["max_hp"]
+        self.obs["zone"]["next_radius"] = 140
+        policy = Loadout(self.hello)
+
+        def pick(*ids):
+            return ids[policy.upgrade(self.obs, [{"id": ident} for ident in ids])]
+
+        self.assertEqual(pick("armor", "gun_mag"), "gun_mag")
+        self.assertEqual(pick("gun_mag", "plating"), "plating")
+        self.assertEqual(pick("gun_damage", "armor"), "armor")
+        self.assertEqual(pick("gun_rate", "armor"), "armor")
+        self.me["hp"] = .65 * self.me["max_hp"]
+        self.assertEqual(pick("gun_mag", "armor"), "armor")
+        self.me["hp"] = self.me["max_hp"]
+        self.obs["zone"]["next_radius"] = 90
+        self.assertEqual(pick("gun_mag", "armor"), "armor")
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,
