@@ -838,6 +838,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "814569c162812285a99ee658638d5919f4e9ba72",
+      "summary": "Use a grounded detour only in quiet turns outside the native future-circle buffer. Restores the adverse replay, repeats a 176 storm-damage saving and gains one place across 76 fresh pairs against 1cba. All 22 units and 300 timed Docker replies passed.",
+      "created_at": "2026-11-21T11:24:43Z",
+      "parents": [
+        "4ef7e7f02e3f8cfb63703830d5956902231a63eb"
+      ],
+      "reviews": {
+        "commit": "814569c162812285a99ee658638d5919f4e9ba72",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Restores the adverse route and required jet commands. A directed replay saves 176 storm damage at equal total incoming, and one fresh game gains a place after real combat contact. The fresh gain has no storm difference. Exact runtime rerun is required and passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Computing native combat before the quiet detour repairs the earlier armed-turn override. Directed storm saving and adverse restoration recur under both opponent models. The fresh gain includes a real earlier hit at equal first-second inbound. Exact runtime rerun passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The same-command tactical bypass is gone. The former adverse route matches its baseline and the real storm saving repeats under faster opponent reacquisition. One fresh trade had more outgoing and received damage before gaining a place and reducing final incoming. Exact runtime verification passed."
+          }
+        }
+      }
     }
   ]
 }
