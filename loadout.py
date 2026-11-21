@@ -780,9 +780,17 @@ class Loadout:
                 reach = weapon.get("range", 45)
                 if not reach - 1 < dist <= reach + 5:
                     continue
-                reserve = max(12, self.lightning_reserve(obs, ent, evade, climbing))
-                if energy < weapon.get("energy", 3) + reserve:
-                    continue
+                cost = weapon.get("energy", 3)
+                if energy < cost + 30:
+                    own_velocity = me.get("vel", (0., 0., 0.))
+                    foe_velocity = ent.get("vel", (0., 0., 0.))
+                    separation = sum((their_pos - my_pos) * (their_speed - my_speed)
+                                     for their_pos, my_pos, their_speed, my_speed
+                                     in zip(ent["pos"], pos, foe_velocity, own_velocity))
+                    # If they are closing, wait for the ordinary close-range pulse.
+                    if separation <= 0 or energy < cost + max(
+                            12, self.lightning_reserve(obs, ent, evade, climbing)):
+                        continue
                 dt = self.step if w.get("cooldown", 0) <= self.step else 2 * self.step
                 if (w.get("cooldown", 0) > dt or dt > self.step and
                         self.config.get("match", {}).get("decide_every", 2) < 2):
