@@ -43,7 +43,7 @@ The house squad cooperates in practice. The top 16 finalists play one another on
 | [`4cb4a9e`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/4cb4a9ea753e8df3744a9ba8d44053068e64e535) | 3.60 | 48 |
 | [`9e59bbf`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/9e59bbfd46f562dbb88d0a4377dc333ce2f8c273) | 3.23 | 48 |
 | [`ce73f3e`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/ce73f3e213a1c7bcc1fb65a90b4edf6e76133c13) | 3.65 | 48 |
-
+| [`03a8f93`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e) | 3.71 | 48 |
 
 ## Decision records
 
