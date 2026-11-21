@@ -28,6 +28,8 @@ class Loadout:
         self.arm_evidence_stage = None
         self.arm_damage = {"gun": 0., "laser": 0.}
         self.last_target = None
+        self.last_gun_hit = None
+        self.used_gun_hit = None
         self.sight = {}
 
     def pickup(self, obs, action):
@@ -177,6 +179,71 @@ class Loadout:
         self.sight[key] = (t + .22, h)
         return h
 
+    def keep_prepared_gun_target(self, obs, origin, winner, score, priority):
+        hit = self.last_gun_hit
+        previous = getattr(self, "last_decision", {})
+        t = obs.get("t", 0)
+        if (hit is None or hit == self.used_gun_hit or hit[1] != self.last_target
+                or previous.get("intent") != "engage" or winner.get("id") == hit[1]
+                or winner.get("kind") != "mech" or winner.get("charging")
+                or (winner.get("id") == self.last_attacker and t - self.last_damage < 3.2)):
+            return None
+        me = obs["self"]
+        slots = me.get("weapons", ())
+        gun = next((w for w in slots if w and w.get("kind") == "gun"), None)
+        if not gun or not gun.get("ammo") or gun.get("reload", 0) or gun.get("cooldown", 0) > 2 * self.step:
+            return None
+        weapon = self.weapons.get("gun", {}) | gun.get("stats", {})
+        if t - hit[0] > weapon.get("cooldown", .24) + 2 * self.step:
+            return None
+        old = next(((e, s) for s, e, fighting in priority if fighting and e.get("id") == hit[1]), None)
+        if old is None or score - old[1] > 4:
+            return None
+        target = old[0]
+        if target.get("kind") != "mech":
+            return None
+        for other in slots:
+            if not other or other is gun:
+                continue
+            if other.get("charge", 0) > 0:
+                return None
+            if other.get("cooldown", 0) <= 2 * self.step:
+                if other.get("kind") != "lightning":
+                    return None
+                arc = self.weapons.get("lightning", {}) | other.get("stats", {})
+                if any(math.dist(origin, e["pos"]) <= arc.get("range", 45) + 2
+                       for e in (target, winner)):
+                    return None
+        aim = me.get("aim", (0., 0.))
+        stats = me.get("stats", {})
+        turn = self.step * stats.get("turn_rate", 4)
+        wx, wy = (winner["pos"][i] - origin[i] for i in (0, 1))
+        new_bearing = math.atan2(wy, wx)
+        opposing_aim = winner.get("aim")
+        if opposing_aim and abs(angle_delta(new_bearing + math.pi, opposing_aim[0])) < .43:
+            return None
+        if abs(angle_delta(new_bearing, aim[0])) <= 2 * turn + .07:
+            return None
+        h = self.sight_height(origin, target, t)
+        if h is None:
+            return None
+        body = (*target["pos"][:2], target["pos"][2] + h)
+        offset = stats.get("radius", 2.5) + .5
+        solution = self.solution("gun", origin, body, target.get("vel", (0, 0, 0)), weapon,
+                                 offset, stats.get("max_pitch", 1.3))
+        if solution is None or not stats.get("min_pitch", -.7) <= solution[1] <= stats.get("max_pitch", 1.3):
+            return None
+        yaw, pitch = solution
+        radius, height = self.dimensions(target)
+        dist = max(.1, math.dist(origin, body))
+        if (abs(angle_delta(yaw, aim[0])) > turn + math.atan2(.8 * radius, dist)
+                or abs(pitch - aim[1]) > self.step * stats.get("pitch_rate", 3) + math.atan2(.35 * height, dist)):
+            return None
+        if self.nav and not self.nav.line_clear(origin, body):
+            return None
+        self.used_gun_hit = hit
+        return target, h, True
+
     def target(self, obs, origin, evade, target_id):
         me = obs["self"]
         x, y, _ = me["pos"]
@@ -227,9 +294,12 @@ class Loadout:
             if self.last_target is not None and ent.get("id") == self.last_target:
                 score += 4
             priority.append((score, ent, fight))
-        for _, ent, fight in sorted(priority, key=lambda row: -row[0])[:4]:
+        for score, ent, fight in sorted(priority, key=lambda row: -row[0])[:4]:
             h = self.sight_height(origin, ent, t)
             if h is not None:
+                alternate = self.keep_prepared_gun_target(obs, origin, ent, score, priority) if fight else None
+                if alternate is not None:
+                    return alternate
                 self.last_target = ent.get("id")
                 return ent, h, fight
         self.last_target = None
@@ -345,6 +415,9 @@ class Loadout:
             # Stage and equipment changes invalidate the evidence from the
             # previous interval. NPC and crate work does not count here.
             arm, target = event.get("weapon"), event.get("target")
+            if (event.get("type") == "hit" and arm == "gun" and event.get("amount", 0) > 0
+                    and type(target) is int and 0 <= target < self.config.get("match", {}).get("mechs", 16)):
+                self.last_gun_hit = (t, target)
             if (measure and event.get("type") == "hit" and arm in self.arm_damage
                     and type(target) is int and 0 <= target < self.config.get("match", {}).get("mechs", 16)):
                 self.arm_damage[arm] += event.get("amount", 0.)
