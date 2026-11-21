@@ -286,6 +286,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "fe63d42d2743848f7933309c833577e5b204ba35",
+      "summary": "Chooses a faster legal ground route when already outside a high-damage storm, keeping the first aim and boost. One +7 placement gain, no losses in 72 fresh campus pairs, 80 four-mech ties, 23 units and 300 starter ticks passed.",
+      "created_at": "2026-11-21T06:11:12Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ],
+      "reviews": {
+        "commit": "fe63d42d2743848f7933309c833577e5b204ba35",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The fresh 1027423 override changes only movement and reaches safety 4.6 seconds sooner, cutting three-second storm damage from 300 to 90 and winning at seven more placement points. Independent 1028202 repeats faster re-entry and 160 less storm damage. All remaining fresh placements tied. An archived repeat exit and less short-window outgoing damage are tradeoffs."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The first movement change keeps aim and boost identical. In the seven-point fresh gain 1027423, the next three seconds have 300 to 90 storm damage and unchanged zero outgoing or hostile incoming. Later trades differ with position. Independent campus and four-mech placements tie and the exact 300-tick sandbox passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The owner panel improves seven placement points and the independent and four-mech panels tie. Fresh 1027423 shows earlier entry and lower damage with only an initial movement redirect, and joint 1028202 independently re-enters sooner. Delayed damage tradeoffs remain, but the evidence supports a narrow practice probe."
+          }
+        }
+      }
     }
   ]
 }
