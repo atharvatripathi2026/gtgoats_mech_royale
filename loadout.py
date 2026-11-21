@@ -543,6 +543,42 @@ class Loadout:
                 return False
         return True
 
+    def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
+        """Forecast a shorter lead for a ground target running into a broad wall."""
+        if not self.nav or not self.nav.loaded or target.get("kind") != "mech":
+            return None
+        x, y, z = target["pos"]
+        vx, vy, vz = target.get("vel", (0., 0., 0.))
+        speed = math.hypot(vx, vy)
+        distance = math.dist(origin[:2], body[:2])
+        if (not 35 <= distance <= 120 or speed < 3 or abs(vz) > 2
+                or abs(self.nav.ground(x, y) - z) > 1.2):
+            return None
+        shell_speed = max(1., weapon.get("speed", 72) * math.cos(aim[1]))
+        arrival = distance / shell_speed
+        for _ in range(4):
+            predicted = (x + vx * arrival, y + vy * arrival)
+            arrival = max(0., math.dist(origin[:2], predicted) - offset) / shell_speed
+        horizon = min(.9, arrival)
+        radius, height = self.dimensions(target)
+        nx, ny = -vy / speed, vx / speed
+        ray_height = z + .55 * height
+
+        def clear(t, side=0.):
+            start = (x + nx * side, y + ny * side, ray_height)
+            end = (start[0] + vx * t, start[1] + vy * t, ray_height)
+            return self.nav.line_clear(start, end)
+
+        if any(clear(horizon, side) for side in (0., .55 * radius, -.55 * radius)):
+            return None
+        before_wall = 0.
+        while before_wall + self.step < horizon and clear(before_wall + self.step):
+            before_wall += self.step
+        if before_wall < .15 or (arrival - before_wall) * speed < 3:
+            return None
+        stop = max(0., before_wall - radius / speed)
+        return (x + vx * stop, y + vy * stop, body[2])
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -612,6 +648,13 @@ class Loadout:
                 result = self.solution(kind, origin, body, vel, ws, offset, stats.get("max_pitch", 1.3))
                 if result is None:
                     continue
+                if kind == "mortar":
+                    stopped_body = self.mortar_wall_stop(ent, origin, body, result, ws, offset)
+                    if stopped_body is not None:
+                        adjusted = self.solution(kind, origin, stopped_body, (0., 0., 0.), ws, offset,
+                                                 stats.get("max_pitch", 1.3))
+                        if adjusted is not None and adjusted[1] >= stats.get("min_pitch", -.7):
+                            result = adjusted
                 yaw, pitch = result
                 low_pitch = stats.get("min_pitch", -.7)
                 if kind != "lightning" and not low_pitch <= pitch <= stats.get("max_pitch", 1.3):
