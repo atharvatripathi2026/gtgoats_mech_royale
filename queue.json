@@ -712,6 +712,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "f0904041aa541a940db2e544536a33877ede8557",
+      "summary": "Approach an already engaged crate only while the sidearm slot is empty. Restored the adverse replay to stock and reproduced a 0.1-second earlier cube and laser in fresh paired play. All 22 units and 300 timed networkless Docker ticks passed.",
+      "created_at": "2026-11-21T10:03:18Z",
+      "parents": [
+        "03a95ca2a82bb55579b6c41609b79a319b4d7169"
+      ],
+      "reviews": {
+        "commit": "f0904041aa541a940db2e544536a33877ede8557",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The empty-slot guard restores all 235 native commands in the adverse replay and retains all 3243 commands in the earlier successful replay. In a fresh paired match the same cube and laser arrived 0.1 seconds earlier with equal early trades. All 48 effective-parent placements tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Exact controls retain the earlier laser and three-point directed gain, while the broad variant's one-point loss returns to stock. The verified panel's placement changes start with inherited boost. The narrow pickup effect and fresh direct-parent ties support practice."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The directed timing benefit survived and earlier acquisition reproduced in fresh 1060121 at a tied place. The harmful broad replay matches stock exactly. The trade includes forgoing one favorable fully armed replay and 11.15 seconds less life in the fresh timing gain."
+          }
+        }
+      }
     }
   ]
 }
