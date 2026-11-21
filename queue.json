@@ -361,6 +361,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "1d146590e77aad09e012b715e22d20770946287a",
+      "summary": "Fires an available gun along a legal downward angle when it reaches the upper hull of the selected mech. 18 of 26 fresh activated games gained first-second outgoing; 119 fresh placement ties and one -1. 22 units and 300 starter responses passed.",
+      "created_at": "2026-11-21T07:12:37Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ],
+      "reviews": {
+        "commit": "1d146590e77aad09e012b715e22d20770946287a",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Same-target legal edge shots landed repeatedly. Across the 21 activated independent cases, 16 improved first-second outgoing and none lowered it. The sole fresh placement regression still gained 189 outgoing over three seconds at equal incoming. There is no measured fresh placement uplift."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The first-hit mechanism is verified by repeated direct same-target contacts, including +115.2 damage and +11 places in directed 1020301. The 120 fresh placements saw one late −1 and the rest tied. Across owner and independent campus, 18 of 26 activations improved first-second outgoing, with one transient loss. Exact 22 units and all 300 rerun sandbox responses passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Prospective standard, joint and faster matches realized additional gun hits under the conservative no-other-weapon guard. The sole fresh placement loss still adds 126 damage in the first second and takes 194.4 less damage by six seconds. The local results verify extra reachable shots and do not establish an official score gain."
+          }
+        }
+      }
     }
   ]
 }
