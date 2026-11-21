@@ -1,0 +1,9 @@
+# Combine the complete gun forecast and crossfire dodge lineages
+
+Candidate `f5e4dc0096160f9f5b64c933ce3354b283dee205` merges `d8b45cd8cc1cb71077aa77f0c40f861744a0f92c` and `e87064a570567f6b47d37f4606bd3e843bb68f7e`. The gun decision runs first. Its extra trigger can suppress the dodge on a shared observation, since the dodge requires no weapon fire.
+
+Across 116 fresh simulated pairs, the merge lost three points over 12 standard campus pairs against the dodge and tied in aggregate over 16 joint pairs with mixed signs. It tied 12 standard pairs against the gun parent and gained one point over 16 faster pairs. Against verified `03a8f93`, 12 native campus pairs lost six points and all 48 four-mech placements tied. Instrumentation matched all measured outcomes from 56 exact plays drawn from those campus sets. It found one forecast trigger and zero same-frame contention.
+
+In standard 1046904 the inherited steep-angle gun branch added 46.8 early damage and both exchanges matched through six seconds. The merge finished six points lower than the dodge. Native 1047210 also diverged first on inherited downward fire and lost seven points. In directed 970402 and 1044006 an earlier inherited trigger changed the trajectories well before the recorded dodge, so the merge lost both opportunities. The full trajectory in 1043505 did retain the gun forecast parent's actions. All 24 unit tests and all 300 timed Docker observations passed.
+
+Survival voted reject because the raw merge lost both intended physical dodges on their directed tapes and had fresh placement losses. Combat and validation voted revise because the inherited pitch policy overwhelmed the scoped changes. Withheld. The narrower revision preserves the native pitch filter and transfers only the two intended policies on the shared equipment base. [Narrower review](9873a47-cross-dodge-with-native-forecast.md)
