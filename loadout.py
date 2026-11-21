@@ -543,6 +543,12 @@ class Loadout:
                 return False
         return True
 
+    def lightning_reserve(self, obs, target, evade, climbing):
+        if (target.get("kind") == "mech" and not climbing and self.safe_zone_time(obs)
+                and (target.get("charging") or self.single_opponent(obs, target))):
+            return 0
+        return 30 if evade or target.get("kind") != "mech" else 12
+
     def lightning_muzzle_reaches(self, me, target, origin, aim, weapon, delay):
         """Check the short range band with the barrel's translated origin."""
         if not self.nav or not self.nav.loaded:
@@ -670,10 +676,7 @@ class Loadout:
                 elif kind == "lightning":
                     if dist > ws.get("range", 45) - 1:
                         continue
-                    reserve = 30 if evade or ent.get("kind") != "mech" else 12
-                    if (ent.get("kind") == "mech" and not climbing and self.safe_zone_time(obs)
-                            and (ent.get("charging") or self.single_opponent(obs, ent))):
-                        reserve = 0
+                    reserve = self.lightning_reserve(obs, ent, evade, climbing)
                     if energy < ws.get("energy", 3) + reserve:
                         continue
                 if kind not in ("gun", "laser", "lightning", "mortar"):
@@ -775,7 +778,10 @@ class Loadout:
                     continue
                 weapon = self.weapons.get("lightning", {}) | w.get("stats", {})
                 reach = weapon.get("range", 45)
-                if not reach - 1 < dist <= reach + 5 or energy < weapon.get("energy", 3) + 30:
+                if not reach - 1 < dist <= reach + 5:
+                    continue
+                reserve = max(12, self.lightning_reserve(obs, ent, evade, climbing))
+                if energy < weapon.get("energy", 3) + reserve:
                     continue
                 dt = self.step if w.get("cooldown", 0) <= self.step else 2 * self.step
                 if (w.get("cooldown", 0) > dt or dt > self.step and
