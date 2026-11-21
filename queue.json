@@ -687,6 +687,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "02e756efb79ff95d7be6d82e44e98f51fc1bdba6",
+      "summary": "Keep the native mortar lead when an immediate wall stop is ambiguous. Restored a 351.62-damage directed hit and preserved four controls. Across 136 fresh pairs one placement gained two points and 135 tied. All 22 units and 300 timed Docker observations passed.",
+      "created_at": "2026-11-21T09:50:52Z",
+      "parents": [
+        "c52385e32ead4a9f6b50bf8e3dcc24e070897b94"
+      ],
+      "reviews": {
+        "commit": "02e756efb79ff95d7be6d82e44e98f51fc1bdba6",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The fallback restores the actual 351.62-damage shot when the immediate stop is ambiguous. The positive directed controls retain their actions, 80 direct-parent placements tie, and the transferred wall aim lands prospective damage. The exact checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact correction returned 351.62 same-target damage at equal incoming and placement. All four positive and legality controls kept every command. Fresh evidence shows no placement regression, and the proximity rays remain an estimate of future motion."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The fallback fixes the mixed-face zero-stop miss and retains the useful zero-stop clip. Across 136 fresh comparisons there is one two-point gain and no placement regression. Actual prospective mortar damage came from transporting the nonzero clip, and the new veto is verified by the directed replay."
+          }
+        }
+      }
     }
   ]
 }
