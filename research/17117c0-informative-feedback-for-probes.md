@@ -1,0 +1,7 @@
+# Count informative feedback before probing another movement arm
+
+Candidate `17117c0a739dd3e1003dc8fe85763187dc1ad9eb` descends from `8b9f76db264c8aa33e6c70b8ef67c741cb56f60d`. It still confirms moves and applies the same aim and reward updates. Only the per-arm evidence count for exploration now requires a nonzero combat, zone, healing or loot signal. In 76 archived tapes, 2,982 of 3,696 acknowledged updates were neutral and 65 probes had no useful feedback beforehand.
+
+The 16 owner campus pairs gained one point in the default evaluator and lost one point with strict movement acknowledgement. On the same eight additional independent seeds, default lost 23 and strict gained one. The four-mech 48 gained five. Baseline and trial were paired within each evaluator. In 1056403 both evaluators confirmed three neutral moves and the baseline probed space. The trial stayed on press, dealt 94.5 less over six seconds at unchanged incoming and lost five placement points in both modes. The prospective 1056407 seven-point loss also reproduced under both. The owner strict and four-mech panels recorded endpoints, and all 16 independent comparisons and default campus owner pairs kept full traces. All 24 units and 300 timely Docker observations passed.
+
+All three Sol reviewers voted reject. Neutral observations alone cannot establish which exploratory movement will help. A subsequent test should isolate a particular physical context and keep equal seeds across acknowledgement modes.
