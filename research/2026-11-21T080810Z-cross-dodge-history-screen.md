@@ -1,0 +1,5 @@
+# Screen narrower crossing-path refinements
+
+Four local experiments used partial-ray terrain clipping, a confirmed recent damage bearing, legal alternatives when one projectile remains unavoidable, and prior projectile motion as corroboration. Each reproduced the existing outputs over the same 148 simulated archived games. Counting frames shows where the decision narrows. Of 14,992 line frames, 935 allowed the native ground forecast, 196 predicted a hit and 138 met a crossing or motion-history gate. Three had a legal clear alternative. A wider ±1.4 radian sample still reproduced the original actions.
+
+The existing dodge `d8b45cd` also matched all measured outcomes over 16 fresh campus and 48 four-mech pairs against `8b9f76d`. This provides no new controller for review. The simulation indicates that two-tick achievable displacement is the limiting factor in these cases. The next independent test should start from a confirmed feasible physical dodge and examine the prior observation for a legal earlier preparation step. [Approved dodge evidence](d8b45cd-two-tick-cross-shot-dodge.md)
