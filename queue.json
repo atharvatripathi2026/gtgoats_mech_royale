@@ -737,6 +737,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "a11e87a5dd0c484f7ffd1537f4226b15159f9e34",
+      "summary": "Check offset muzzle reach with clear rays to observed and projected targets. Restores the dry-shot replay and preserves actual arc hits, including a fresh hit reproduced in an exact-parent eleven-point gain. All 22 units and 300 timed Docker observations passed.",
+      "created_at": "2026-11-21T10:29:25Z",
+      "parents": [
+        "9c93fe7eab0c1f9f54d8fb783515c26e048cdf76"
+      ],
+      "reviews": {
+        "commit": "a11e87a5dd0c484f7ffd1537f4226b15159f9e34",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Restores the full blocked-shot adverse tape, retains three actual directed arc outcomes, and adds a real 69.6 hit at equal incoming in the fresh case reproduced against the exact approved family. The fresh one-place loss nevertheless improved the immediate trade."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The observed-target ray removes the empty pulse and keeps prior actual hits. A fresh eleven-point gain reproduced on the effective exact parent begins with a real 69.6 same-target arc. A separate fresh loss had 89.6 more early output and 315 less incoming."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The known empty shot returns to the same actions and all proven contacts survive. In the fresh owner loss the two added arcs were both real and early incoming fell 315. The other effective-parent placements tied, and current range and cone remain model estimates."
+          }
+        }
+      }
     }
   ]
 }
