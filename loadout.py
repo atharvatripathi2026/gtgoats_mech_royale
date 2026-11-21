@@ -293,7 +293,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def gun_can_hit_pitch_edge(self, me, target, origin, yaw, pitch, weapon, offset):
+    def gun_can_hit_pitch_edge(self, me, target, origin, yaw, pitch, weapon, offset, second_step):
         """Check a legal downward ray against the moving hull, not its center."""
         if not self.nav or not self.nav.loaded:
             return False
@@ -301,8 +301,9 @@ class Loadout:
         low = stats.get("min_pitch", -.7)
         high = stats.get("max_pitch", 1.3)
         actual_yaw, actual_pitch = me.get("aim", (yaw, pitch))
-        turn = stats.get("turn_rate", 4) * self.step
-        tilt = stats.get("pitch_rate", 3) * self.step
+        slew_time = self.step * (2 if second_step else 1)
+        turn = stats.get("turn_rate", 4) * slew_time
+        tilt = stats.get("pitch_rate", 3) * slew_time
         next_yaw = actual_yaw + clamp(angle_delta(yaw, actual_yaw), -turn, turn)
         next_pitch = clamp(actual_pitch + clamp(pitch - actual_pitch, -tilt, tilt), low, high)
         if abs(next_pitch - pitch) > .02:
@@ -320,10 +321,20 @@ class Loadout:
         target_velocity = target.get("vel", (0., 0., 0.))
         velocity = me.get("vel", (0., 0., 0.))
         speed = max(1, weapon.get("speed", 252))
-        for launch in (0., self.step):
+        first_launch = self.step if second_step else 0.
+        for launch in (first_launch, first_launch + self.step):
             muzzle = tuple(x + launch * v + offset * component
                            for x, v, component in zip(origin, velocity, ray))
             delay = launch + distance / speed
+            if second_step:
+                # Advance to the intercept along the horizontal projection of the
+                # steep ray. The projectile does not inherit our launch velocity.
+                crossing = sum((pos[i] + launch * target_velocity[i] - muzzle[i]) * ray[i]
+                               for i in (0, 1))
+                closing_speed = speed * horizontal - sum(target_velocity[i] * ray[i] for i in (0, 1))
+                if crossing <= 0 or closing_speed <= 0:
+                    return False
+                delay = launch + crossing / closing_speed
             feet = tuple(x + delay * v for x, v in zip(pos, target_velocity))
             depth = sum((feet[i] - muzzle[i]) * ray[i] for i in (0, 1)) / horizontal
             point = tuple(x + depth * component for x, component in zip(muzzle, ray))
@@ -400,8 +411,10 @@ class Loadout:
                 low_pitch = stats.get("min_pitch", -.7)
                 if kind != "lightning" and not low_pitch <= pitch <= stats.get("max_pitch", 1.3):
                     if (kind == "gun" and pitch < low_pitch and ent.get("kind") == "mech"
-                            and aim[1] < low_pitch and w.get("cooldown", 0) <= self.step):
-                        pitch_edge = (i, yaw, low_pitch, ws)
+                            and aim[1] < low_pitch):
+                        second_step = w.get("cooldown", 0) > self.step
+                        if not second_step or self.config.get("match", {}).get("decide_every", 2) >= 2:
+                            pitch_edge = (i, yaw, low_pitch, ws, second_step)
                     continue
                 if kind == "mortar" and self.nav is not None:
                     # A ledge directly in front of the tube can cause self-splash.
@@ -424,8 +437,8 @@ class Loadout:
                 shots[i] = (score, yaw, pitch, kind, ws, w)
             if (not shots and pitch_edge is not None
                     and not any(w and w.get("charge", 0) > 0 for w in slots)):
-                i, yaw, pitch, weapon = pitch_edge
-                if self.gun_can_hit_pitch_edge(me, ent, muzzle, yaw, pitch, weapon, offset):
+                i, yaw, pitch, weapon, second_step = pitch_edge
+                if self.gun_can_hit_pitch_edge(me, ent, muzzle, yaw, pitch, weapon, offset, second_step):
                     aim = [yaw, pitch]
                     action["fire"] = [i == 0, i == 1]
                     self.last_decision["aim_weapon"] = "gun"
