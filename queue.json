@@ -813,6 +813,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "af1b2ab38184da943b05aa4072a8f6b90fc2d03c",
+      "summary": "Transfer the aimed cover hold to the verified 3.71 gameplay base. Two aligned replays gain four and six places, 88 fresh matched placements tie and away controls keep their routes. All 22 units and 300 timed Docker replies pass.",
+      "created_at": "2026-11-21T11:09:39Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ],
+      "reviews": {
+        "commit": "af1b2ab38184da943b05aa4072a8f6b90fc2d03c",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The targeted transfer to the verified 3.71 commit preserves the aligned cover gain and reduces real incoming damage. Away controls retain the original path. All 88 fresh placements tie and exact checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The two directed aligned holds gain four and six places, with real early damage saved in one. The transfer isolates the cover behavior from weapon changes and all 88 fresh placements tie. The yaw budget estimates immediate threat."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The direct scored-baseline comparison isolates cover. It avoids documented incoming damage in 1054303 and preserves the away route. The six-place gain develops later and 88 fresh placements all tie. Exact Docker and units passed."
+          }
+        }
+      }
     }
   ]
 }
