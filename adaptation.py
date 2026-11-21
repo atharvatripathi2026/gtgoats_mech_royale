@@ -45,6 +45,8 @@ class AdaptivePolicy:
         self.side = 1 if hello.get("seed", 0) % 2 else -1
         self.values = {context: {"press": 0.0, "space": 0.0} for context in ("gun", "armed")}
         self.confirmed = 0
+        self.samples = {key: {"press": 0, "space": 0} for key in self.values}
+        self.probed = set()
         self.staged = self.pending = None
         self.arm = self.context = self.target = None
         self.choose_at = -1.0
@@ -59,7 +61,8 @@ class AdaptivePolicy:
         return {"context": self.context, "arm": self.arm, "reason": self.reason,
                 "credited": self.credited, "reward": round(self.reward, 5),
                 "estimates": {k: round(v, 5) for k, v in estimates.items()},
-                "evidence": self.confirmed, "feedback": dict(self.feedback)}
+                "evidence": self.confirmed, "feedback": dict(self.feedback),
+                "probed": sorted(self.probed), "arm_evidence": self.samples}
 
     def sent(self, tick, action, on_time=True, applied=False):
         """Call after a valid flush; applied=True is for a simulator with explicit application."""
@@ -160,6 +163,7 @@ class AdaptivePolicy:
         self.feedback = {"hit": round(dealt, 1), "hurt": round(taken, 1), "zone": round(zone, 1),
                          "regen": round(regen, 1), "cubes": cubes, "kills": int(kills)}
         self.confirmed += 1
+        self.samples[context][arm] += 1
         self.credited = True
         for option in self.values[context]:
             self.values[context][option] *= math.exp(-elapsed / 14)
@@ -303,10 +307,15 @@ class AdaptivePolicy:
                 prior += .006 if self.arm == "press" else -.006
             self.arm = "press" if self.values[context]["press"] + prior >= self.values[context]["space"] else "space"
             self.context, self.target, self.choose_at = context, target, t + .85
+        alternative = "space" if self.arm == "press" else "press"
+        probe = (context not in self.probed and self.samples[context][self.arm] >= 3
+                 and self.samples[context][alternative] == 0 and abs(self.values[context][self.arm]) < .11
+                 and hp >= .8 and d >= 58 and me.get("energy",100) >= .48*me.get("max_energy",100))
+        arm = alternative if probe else self.arm
         # A signed radial component changes separation without undoing the
         # strafe direction chosen by the existing projectile/cover policy.
         old_radial = (bx * gx + by * gy) / max(1, length)
-        if self.arm == "space":
+        if arm == "space":
             radial = max(-.77, min(-.14, old_radial - self.policy["retreat_bias"]))
         else:
             desired = max(-.25, min(.40, (d-self.policy["engage_range_m"])*.012))
@@ -324,6 +333,9 @@ class AdaptivePolicy:
                     self.reason = "unsafe_footing"
                     return plan
                 last_z = z
+        if probe:
+            self.probed.add(context)
+            self.arm, self.choose_at = arm, t + .6
         self.reason = "engagement"
         self.staged = {"tick": obs["tick"], "t": t, "context": context, "arm": self.arm,
                        "target": target, "dist": d, "pos": tuple(pos[:2]),
