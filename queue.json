@@ -186,6 +186,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "a1ae1d7dae855b94e1e80f327179c6855769ce33",
+      "summary": "During a qualifying gun reload, turn toward a recent rear attacker while preserving movement and weapon actions. Replays verified rear-to-front conversions saving 20.7 and 22.5 HP. Across 104 fresh pairs one gained eight places and 103 tied. Docker 300/300.",
+      "created_at": "2026-11-21T02:54:11Z",
+      "parents": [
+        "367287e08745649c728a9cbee2ad2311ac781156"
+      ],
+      "reviews": {
+        "commit": "a1ae1d7dae855b94e1e80f327179c6855769ce33",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "In independent seed 970813 the change saved 22.5 HP on a rear-to-front conversion at the same position with identical movement and first-second outgoing damage. Across 56 campus pairs there was one eight-place gain and no losses. Scaled and four-mech placements tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Closed-loop replays independently converted rear hits to front hits without sacrificing weapon actions, saving 20.7 and 22.5 HP in concrete cases. The four panels had 103 ties and one gain across 104 pairs. Twenty-five tests and a 300/300 Docker rerun passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The direct armor effect on 970813 preserved legs, target and outgoing damage. Across 56 campus placements the sole change was a gain, including 16 scaled ties. A marginal reload window can still end before the turn completes, so expect infrequent activation."
+          }
+        }
+      }
     }
   ]
 }
