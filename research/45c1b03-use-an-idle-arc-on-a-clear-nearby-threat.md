@@ -1,0 +1,7 @@
+# Use an idle lightning pulse on a clear nearby threat
+
+Exact `45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555`, direct child of `e35d7d070e8d0ee8736769e8592b9d162b2f5380`, adds an idle ready lightning trigger while keeping existing aim and target. It requires grounded safe-zone time, no existing trigger or beam charge, 30 reserve above arc energy cost, and one nearby alternate aimed rifle or charging rival along the predicted first-step firing cone. It checks both observed and projected muzzle and target lines and excludes a competing near conductor.
+
+On fresh exact 1064348, the trigger-only change at t174.5 lands two extra 92.4 arcs on #3. All three native hits on intended target #12 still land. Incoming, survival and placement remain equal, and outgoing increases 184.8. Two directed tests add 81.6 and 277.2 at equal incoming. Directed 1061083 adds an early arc but by six seconds deals 14 less and takes 41.4 more, with tied placement. The three faster-house repeats use identical commands because their trajectories remove the arc opportunity.
+
+All 100 fresh simulated placements tied across public16, native12, stock joint16, original four-mech48 and linked8. The owner public panel was rerun from the frozen SHA after its initial checkout changed commit state. Exact 23 units and all 300 sandbox replies passed. The three roles approved the exact SHA and the publisher recorded entry 43. [Candidate](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555)
