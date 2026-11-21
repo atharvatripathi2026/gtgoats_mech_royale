@@ -543,6 +543,28 @@ class Loadout:
                 return False
         return True
 
+    def lightning_muzzle_reaches(self, me, target, origin, aim, weapon, delay):
+        """Check the short range band with the barrel's translated origin."""
+        if not self.nav or not self.nav.loaded:
+            return False
+        stats = me.get("stats", {})
+        current_yaw, current_pitch = me.get("aim", aim)
+        turn = delay * stats.get("turn_rate", 4)
+        tilt = delay * stats.get("pitch_rate", 3)
+        yaw = current_yaw + clamp(angle_delta(aim[0], current_yaw), -turn, turn)
+        desired_pitch = clamp(aim[1], stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3))
+        pitch = current_pitch + clamp(desired_pitch - current_pitch, -tilt, tilt)
+        forward = math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch)
+        offset = stats.get("radius", 2.5) + .5
+        muzzle = tuple(p + delay * v + offset * ray
+                       for p, v, ray in zip(origin, me.get("vel", (0., 0., 0.)), forward))
+        ground = tuple(p + delay * v for p, v in zip(target["pos"], target.get("vel", (0., 0., 0.))))
+        center = (*ground[:2], ground[2] + .5 * self.dimensions(target)[1])
+        bearing = math.atan2(center[1] - muzzle[1], center[0] - muzzle[0])
+        return (math.dist(muzzle, center) <= weapon.get("range", 45) - .7
+                and abs(angle_delta(bearing, yaw)) <= .65 * math.radians(weapon.get("cone_deg", 30))
+                and self.nav.line_clear(muzzle, center))
+
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
         """Forecast a shorter lead for a ground target running into a broad wall."""
         if not self.nav or not self.nav.loaded or target.get("kind") != "mech":
@@ -743,5 +765,20 @@ class Loadout:
                 ammo = w.get("ammo", mag)
                 if ammo == 0 or (not engage and ammo < mag * .80):
                     action["reload"] = True
+        if engage and ent.get("kind") == "mech" and not climbing and me.get("grounded", True):
+            for i, w in enumerate(slots[:2]):
+                if (not w or w.get("kind") != "lightning" or action.get("drop") == i
+                        or action.get("fire", (False, False))[i]):
+                    continue
+                weapon = self.weapons.get("lightning", {}) | w.get("stats", {})
+                reach = weapon.get("range", 45)
+                if not reach - 1 < dist <= reach + 5 or energy < weapon.get("energy", 3) + 30:
+                    continue
+                dt = self.step if w.get("cooldown", 0) <= self.step else 2 * self.step
+                if (w.get("cooldown", 0) > dt or dt > self.step and
+                        self.config.get("match", {}).get("decide_every", 2) < 2):
+                    continue
+                if self.lightning_muzzle_reaches(me, ent, muzzle, aim, weapon, dt):
+                    action.setdefault("fire", [False, False])[i] = True
         action["aim"] = aim
         return action
