@@ -1292,6 +1292,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "1d135a08dcf92df0f1f1d336bfbaf93885f53259",
+      "summary": "Clear a three-cube recovery pack after two observed rivals confirm disjoint pickups. The controlled true depletion avoids the dead route and adds 3 seconds at equal place; survivor and external pickup controls stay identical. 76 fresh paired placements tied, 300 ticks passed.",
+      "created_at": "2026-11-21T16:06:56Z",
+      "parents": [
+        "a311eb94e0dd1025f19494d22e403fdbb9a1c893"
+      ],
+      "reviews": {
+        "commit": "1d135a08dcf92df0f1f1d336bfbaf93885f53259",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Two moving rivals actually take the three cubes in separate footprints. Removing the depleted cache changes the stale route, increases first-six-second outgoing damage by 207, lowers received damage by 230.9, and adds three seconds of survival at tied placement. Near miss and eight fresh native pairs match every command and placement."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The patch clears the three mutually accounted item IDs and changes the truly depleted route. The six-second trade improves at tied placement, with 47.25 greater incoming over the full match. External collection and near-miss controls preserve the route and surviving cube. Exact units, sandbox and independent fresh comparisons passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight phased-public fresh pairs tie on all commands and placement. The external-cube cargo increase leaves the remaining real target and all commands unchanged. With real separately confirmed collection the new revision clears all three dead cache IDs and prevents the stale movement. Rivals first seen inside do not arm the shortcut."
+          }
+        }
+      }
     }
   ]
 }
