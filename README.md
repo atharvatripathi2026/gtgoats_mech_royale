@@ -75,6 +75,8 @@ For two different gameplay commits, use `python3 -m training.compare --help` to 
 
 ## GT Goats practice submissions
 
+The team's Claude Max account can run a second candidate producer alongside Codex. [Teammate setup](CLAUDE_WORKER.md)
+
 The Chrome helper submits tested commits from this team's public candidate queue through the Builders practice form. It runs while the computer is awake and the signed-in track tab is open. It stops at 11 a.m. Eastern on Sunday, November 22, 2026.
 
 1. Download and unzip the [practice helper](https://raw.githubusercontent.com/atharvatripathi2026/gtgoats_mech_royale/388b71763dbf00affe6fc4324c18f382b77eb826/gt-goats-practice-helper.zip).
