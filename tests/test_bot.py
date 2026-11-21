@@ -90,6 +90,22 @@ class DecisionTests(unittest.TestCase):
         self.obs["zone"]["next_radius"] = 90
         self.assertEqual(pick("gun_mag", "armor"), "armor")
 
+    def test_gun_aligns_at_the_second_physics_tick_if_still_cooling(self):
+        gun = {"kind": "gun", "ammo": 12, "cooldown": .09}
+        self.me.update(pos=[0, 0, 0], aim=[-.38, 0], weapons=[gun, None])
+        self.obs["mechs"] = [{"id": 8, "kind": "mech", "hp": 1000, "pos": [125, 0, 0],
+                              "vel": [0, 0, 0], "aim": [math.pi, 0]}]
+        self.obs["alive"] = 8
+        policy = Loadout(self.hello)
+        recovering = policy.decide(self.obs, 0)
+        self.assertEqual(recovering["fire"], [True, False])
+        gun["cooldown"] = .04
+        ready = policy.decide(self.obs, 0)
+        self.assertEqual(ready["fire"], [False, False])
+        self.assertEqual(recovering["aim"], ready["aim"])
+        gun["cooldown"] = .11
+        self.assertNotIn("fire", policy.decide(self.obs, 0))
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,

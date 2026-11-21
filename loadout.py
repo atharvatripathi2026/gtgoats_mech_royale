@@ -412,10 +412,12 @@ class Loadout:
                 yaw_next = actual[0] + clamp(angle_delta(yaw, actual[0]), -turn, turn)
                 pitch_next = actual[1] + clamp(pitch - actual[1], -tilt, tilt)
                 fire = [False, False]
+                yaw_limit = math.atan2(radius * .85 + .22, dist)
+                pitch_limit = math.atan2(height * .38, dist)
                 for i, (_, sy, sp, kind, ws, w) in shots.items():
                     err = abs(angle_delta(sy, yaw_next))
                     travel = abs(sp - pitch_next)
-                    hit = err <= math.atan2(radius * .85 + .22, dist) and travel <= math.atan2(height * .38, dist)
+                    hit = err <= yaw_limit and travel <= pitch_limit
                     if kind == "lightning":
                         fire[i] = err < math.radians(ws.get("cone_deg", 30)) * .85
                     elif kind == "laser":
@@ -428,6 +430,15 @@ class Loadout:
                         lethal = charge >= ws.get("min_charge", .15) and ent.get("hp", 1e9) < damage * .9
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
+                        if (not hit and kind == primary[3] == "gun" and ent.get("kind") == "mech"
+                                and self.step + 1e-8 < w.get("cooldown", 0) <= 2 * self.step):
+                            # The trigger stays held for two physics ticks.
+                            # A gun that is still cooling on the first tick can
+                            # use the second tick of rotation before firing.
+                            yaw_second = yaw_next + clamp(angle_delta(sy, yaw_next), -turn, turn)
+                            pitch_second = pitch_next + clamp(sp - pitch_next, -tilt, tilt)
+                            hit = (abs(angle_delta(sy, yaw_second)) <= yaw_limit
+                                   and abs(sp - pitch_second) <= pitch_limit)
                         fire[i] = hit
                 action["fire"] = fire
         for w in slots:
