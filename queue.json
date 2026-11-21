@@ -311,6 +311,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "1007d94d9de578353be95597a11a7ba6049e81be",
+      "summary": "Keeps existing tactical thrust in the final duel while retaining earlier descent. Restored an archived win, preserved the earlier verified descent gain, 48 fresh campus and 48 four-mech placement ties, 23 units and 300 sandbox ticks passed.",
+      "created_at": "2026-11-21T06:28:25Z",
+      "parents": [
+        "c0727065234f3aa6f87f014e24a3c2c4ed5ac0f3"
+      ],
+      "reviews": {
+        "commit": "1007d94d9de578353be95597a11a7ba6049e81be",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The isolated final-duel veto restores the win in 1030611 and preserves every action of the prior positive 1023905 trajectory. Fresh 48 campus and 48 four-mech placements tie. The effect is a correction in a verified duel and its frequency remains unmeasured."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Directed 1030611 restores first from second with 770 more outgoing and 70 less incoming. Directed 1023912 remains a win at 45 less incoming, and the known early descent gain matches the parent every action. All 96 fresh placements tie and the exact Docker replay passes."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The one-line veto leaves earlier phases open and exact directed 1030611 restores the lost win, while code preserves the actual favorable 1023905 path. All 48 independent campus and 48 four-mech placements tie. An earlier shot may still help in other duels, so the result supports a narrow practice probe."
+          }
+        }
+      }
     }
   ]
 }
