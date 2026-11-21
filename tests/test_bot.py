@@ -45,6 +45,32 @@ class DecisionTests(unittest.TestCase):
         goal = Survival(self.hello).decide(self.obs)["goal"]
         self.assertLess(math.hypot(*goal[:2]), 65)
 
+    def test_isolated_finisher_requires_health_and_room(self):
+        policy = Survival(self.hello)
+        enemy = {"kind": "mech", "pos": [73, 0, 0], "hp": 400, "max_hp": 1400}
+        self.obs["mechs"] = [enemy]
+        foe = (enemy["pos"], .72, 73, True)
+        fallback = (-20, 0)
+        def goal(foes, circle=([0, 0], 150)):
+            return policy._finish_goal(self.obs, foes, circle, 2.5, .8, fallback)
+
+        flank = goal([foe])
+        self.assertGreater(flank[0], 0)
+        self.assertGreater(abs(flank[1]), flank[0])
+        self.assertEqual(goal([foe, foe]), fallback)
+        self.assertEqual(goal([foe], ([0, 0], 10)), fallback)
+        enemy["hp"] = 1200
+        self.assertEqual(goal([foe]), fallback)
+        enemy.pop("hp")
+        self.assertEqual(goal([foe]), fallback)
+
+    def test_first_weapon_worth_a_safe_detour(self):
+        self.obs["pickups"] = [{"id": 8000, "kind": "laser", "pos": [88, 0, 0]}]
+        self.obs["zone"] = {"center": [0, 0], "radius": 300,
+                            "next_center": [0, 0], "next_radius": 230,
+                            "shrink_start": 65, "shrink_end": 100, "dps": 20}
+        self.assertEqual(Survival(self.hello).decide(self.obs)["target_id"], 8000)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,
@@ -68,29 +94,6 @@ class DecisionTests(unittest.TestCase):
         action = Loadout(self.hello).decide(self.obs, 0)
         self.assertGreater(action["aim"][0], 0.02)
         self.assertLess(action["aim"][0], 0.15)
-
-    def test_gun_keeps_its_lead_between_shots(self):
-        self.obs["mechs"] = [{"id": 8, "kind": "mech", "pos": [125, 0, 0],
-                              "vel": [0, 20, 0], "aim": [math.pi, 0], "weapons": ["gun"]}]
-        gun = self.me["weapons"][0]
-        gun["cooldown"] = 0
-        loadout = Loadout(self.hello)
-        firing_yaw = loadout.decide(self.obs, 0)["aim"][0]
-        gun["cooldown"] = 0.14
-        waiting_yaw = loadout.decide(self.obs, 0)["aim"][0]
-        self.assertGreater(firing_yaw, 0.05)
-        self.assertAlmostEqual(waiting_yaw, firing_yaw, places=3)
-
-    def test_rooftop_target_can_be_hit_above_its_center(self):
-        self.me["pos"] = [0, 0, 30]
-        self.me["aim"] = [0, -0.69]
-        self.obs["mechs"] = [{"id": 8, "kind": "mech", "pos": [36, 0, 0],
-                              "vel": [0, 0, 0], "aim": [math.pi, 0], "weapons": ["gun"]}]
-        aim = Loadout(self.hello).decide(self.obs, 0)["aim"]
-        self.assertGreaterEqual(aim[1], self.me["stats"]["min_pitch"])
-        height_at_target = 30 + self.me["stats"]["muzzle_height"] + 36 * math.tan(aim[1])
-        self.assertGreater(height_at_target, 4.5)
-        self.assertLess(height_at_target, 9)
 
     def test_lightning_uses_remaining_energy_only_in_a_safe_close_duel(self):
         self.obs["zone"].update(center=[0, 0], next_center=[0, 0], next_radius=300)
@@ -213,17 +216,6 @@ class NavigationTests(unittest.TestCase):
                 if math.dist(pos[:2], [82, 50]) <= 3:
                     break
             self.assertLessEqual(math.dist(pos[:2], [82, 50]), 3)
-
-    def test_roof_landing_and_perch_stay_on_the_same_building(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            roof = dict(kind="building", base=0, top=13, ring=[38, 28, 76, 28, 76, 74, 38, 74], holes=[])
-            nav = self.make_map(tmp, [roof])
-            approaches = nav.roof_candidates((25, 50, 0), 2.5)
-            self.assertTrue(approaches)
-            self.assertTrue(all(abs(p[2] - 13) < 0.1 for p in approaches))
-            self.assertTrue(nav.same_roof([55, 50, 13], [61, 50, 13], 2.5))
-            self.assertFalse(nav.same_roof([55, 50, 13], [20, 50, 0], 2.5))
-            self.assertEqual(nav.roof_candidates((25, 50, 0), 2.5, max_distance=4), [])
 
     def test_stuck_on_clear_ground_changes_action(self):
         with tempfile.TemporaryDirectory() as tmp:

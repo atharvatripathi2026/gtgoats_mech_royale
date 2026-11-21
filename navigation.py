@@ -36,8 +36,6 @@ class Navigator:
         self.anchor = None
         self.escape_end = -1
         self.escape_sign = 1
-        self.roof_approaches = {}
-        self.ascent_target = None
         try:
             self._load(Path(map_dir) / "v2")
         except (OSError, ValueError, TypeError, KeyError, IndexError, OverflowError) as exc:
@@ -87,128 +85,7 @@ class Navigator:
         for i in range(n-w-2, w, -1):
             if c[i]:
                 c[i] = min(c[i], c[i+1]+3, c[i+w]+3, c[i+w-1]+4, c[i+w+1]+4)
-        self._index_roofs()
         self.loaded = True
-
-    def _index_roofs(self):
-        # Each entry pairs a clear ground launch column with a landing point
-        # one grid cell behind the lip. Keep distinct approaches to a roof.
-        self.roof_buckets = {}
-        w = self.w
-        top = array("f", (max((hi for _, hi in spans), default=floor)
-                          for spans, floor in zip(self.solids, self.floors)))
-        self.roof_heights = top
-        for i, spans in enumerate(self.solids):
-            if not spans or not 5.0 <= top[i] - self.floors[i] <= 45:
-                continue
-            y, x = divmod(i, w)
-            if not (3 <= x < w-3 and 3 <= y < self.h-3):
-                continue
-            for step in (-1, 1, -w, w):
-                if (y if abs(step) == 1 else x) % 2:
-                    continue
-                side, launch, landing = i+step, i+2*step, i-step
-                if (self.solids[side] or self.solids[launch] or self.clearance[launch] < 4
-                        or abs(top[landing]-top[i]) > self.step_up
-                        or not self.solids[landing]):
-                    continue
-                px, py = self._xy(landing)
-                ax, ay = self._xy(launch)
-                entry = (px, py, float(top[landing]), ax, ay)
-                self.roof_buckets.setdefault((x//8, y//8), []).append(entry)
-
-    def roof_candidates(self, pos, radius, max_distance=42, threat=None):
-        """Nearby reachable roof landings with unobstructed ground approaches."""
-        if not self.loaded:
-            return []
-        x, y, z = pos
-        ix, iy = self._ij(x, y)
-        reach = math.ceil(min(80, max_distance) / CELL) + 4
-        clearance, height = self._dimensions(radius)
-        ranked = []
-        for by in range((iy-reach)//8, (iy+reach)//8+1):
-            for bx in range((ix-reach)//8, (ix+reach)//8+1):
-                for px, py, roof, ax, ay in self.roof_buckets.get((bx, by), ()):
-                    rise = roof-z
-                    travel = math.hypot(ax-x, ay-y)
-                    if not (5 <= rise <= 42 and travel <= max_distance
-                            and math.hypot(px-x, py-y) <= max_distance):
-                        continue
-                    score = travel + 0.32*abs(rise-19)
-                    if threat is not None:
-                        # Approach behind the roof relative to a pursuer.
-                        score += 0.38*(math.hypot(px-threat[0],py-threat[1])
-                                       - math.hypot(ax-threat[0],ay-threat[1]))
-                    ranked.append((score, (px,py,roof), (ax,ay)))
-        result = []
-        for _, point, approach in sorted(ranked)[:40]:
-            px, py, roof = point
-            if any(math.hypot(px-p[0],py-p[1]) < 10 for p in result):
-                continue
-            if (self._landing_height(px,py,roof,radius,height) > roof + self.step_up
-                    or not self._ground_segment(x,y,*approach,clearance,height)):
-                continue
-            self.roof_approaches[point] = approach
-            result.append(point)
-            if len(result) == 6:
-                break
-        return result
-
-    def same_roof(self, start, end, radius):
-        if not self.loaded or len(start) < 3 or len(end) < 3:
-            return False
-        x, y, feet = start
-        dx, dy = end[0]-x, end[1]-y
-        length = math.hypot(dx, dy)
-        if length > 60 or feet < self.ground(x,y)+4:
-            return False
-        _, height = self._dimensions(radius)
-        n = max(1, math.ceil(length/(CELL*0.65)))
-        for step in range(n+1):
-            px, py = x+dx*step/n, y+dy*step/n
-            i = self._index(px, py)
-            level = self.roof_heights[i]
-            if (not self.solids[i] or abs(level-feet) > self.step_up+0.05
-                    or self._landing_height(px,py,level,radius,height) > level+self.step_up):
-                return False
-            feet = level
-        return abs(feet-end[2]) <= self.step_up+0.05
-
-    def roof_perch(self, pos, radius, threat, max_distance=32):
-        """Find a same-roof point with a clear shot and a continuous walk to it."""
-        if not self.loaded or threat is None:
-            return None
-        x, y, z = pos
-        if z < self.ground(x,y)+4 or abs(self.surface(x,y)-z) > 1.5:
-            return None
-        _, height = self._dimensions(radius)
-        target_z = threat[2] if len(threat) >= 3 else self.ground(*threat[:2])
-        target = (threat[0], threat[1], target_z+4.5)
-        def firing_point(px, py, pz):
-            dx = math.hypot(px-target[0], py-target[1])
-            muzzle = pz+height*7/9
-            return (target[2]-muzzle >= -0.84*dx and
-                    self.line_clear((px,py,muzzle),target))
-        if firing_point(x,y,z):
-            return (x,y,z)
-        yaw = math.atan2(threat[1]-y,threat[0]-x)
-        options = []
-        for offset in (0.0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57, 2.09, -2.09):
-            ux, uy = math.cos(yaw+offset), math.sin(yaw+offset)
-            previous = z
-            for step in range(1, int(min(48,max_distance)/CELL)+1):
-                d = step*CELL
-                px, py = x+d*ux, y+d*uy
-                i = self._index(px,py)
-                level = self.roof_heights[i]
-                if (not self.solids[i] or abs(level-previous) > self.step_up
-                        or self._landing_height(px,py,level,radius,height) > level+self.step_up):
-                    break
-                if firing_point(px,py,level):
-                    options.append((d+abs(offset), (px,py,level)))
-                    break
-                previous = level
-        return min(options)[1] if options else None
 
     def _rasterize(self, prism):
         edges = []
@@ -457,30 +334,6 @@ class Navigator:
         x, y = pos[:2]
         gx, gy = goal[:2]
         dx, dy = gx-x, gy-y
-        key = tuple(goal)
-        if self.ascent_target != key:
-            self.ascent_target = None
-        launch = self.roof_approaches.get(key)
-        if launch is not None and len(pos) >= 3:
-            z = pos[2]
-            below_lip = self.surface(x, y) < goal[2]-self.step_up
-            if self.ascent_target == key:
-                # Keep the cylinder in the open launch column while it rises.
-                # Moving into an overhang early can pin the jet under an eave.
-                if z < goal[2]-4:
-                    lx, ly = launch[0]-x, launch[1]-y
-                    scale = max(3.5, math.hypot(lx,ly))
-                    return lx/scale, ly/scale, True
-                ux, uy = _direction(dx, dy)
-                jet = z < goal[2]+0.6 if below_lip else z < goal[2]-self.step_up
-                return ux, uy, jet
-            if z < goal[2]-self.step_up:
-                if math.hypot(x-launch[0], y-launch[1]) < 3.0:
-                    self.ascent_target = key
-                    return 0.0, 0.0, True
-                # Follow the ground route to this roof's vetted launch side.
-                gx, gy = goal = launch
-                dx, dy = gx-x, gy-y
         direct_x, direct_y = _direction(dx, dy)
         dist = math.hypot(dx, dy)
         if dist < 0.45 and (len(goal) < 3 or len(pos) < 3 or goal[2]-pos[2] < 2):

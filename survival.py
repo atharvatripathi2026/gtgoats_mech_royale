@@ -20,9 +20,10 @@ def disc_point(pos, center, radius):
 
 
 class Survival:
-    def __init__(self, hello, nav=None):
+    def __init__(self, hello, nav=None, loot_priority=1.0):
         self.rules = hello.get("config", {})
         self.nav = nav
+        self.loot_priority = loot_priority
         self.turn_side = 1 if hello.get("seed", 0) % 2 else -1
         self.rng = random.Random(hello.get("seed", 0))
         self.weave_side = self.turn_side
@@ -41,13 +42,6 @@ class Survival:
         self.boosting = False
         self.cover_goal = None
         self.cover_until = -1
-        self.roof = None
-        self.on_roof = False
-        self.roof_deadline = -1
-        self.roof_scan_at = 0
-        self.perch_goal = None
-        self.perch_until = -1
-        self.hide_until = -1
 
     def _zone(self, obs, pos, speed, radius):
         zone = obs.get("zone") or {}
@@ -190,8 +184,8 @@ class Survival:
         held = {w.get("kind") for w in me.get("weapons", []) if w}
         cap = self.rules.get("cubes", {}).get("stat_cap", 10)
         power = me.get("cubes", 0)
-        table = (("cubes", 35 if power < cap else 15),
-                 ("pickups", 28 if len(held) < 2 else 0),
+        table = (("cubes", 52 if power < cap else 15),
+                 ("pickups", 50 if len(held) < 2 else 0),
                  ("crates", 17 if health >= 0.78 and power < cap else 0))
         for field, value in table:
             if not value:
@@ -205,7 +199,7 @@ class Survival:
         best_score, best = 0, None
         options = []
         for key, (seen, p, field, value) in list(self.loot.items()):
-            if (now - seen > 4.5 or (now > seen and distance(p, pos) < 5)
+            if (now - seen > (8 if field in ("pickups", "cubes") else 4.5) or (now > seen and distance(p, pos) < 5)
                     or (field == "pickups" and len(held) >= 2)):
                 del self.loot[key]
                 continue
@@ -228,7 +222,7 @@ class Survival:
             if now < self.skip_until.get(key, -1):
                 continue
             d = distance(p, pos)
-            if d > (100 if field == "drop" else 72) or distance(p, circle[0]) > max(0, circle[1] - min(radius + 3, circle[1]*0.25)):
+            if d > (100 if field in ("drop", "pickups", "cubes") else 72) or distance(p, circle[0]) > max(0, circle[1] - min(radius + 3, circle[1]*0.25)):
                 continue
             # A cube on a roof is unreachable from directly below. A long
             # roof climb costs both time and the reserve for the next escape.
@@ -242,6 +236,8 @@ class Survival:
             if any(power > 0.16 and distance(p, fp) + 5 < min(fd, 65)
                    for fp, power, fd, _ in foes):
                 continue
+            if field in ("pickups", "cubes"):
+                value *= self.loot_priority
             score = value - d * 0.48 + (3.5 if key == self.chase_id else 0)
             if score > best_score:
                 best, best_score = (key, p, field, d), score
@@ -312,6 +308,37 @@ class Survival:
             self.evade_goal = anchor
         self.evade_until = now + 0.50
         return self.evade_goal
+
+    def _finish_goal(self, obs, foes, circle, radius, health, fallback):
+        """Strafe inward for a finishing shot on one exposed, badly hurt opponent."""
+        if len(foes) != 1 or health <= .60:
+            return fallback
+        pos, _, d, visible = foes[0]
+        me = obs["self"]
+        here = me["pos"]
+        if not visible or not 30 < d < 105:
+            return fallback
+        enemy = next(e for e in obs["mechs"] if e.get("kind") == "mech")
+        if "hp" not in enemy or "max_hp" not in enemy:
+            return fallback
+        enemy_health = enemy["hp"] / max(1, enemy["max_hp"])
+        if enemy_health >= .5 * health or enemy.get("charging"):
+            return fallback
+        dx, dy = (pos[0] - here[0]) / d, (pos[1] - here[1]) / d
+        side = 1 if me["id"] % 2 else -1
+        for sign in (side, -side):
+            end = (here[0] + 13 * (.62 * dx - .78 * dy * sign),
+                   here[1] + 13 * (.62 * dy + .78 * dx * sign))
+            if distance(end, circle[0]) > circle[1] - radius - 7:
+                continue
+            if self.nav:
+                if not self.nav.walkable(*end, radius):
+                    continue
+                sight = (*end, self.nav.ground(*end) + me.get("stats", {}).get("eye_height", 8))
+                if not self.nav.line_clear(sight, (*pos[:2], pos[2] + 4.5)):
+                    continue
+            return end
+        return fallback
 
     def _shelter(self, now, pos, radius, height, final):
         """Wait behind nearby cover facing the crowded side of the circle."""
@@ -411,156 +438,6 @@ class Survival:
                 return goal
         return end
 
-    def _leave_roof(self, t, delay):
-        self.roof = self.perch_goal = None
-        self.on_roof = False
-        self.roof_scan_at = t + delay
-        self.perch_until = self.hide_until = -1
-
-    def _roof_position(self, obs, foes, dodge, radius, hp):
-        me, t = obs["self"], obs["t"]
-        pos = me["pos"]
-        # Only pursue items which can actually be collected on this roof.
-        if not dodge and not any(d < 70 and visible for _, _, d, visible in foes):
-            kinds = {w["kind"] for w in me.get("weapons", []) if w}
-            items = list(obs.get("cubes") or ())
-            if len(kinds) < 2:
-                items += [p for p in obs.get("pickups") or () if p.get("kind") not in kinds]
-            for item in sorted(items, key=lambda o: distance(o["pos"], pos)):
-                p = item["pos"]
-                if (distance(p, pos) <= 27 and abs(p[2] - pos[2]) < 2.0
-                        and self.nav.same_roof(pos, p, radius)):
-                    return tuple(p), "roof_loot", item.get("id")
-        nearby = [f for f in foes if f[2] < 175]
-        if not nearby:
-            self.perch_goal = None
-            return tuple(pos[:2]), "rooftop", None
-        attacker = max(nearby, key=lambda f: (f[1], -f[2]))[0]
-        took_hit = any(e.get("type") == "damaged" and e.get("by") is not None
-                       for e in obs.get("events") or ())
-        if took_hit and (hp < 0.80 or len(nearby) > 1):
-            self.hide_until = t + 5.8
-            self.perch_until = -1
-        hide = hp < 0.69 or t < self.hide_until or len(nearby) > 1 or bool(dodge)
-        if self.perch_goal and t < self.perch_until and not dodge:
-            return self.perch_goal, "rooftop", None
-        goal = None
-        if not hide:
-            # An elevated gun needs an actual sight line over the parapet.
-            goal = self.nav.roof_perch(pos, radius, attacker, max_distance=26)
-        if not goal or hide:
-            # Move toward a setback where the slab occludes ground-level
-            # shooters. Keep each step entirely on the same usable surface.
-            choices = [(tuple(pos[:2]), 0)]
-            yaw = math.atan2(pos[1] - attacker[1], pos[0] - attacker[0])
-            for step in (9, 17):
-                for i in range(8):
-                    angle = yaw + math.tau * i / 8
-                    xy = (pos[0] + step * math.cos(angle), pos[1] + step * math.sin(angle))
-                    if self.nav.same_roof(pos, (*xy, pos[2]), radius):
-                        choices.append((xy, 0.24 * math.cos(angle - yaw) - 0.035 * step))
-            best_score, goal = -math.inf, tuple(pos[:2])
-            sheltered = False
-            for xy, score in choices:
-                end = (*xy, pos[2] + me.get("stats", {}).get("muzzle_height", 7))
-                exposed_peers = 0
-                for p, _, _, _ in nearby[:3]:
-                    if not self.nav.line_clear((*p[:2], p[2] + 7), end):
-                        score += 2
-                    elif p[2] >= pos[2] - 4:
-                        exposed_peers += 1
-                sheltered |= exposed_peers < 2
-                if dodge and dodge[0] == "blast":
-                    score += min(18, distance(xy, dodge[1])) * 0.25
-                elif dodge and dodge[0] == "line":
-                    nx, ny = dodge[1]
-                    score += abs((xy[0] - pos[0]) * nx + (xy[1] - pos[1]) * ny) * 0.15
-                if score > best_score:
-                    goal, best_score = xy, score
-            if not sheltered:
-                self._leave_roof(t, 15)
-                return None
-        self.perch_goal, self.perch_until = goal, t + 1.2
-        return goal, "rooftop", None
-
-    def _roof_plan(self, obs, foes, dodge, final, circle, urgency, radius, hp, base_mode, base_goal):
-        if not self.nav or not self.nav.loaded:
-            return None
-        me, t = obs["self"], obs["t"]
-        pos, stats = me["pos"], me.get("stats") or {}
-        ground = self.nav.ground(*pos[:2])
-        feet_up = pos[2] - ground
-        forecast_center, forecast_r = final
-        margin = min(17, forecast_r * 0.23)
-        usable = (urgency < 0.42 and me.get("in_zone", True)
-                  and circle[1] - distance(pos, circle[0]) > radius + 4)
-        if self.roof is not None:
-            safe = distance(self.roof, forecast_center) <= forecast_r - margin
-            if not usable or not safe:
-                self._leave_roof(t, 3)
-                return None
-            landed = (me.get("grounded", True) and feet_up > 6 and
-                      abs(self.nav.surface(*pos[:2]) - pos[2]) < 2.4)
-            if landed and (self.on_roof or (pos[2] >= self.roof[2] - 1.5 and distance(pos, self.roof) < 19)):
-                self.on_roof = True
-                return self._roof_position(obs, foes, dodge, radius, hp)
-            if self.on_roof and not me.get("grounded", True) and pos[2] >= self.roof[2] - 2:
-                return self.roof, "climb", None
-            nearly_up = abs(self.roof[2] - pos[2]) < 3 and distance(self.roof, pos) < 9
-            if (self.on_roof or t > self.roof_deadline or
-                    (me.get("energy", 0) < me.get("max_energy", 100) * 0.22 and not nearly_up)):
-                self._leave_roof(t, 14)
-                return None
-            return self.roof, "climb", None
-        if (not usable or forecast_r < 35 or t < self.roof_scan_at
-                or not me.get("grounded", True) or (dodge and dodge[0] == "blast")):
-            return None
-        self.roof_scan_at = t + 1.35
-        if distance(pos, forecast_center) > forecast_r - margin + 38:
-            return None
-        if base_mode == "capture" or (base_mode == "loot" and distance(base_goal, pos) < 12):
-            return None
-        if feet_up >= 7 and abs(self.nav.surface(*pos[:2]) - pos[2]) < 2.4:
-            if distance(pos, forecast_center) <= forecast_r - margin:
-                self.roof, self.on_roof = tuple(pos), True
-                return self._roof_position(obs, foes, dodge, radius, hp)
-            return None
-        reserve = max(25, me.get("max_energy", 100) * 0.30)
-        energy = me.get("energy", 0)
-        if energy < reserve + 18:
-            return None
-        threat = foes[0][0] if foes else None
-        roofs = self.nav.roof_candidates(pos, radius, max_distance=42, threat=threat)
-        best, best_score = None, -math.inf
-        for p in roofs:
-            rise, approach = p[2] - pos[2], distance(pos, p)
-            if not 7.5 <= rise <= 30 or distance(p, forecast_center) > forecast_r - margin:
-                continue
-            jet_s = 0.65 + rise / max(2, stats.get("max_rise_speed", 10))
-            if energy < jet_s * stats.get("jet_drain", 15) + reserve:
-                continue
-            exposures = peers = 0
-            for enemy, _, _, _ in foes:
-                separation = distance(enemy, p)
-                if separation > 155:
-                    continue
-                peer = enemy[2] >= p[2] - 4
-                clear = self.nav.line_clear((*enemy[:2], enemy[2] + 7), (*p[:2], p[2] + 5))
-                if clear and separation < 100:
-                    exposures += 1
-                if peer and (separation < 38 or clear):
-                    peers += 1
-            if peers >= 2 or (peers and exposures and hp < 0.78) or exposures > 2:
-                continue
-            score = min(21, rise) * 0.55 - approach * 0.30 - 8 * peers - 3.5 * exposures
-            if score > best_score:
-                best, best_score = p, score
-        if best is None:
-            return None
-        self.roof, self.on_roof = tuple(best), False
-        self.roof_deadline = t + 4.0 + distance(pos, best) / 6.5 + (best[2] - pos[2]) / 5.5
-        return self.roof, "climb", None
-
     def decide(self, obs):
         me, t = obs["self"], obs.get("t", 0)
         pos = me["pos"]
@@ -574,7 +451,10 @@ class Survival:
         foes, pressure, bearing = self._enemies(obs, t, pos)
         dodge = self._dodge(obs, pos, radius)
         goal, mode, target = anchor, "zone", None
-        if urgency < 0.5 and pressure < (0.29 if hp < 0.65 else 0.45) and not dodge:
+        loot_pressure = 0.29 if hp < 0.65 else 0.45
+        if hp > .80 and len(foes) <= 1 and not all(me.get("weapons", [])):
+            loot_pressure += .18 * (self.loot_priority - 1)
+        if urgency < 0.5 and pressure < loot_pressure and not dodge:
             loot = self._loot_goal(obs, t, pos, radius, hp, foes, circle, final, until)
             if loot:
                 goal, mode, target = loot
@@ -585,23 +465,36 @@ class Survival:
             goal = self._evade(t, pos, radius, stats.get("height", 9), foes, bearing,
                                dodge, anchor, circle, urgency)
             mode = "evade"
-        rooftop = self._roof_plan(obs, foes, dodge, final, circle, urgency, radius, hp, mode, goal)
-        if rooftop:
-            goal, mode, target = rooftop
+        reason = {
+            "zone": "reach_forecast_circle", "evade": "incoming_projectile" if dodge else "avoid_exposure",
+            "hold": "safe_position", "shelter": "break_line_of_sight", "farm": "reach_or_destroy_crate",
+            "loot": "collect_accessible_item", "capture": "hold_supply_ring",
+        }[mode]
         if mode != "evade":
             self.evade_until = -1
         if (self.pursuer and (not dodge or dodge[0] == "line")
                 and mode in ("evade", "zone") and urgency < 0.3
                 and me.get("grounded", True) and me.get("in_zone", True)
                 and circle[1] - distance(pos, circle[0]) > 19 + radius and len(goal) == 2):
-            goal = self._weave(obs, goal, radius, stats.get("height", 9), dodge)
+            woven = self._weave(obs, goal, radius, stats.get("height", 9), dodge)
+            if woven != goal:
+                reason = "vary_strafe_against_lone_pursuer"
+                goal = woven
         if mode not in ("hold", "shelter"):
             self.cover_until = -1
         # Hysteresis leaves energy for jumping obstacles, and lets regeneration
         # restart between escape bursts instead of toggling boost every frame.
         reserve = 0.10 if urgency >= 0.9 or dodge else 0.36
         stress = max(urgency, pressure, 1 if dodge else 0)
-        self.boosting = (not rooftop and stress > 0.66 and distance(pos, goal) > 5
+        self.boosting = (stress > 0.66 and distance(pos, goal) > 5
                          and energy > (reserve if self.boosting else reserve + 0.19))
+        if (urgency < .35 and mode not in ("loot", "capture") and me.get("grounded", True)
+                and not (dodge and dodge[0] == "blast")):
+            flank = self._finish_goal(obs, foes, circle, radius, hp, goal)
+            if flank != goal:
+                reason = "flank_wounded_opponent"
+                goal = flank
         return {"goal": goal, "mode": mode, "urgency": max(urgency, pressure),
+                "reason": reason, "zone_urgency": urgency, "enemy_pressure": pressure,
+                "dodge": dodge[0] if dodge else None,
                 "boost": self.boosting, "threat_yaw": bearing, "target_id": target}

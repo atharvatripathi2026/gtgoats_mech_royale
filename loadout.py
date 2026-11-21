@@ -18,7 +18,6 @@ class Loadout:
         self.upgrades = {u["id"]: u for u in self.config.get("upgrades", [])}
         self.nav = navigator
         self.step = 1 / max(1, self.config.get("match", {}).get("tick_hz", 20))
-        self.decision = self.step * self.config.get("match", {}).get("decide_every", 2)
         self.scan_phase = (hello.get("seed", 0) % 360) * math.pi / 180
         self.last_damage = -100
         self.last_attacker = None
@@ -123,27 +122,22 @@ class Loadout:
         shape = self.config.get("npc" if kind == "npc" else "crates", {})
         return shape.get("radius", 1.5), shape.get("height", 3)
 
-    def sight_height(self, origin, entity, t, limits):
+    def sight_height(self, origin, entity, t):
         """Tracked mechs can be on the other side of a wall for five seconds."""
+        _, height = self.dimensions(entity)
+        if self.nav is None:
+            return height * .5
         key = entity.get("id")
         cached = self.sight.get(key)
-        target = entity["pos"]
-        if (cached and t < cached[0] and math.dist(cached[2], origin) < 2
-                and math.dist(cached[3], target) < 2):
+        if cached and t < cached[0]:
             return cached[1]
-        _, height = self.dimensions(entity)
-        x, y, z = target
-        distance = math.hypot(x - origin[0], y - origin[1])
-        # From a roof the center of a target may be below the torso's
-        # depression limit, while its shoulders remain in the firing arc.
-        low = clamp(origin[2] - z + distance * math.tan(limits[0] + .012), height * .10, height * .94)
-        high = clamp(origin[2] - z + distance * math.tan(limits[1] - .012), low, height * .94)
-        h = clamp(height * .5, low, high)
-        if self.nav is not None and not self.nav.line_clear(origin, (x, y, z + h)):
-            h = clamp(height * .86, low, high)
+        x, y, z = entity["pos"]
+        h = height * .49
+        if not self.nav.line_clear(origin, (x, y, z + h)):
+            h = height * .84
             if not self.nav.line_clear(origin, (x, y, z + h)):
                 h = None
-        self.sight[key] = (t + .22, h, origin, tuple(target))
+        self.sight[key] = (t + .22, h)
         return h
 
     def target(self, obs, origin, evade, target_id):
@@ -153,8 +147,6 @@ class Loadout:
         health = me.get("hp", 1) / max(1, me.get("max_hp", 1))
         late = obs.get("alive", 16) <= 3 or obs.get("zone", {}).get("radius", 560) < 55
         armed = {w["kind"] for w in me.get("weapons", []) if w}
-        stats = me.get("stats", {})
-        limits = stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)
         priority = []
         for ent in (*obs.get("mechs", []), *obs.get("crates", [])):
             px, py, pz = ent["pos"]
@@ -199,7 +191,7 @@ class Loadout:
                 score += 4
             priority.append((score, ent, fight))
         for _, ent, fight in sorted(priority, key=lambda row: -row[0])[:4]:
-            h = self.sight_height(origin, ent, t, limits)
+            h = self.sight_height(origin, ent, t)
             if h is not None:
                 self.last_target = ent.get("id")
                 return ent, h, fight
@@ -270,15 +262,12 @@ class Loadout:
             speed = stats.get("speed", 72)
             gravity = stats.get("gravity", 22)
             flight = math.hypot(dx, dy) / max(1, speed)
-            pitch = math.atan2(dz, math.hypot(dx, dy))
             # Iterate the game's low trajectory against a moving target.
             for _ in range(5):
                 ax, ay = dx + vx * flight, dy + vy * flight
                 distance = math.hypot(ax, ay)
-                # The server advances the mortar muzzle along its pitched
-                # direction. Both coordinates change on a steep roof shot.
-                span = max(.25, distance - offset * math.cos(pitch))
-                rise = dz + vz * min(flight, .16) - offset * math.sin(pitch)
+                span = max(.25, distance - offset)
+                rise = dz + vz * min(flight, .16)
                 v2 = speed * speed
                 disc = v2 * v2 - gravity * (gravity * span * span + 2 * rise * v2)
                 if disc < 0:
@@ -324,6 +313,10 @@ class Loadout:
         slots = me.get("weapons", [])
         aim = self.quiet_aim(obs, travel_yaw)
         shots = {}
+        self.last_decision = {
+            "target_id": ent.get("id") if ent else None,
+            "intent": "engage" if engage else "track" if ent else "scan",
+        }
         if ent is not None:
             body = (*ent["pos"][:2], ent["pos"][2] + h)
             vel = ent.get("vel", (0, 0, 0))
@@ -333,14 +326,9 @@ class Loadout:
             aim = [math.atan2(body[1] - pos[1], body[0] - pos[0]),
                    math.atan2(body[2] - muzzle[2], math.dist(body[:2], pos[:2]))]
             for i, w in enumerate(slots[:2]):
-                if not engage or not w:
+                if not engage or not w or w.get("cooldown", 0) > self.step * 2:
                     continue
                 kind = w.get("kind")
-                ready = w.get("cooldown", 0) <= self.decision + 1e-6
-                # Keep leading through the gun's cooldown so the next shot
-                # starts aligned. A ready secondary can still take the torso.
-                if not ready and kind != "gun":
-                    continue
                 ws = self.weapons.get(kind, {}) | w.get("stats", {})
                 origin = muzzle
                 if kind == "mortar":
@@ -378,8 +366,6 @@ class Loadout:
                     if not self.nav.line_clear(origin, nearby):
                         continue
                 score = {"gun": 2., "mortar": 3.8, "laser": 4., "lightning": 1.}[kind]
-                if not ready:
-                    score = -1.
                 if kind == "mortar" and dist > 105 and math.hypot(*vel[:2]) > 7:
                     score -= 2
                 if kind == "laser":
@@ -391,7 +377,9 @@ class Loadout:
                         score += 2
                 shots[i] = (score, yaw, pitch, kind, ws, w)
             if shots:
-                _, yaw, pitch, *_ = max(shots.values(), key=lambda shot: shot[0])
+                primary = max(shots.values(), key=lambda shot: shot[0])
+                _, yaw, pitch, kind, _, _ = primary
+                self.last_decision["aim_weapon"] = kind
                 aim = [yaw, pitch]
                 actual = me.get("aim", aim)
                 turn = stats.get("turn_rate", 4) * self.step
@@ -401,9 +389,8 @@ class Loadout:
                 fire = [False, False]
                 for i, (_, sy, sp, kind, ws, w) in shots.items():
                     err = abs(angle_delta(sy, yaw_next))
-                    pitch_error = pitch_next - sp
-                    hit = (err <= math.atan2(radius * .85 + .22, dist)
-                           and -math.atan2(h * .80, dist) <= pitch_error <= math.atan2((height - h) * .80, dist))
+                    travel = abs(sp - pitch_next)
+                    hit = err <= math.atan2(radius * .85 + .22, dist) and travel <= math.atan2(height * .38, dist)
                     if kind == "lightning":
                         fire[i] = err < math.radians(ws.get("cone_deg", 30)) * .85
                     elif kind == "laser":

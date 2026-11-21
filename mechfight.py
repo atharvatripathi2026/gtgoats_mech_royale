@@ -18,7 +18,9 @@ What run() does for you (protocol.md section 2):
 - if __init__ or act() raises, logs the traceback to stderr and keeps going: it re-sends your last
   good move/aim/boost, so the mech keeps coasting instead of crashing;
 - attaches whatever you drew with `mf.draw` this tick as `action["debug"]`;
-- exits on `end`.
+- records decisions under MECHFIGHT_LOG_DIR (default /tmp/mechfight-logs);
+- calls optional sent(tick, action, on_time=...) after a successful flush and
+  optional end(message) when the server reports the result.
 
 The types below are generated from mechfight.schema.json; they are TypedDicts, so at runtime every
 message is a plain dict. Fields may be added to the protocol: read them with .get() if unsure.
@@ -29,8 +31,11 @@ import json
 import queue
 import sys
 import threading
+import time
 import traceback
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+
+from recorder import MatchRecorder
 
 try:
     from typing import NotRequired
@@ -486,80 +491,170 @@ _CONTINUOUS = ("move", "aim", "boost")
 
 
 def log(*args: Any) -> None:
-    """print() to stderr: stdout is the protocol. Your team sees stderr after each match."""
+    """Write diagnostics to stderr. The server reserves stdout for protocol messages."""
     print(*args, file=sys.stderr, flush=True)
 
 
-def _send(msg: Dict[str, Any]) -> None:
-    sys.stdout.write(json.dumps(msg, separators=(",", ":")) + "\n")
+def _send(msg: Dict[str, Any], max_bytes=65536) -> None:
+    line = json.dumps(msg, allow_nan=False, separators=(",", ":")) + "\n"
+    if len(line) > max_bytes:  # ensure_ascii is enabled; one byte per character
+        raise ValueError("protocol output exceeds the configured line limit")
+    sys.stdout.write(line)
     sys.stdout.flush()
 
 
-def _reader(q: "queue.Queue[Optional[str]]") -> None:
-    for line in sys.stdin:
-        if line.strip():
-            q.put(line)
-    q.put(None)
+def _check_controls(action):
+    for key in ("move", "aim", "fire"):
+        if key not in action:
+            continue
+        value = action[key]
+        types = (bool,) if key == "fire" else (int, float)
+        if not isinstance(value, (list, tuple)) or len(value) != 2 or any(type(v) not in types for v in value):
+            raise ValueError(f"invalid {key} control")
+    for key in ("jump", "boost", "reload"):
+        if key in action and type(action[key]) is not bool:
+            raise ValueError(f"invalid {key} control")
+    for key in ("take", "drop", "pick"):
+        if key in action and type(action[key]) not in (int, float):
+            raise ValueError(f"invalid {key} control")
+    if action.get("type", "action") != "action":
+        raise ValueError("invalid action type")
+
+
+def _reader(q: queue.Queue) -> None:
+    try:
+        for line in sys.stdin:
+            if line.strip():
+                q.put((time.perf_counter(), line))
+    finally:
+        q.put((time.perf_counter(), None))
 
 
 def run(make_bot: Any) -> None:
-    """Run a bot until the match ends. `make_bot(hello)` returns an object with `act(obs) -> Action`
-    and optionally `name`. A class works: `run(MyBot)`."""
-    q: "queue.Queue[Optional[str]]" = queue.Queue()
+    """Run a bot and record the newest answered observation plus any superseded ones."""
+    q = queue.Queue()
     threading.Thread(target=_reader, args=(q,), daemon=True).start()
-    bot = None
+    bot = recorder = terminal = None
     last: Dict[str, Any] = {}
+    budget_ms = 50
+    max_bytes = 65536
+    last_sent_tick = None
     errors = 0
-    while True:
-        batch = [q.get()]
-        while True:  # drain the queue: only the newest observation matters
-            try:
-                batch.append(q.get_nowait())
-            except queue.Empty:
-                break
-        latest = None
-        for raw in batch:
-            if raw is None:
-                return
-            try:
-                msg = json.loads(raw)
-            except ValueError:
-                continue
-            kind = msg.get("type")
-            if kind == "hello":
-                draw.caps = msg.get("config", {}).get("debug", {})
+
+    def record_skips(observations, reason):
+        if recorder:
+            for obs in observations:
+                recorder.record(obs, None, {"mode": "skipped", "reason": reason}, fallback=reason, on_time=False)
+
+    try:
+        while True:
+            batch = [q.get()]
+            while True:
                 try:
-                    bot = make_bot(msg)
-                except Exception:
-                    log(traceback.format_exc())
-                name = getattr(bot, "name", None) or getattr(make_bot, "__name__", "bot")
-                _send({"type": "ready", "name": str(name)[:32]})
-            elif kind == "obs":
-                latest = msg
-            elif kind == "end":
-                return
-        if latest is None:
-            continue
-        action: Dict[str, Any] = {}
-        draw.clear()
-        if bot is not None:
-            try:
-                action = dict(bot.act(latest) or {})
-                last = {k: action[k] for k in _CONTINUOUS if k in action}
-            except Exception:
-                errors += 1
-                if errors <= 5 or errors % 100 == 0:
-                    log(f"act() failed at tick {latest['tick']} ({errors} so far):\n{traceback.format_exc()}")
-                action = dict(last)
-        action["tick"] = latest["tick"]
-        d = draw.take()
-        if d and "debug" not in action:
-            action["debug"] = d
-        try:
-            _send(action)
-        except (TypeError, ValueError):  # something in the action isn't JSON
-            log(f"unserializable action at tick {latest['tick']}:\n{traceback.format_exc()}")
-            _send({"tick": latest["tick"], **last})
+                    batch.append(q.get_nowait())
+                except queue.Empty:
+                    break
+            latest = None
+            superseded = []
+            arrival = 0.
+            eof = False
+            for item in batch:
+                received, raw = item if isinstance(item, tuple) else (time.perf_counter(), item)
+                if raw is None:
+                    eof = True
+                    break
+                try:
+                    msg = json.loads(raw)
+                except ValueError:
+                    continue
+                if not isinstance(msg, dict):
+                    continue
+                kind = msg.get("type")
+                if kind == "hello":
+                    draw.caps = msg.get("config", {}).get("debug", {})
+                    limits = msg.get("config", {}).get("bot", {})
+                    budget_ms = limits.get("tick_budget_ms", 50)
+                    max_bytes = limits.get("max_line_bytes", 65536)
+                    last, last_sent_tick = {}, None
+                    try:
+                        bot = make_bot(msg)
+                    except Exception:
+                        bot = None
+                        log(traceback.format_exc())
+                    name = getattr(bot, "name", None) or getattr(make_bot, "__name__", "bot")
+                    if recorder:
+                        recorder.close()
+                    recorder = MatchRecorder(msg, name, getattr(bot, "match_metadata", None))
+                    _send({"type": "ready", "name": str(name)[:32]})
+                elif kind == "obs" and "tick" in msg:
+                    if latest is not None:
+                        superseded.append(latest)
+                    latest, arrival = msg, received
+                elif kind == "end":
+                    terminal = msg
+                    break
+            if terminal is not None:
+                record_skips(superseded, "superseded")
+                if latest is not None:
+                    record_skips([latest], "match_ended")
+                end_hook = getattr(bot, "end", None)
+                if end_hook:
+                    try:
+                        end_hook(terminal)
+                    except Exception:
+                        log(traceback.format_exc())
+                break
+            if latest is not None:
+                action, fallback, decision = dict(last), None, {}
+                draw.clear()
+                if bot is None:
+                    fallback = "init_error"
+                else:
+                    try:
+                        action = dict(bot.act(latest) or {})
+                        decision = getattr(bot, "last_decision", {}) or {}
+                    except Exception as exc:
+                        fallback = "act_error"
+                        errors += 1
+                        decision = {"mode": "coast", "error_type": type(exc).__name__}
+                        if errors <= 5 or errors % 100 == 0:
+                            log(f"act() failed at tick {latest['tick']} ({errors} so far):\n{traceback.format_exc()}")
+                        action = dict(last)
+                action["tick"] = latest["tick"]
+                drawing = draw.take()
+                if drawing and "debug" not in action:
+                    action["debug"] = drawing
+                try:
+                    _check_controls(action)
+                    _send(action, max_bytes)
+                except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+                    fallback = "invalid_action"
+                    decision = {"mode": "coast", "error_type": type(exc).__name__}
+                    log(f"invalid action at tick {latest['tick']}: {type(exc).__name__}")
+                    action = {"tick": latest["tick"], **last}
+                    _send(action, max_bytes)
+                elapsed = (time.perf_counter() - arrival) * 1000
+                fresh = last_sent_tick is None or latest["tick"] > last_sent_tick
+                on_time = fresh and fallback is None and elapsed <= budget_ms
+                if fresh:
+                    last_sent_tick = latest["tick"]
+                if fallback is None:
+                    last = {k: list(action[k]) if k != "boost" else action[k]
+                            for k in _CONTINUOUS if k in action}
+                record_skips(superseded, "superseded")
+                if recorder:
+                    recorder.record(latest, action, decision, elapsed, fallback=fallback, on_time=on_time)
+                sent_hook = getattr(bot, "sent", None)
+                if sent_hook:
+                    try:
+                        sent_hook(latest["tick"], action, on_time=on_time)
+                    except Exception:
+                        log(traceback.format_exc())
+            if eof:
+                break
+    finally:
+        if recorder:
+            recorder.close(terminal)
 
 
 if __name__ == "__main__":

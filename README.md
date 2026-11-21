@@ -4,7 +4,7 @@ Astra pilots one mech in the Builders Mech Royale competition. It starts moving 
 
 ## How it plays
 
-- **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and jets onto reachable roofs when they offer shelter inside the forecast circle. It can move to a firing position along a roof, leave under crossfire, and descend before the zone closes.
+- **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and saves jets for obstructions and forced rooftop finishes. After early rooftop camping scored 3.23, the adaptive candidate returned to the ground policy that scored 3.60.
 - **Survival.** The bot estimates travel time to the next circle, reserves energy for escapes, and uses nearby cover to break a pursuer’s line of sight. It looks for accessible cubes, weapon pickups and uncontested supply drops and evaluates upgrade offers using the live rule definitions.
 - **Combat.** Astra leads moving targets and tracks the actual torso angle before firing. It can keep shooting while retreating, time a charged laser release, lob mortar shells, and conserve lightning energy when a target is outside the cone. A wounded mech can disengage long enough to regenerate.
 
@@ -41,3 +41,31 @@ The house squad cooperates in practice. The top 16 finalists play one another on
 | Tested commit | Mean placement points | Matches |
 | --- | ---: | ---: |
 | [`4cb4a9e`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/4cb4a9ea753e8df3744a9ba8d44053068e64e535) | 3.60 | 48 |
+| [`9e59bbf`](https://github.com/atharvatripathi2026/gtgoats_mech_royale/commit/9e59bbfd46f562dbb88d0a4377dc333ce2f8c273) | 3.23 | 48 |
+
+
+## Decision records
+
+Each played observation produces a JSON-lines record with its tick, observed state and events, movement mode and goal, decision reason, combat target, learned context, and the action sent. The final record includes the referee’s placement and kill count when it sends `end`. Match-local adaptation starts fresh at each `hello`.
+
+The scorer runs with a read-only image, a private 64 MB `/tmp`, and no network. It displays the practice score and may display a scorer message. The team page does not provide the match filesystem. The files below are available from runs you control.
+
+```sh
+# From the extracted starter kit, with BOT set to this checkout:
+mkdir -p "$PWD/astra-logs"
+MECHFIGHT_LOG_DIR="$PWD/astra-logs" python3 check/check.py -- python3 -u "$BOT/bot.py"
+# From the bot checkout, inspect an individual log:
+python3 -m training.review /path/to/match.jsonl --last 10
+```
+
+Use `MECHFIGHT_LOG_RAW=1` for full local observations. The default compact trace keeps space available for the whole match. For a local Docker run, bind a directory writable by uid 65534 at `/tmp/mechfight-logs`. The official replay uses prerecorded observations; its terminal result belongs to the recording.
+
+## Train and validate a policy locally
+
+The trainer plays closed-loop local games using the kit's rule values. The arena changes in response to actions, reports the outcome, and writes decision and event logs. The trainer tries bounded changes to `policy.json`, compares them on paired seeds, and reserves independent seeds to check whether a candidate generalizes. The official 48-match aggregate remains the comparison for competition entries.
+
+```sh
+python3 -m training.tune --kit /path/to/mechfight-kit \
+    --output-dir /tmp/astra-training --rounds 3 --train-seeds 3 \
+    --validation-seeds 3 --test-seeds 4 --apply
+```
