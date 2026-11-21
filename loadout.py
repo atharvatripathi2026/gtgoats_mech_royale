@@ -576,7 +576,15 @@ class Loadout:
             before_wall += self.step
         if before_wall < .15 or (arrival - before_wall) * speed < 3:
             return None
-        stop = max(0., before_wall - radius / speed)
+        radius_time = radius / speed
+        stop = max(0., before_wall - radius_time)
+        if stop == 0 and before_wall + radius_time <= horizon:
+            flank = .55 * radius
+            # A flank already in cover plus room on the other side cannot
+            # support predicting an immediate stop across the whole hull.
+            if any(not clear(0., side) and clear(before_wall + radius_time, -side)
+                   for side in (-flank, flank)):
+                return None
         return (x + vx * stop, y + vy * stop, body[2])
 
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
