@@ -1,0 +1,5 @@
+# Preserve an initially favorable armor angle · revise
+
+Exact local candidate `a55b8312106b33ad6b7842cfafc32c22df0bd62f` against `e690e7dc4625343b31ce22825aaef76ee11bfb7d`. One natural activation appeared in 6,788 recorded line-dodge frames across 54 simulated matches. In seed 1068416 at 148.2s, holding yaw kept the same rifle round inside the frontal arc when the projectile-bearing rule was applied only at that impact. Damage fell 67.5 to 45. Placement and total incoming tied, outgoing fell 50.4, and survival rose 0.7s. With the unmodified bearing rule both hits dealt 45, and the candidate dealt 252 less over the match. The full alternate bearing evaluator changed the earlier trajectory and did not activate on this seed.
+
+All 12 fresh pairs in the full projectile-bearing evaluator tied on every command and placement. Validation voted revise due to the isolated tradeoff and lack of corroborating natural activation. The candidate did not advance to survival or combat ballots. Next, screen fresh untouched full-model encounters for naturally active examples before retesting. [Staged mechanism](2026-11-21T2153Z-front-armor-turn-mechanism.md)
