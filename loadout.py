@@ -383,7 +383,7 @@ class Loadout:
                 return False
         return True
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -508,7 +508,7 @@ class Loadout:
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
                         fire[i] = hit
-                if (primary[3] == "gun" and ent.get("kind") == "mech" and not any(fire)
+                if (line_dodge and primary[3] == "gun" and ent.get("kind") == "mech" and not any(fire)
                         and self.config.get("match", {}).get("decide_every", 2) >= 2
                         and not any(w and w.get("charge", 0) > 0 for w in slots)):
                     for i, (_, _, _, weapon_kind, weapon_stats, weapon) in shots.items():

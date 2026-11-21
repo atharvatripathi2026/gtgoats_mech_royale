@@ -68,7 +68,8 @@ class Bot:
             "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
-                                          target_id=plan["target_id"], climbing=jet))
+                                          target_id=plan["target_id"], climbing=jet,
+                                          line_dodge=plan["dodge"] == "line"))
         self.last_decision = {
             "mode": plan["mode"], "reason": base["reason"], "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
