@@ -556,13 +556,14 @@ class Loadout:
         pitch = current_pitch + clamp(desired_pitch - current_pitch, -tilt, tilt)
         forward = math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch)
         offset = stats.get("radius", 2.5) + .5
-        muzzle = tuple(p + delay * v + offset * ray
-                       for p, v, ray in zip(origin, me.get("vel", (0., 0., 0.)), forward))
+        base = tuple(p + delay * v for p, v in zip(origin, me.get("vel", (0., 0., 0.))))
+        muzzle = tuple(p + offset * ray for p, ray in zip(base, forward))
         ground = tuple(p + delay * v for p, v in zip(target["pos"], target.get("vel", (0., 0., 0.))))
         center = (*ground[:2], ground[2] + .5 * self.dimensions(target)[1])
         bearing = math.atan2(center[1] - muzzle[1], center[0] - muzzle[0])
         return (math.dist(muzzle, center) <= weapon.get("range", 45) - .7
                 and abs(angle_delta(bearing, yaw)) <= .65 * math.radians(weapon.get("cone_deg", 30))
+                and self.nav.line_clear(base, muzzle)
                 and self.nav.line_clear(muzzle, center))
 
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
