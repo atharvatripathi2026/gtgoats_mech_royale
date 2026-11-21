@@ -135,6 +135,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "0edd2c8bddd6a1fa41093d1c39a465adb7ddeb43",
+      "summary": "Recheck a wounded target only when the regular search would scan. Against 489c721, two placement gains and no losses in 48 fresh legacy and realistic-offer campus pairs; 48 four-mech placement ties. Docker 300/300.",
+      "created_at": "2026-11-21T02:39:25Z",
+      "parents": [
+        "7f283d18f0486b91d8776cb59aa4b969355ec007"
+      ],
+      "reviews": {
+        "commit": "0edd2c8bddd6a1fa41093d1c39a465adb7ddeb43",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The fallback preserved existing visible targets and had two gains with no losses in 48 fresh campus pairs. In seed 965407 it acquired an otherwise missed target and dealt 225.95 more in the first second with no incoming damage. The independent public-upgrade gain showed a second early damage benefit."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Narrowing the recheck to targetless decisions preserves the known 964006 visible-target selection. Fresh campus panels gained four total points without a loss, all 48 four-mech pairs tied, and 24 tests plus the 300-observation Docker replay passed. The effect is infrequent."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "A fixture and replay verified normal target selection before the fallback. Two gains in 48 campus pairs accompanied a measured damage benefit after target acquisition in both local models, with 46 ties and no losses. Docker passed. This is lower-priority evidence than gun throughput."
+          }
+        }
+      }
     }
   ]
 }
