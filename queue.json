@@ -562,6 +562,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "5934e3adc0f3154988b81b9850247e2818760ab7",
+      "summary": "Require current and projected lightning reach before releasing rising thrust and honor remaining gun reload. Directed replay recovered four points and retained the useful lightning control. Among 120 fresh pairs, one gained two points and 119 tied. Unit and 300-tick Docker checks passed.",
+      "created_at": "2026-11-21T08:40:57Z",
+      "parents": [
+        "07324d676a25ff0216176b094cdf377a905e4268"
+      ],
+      "reviews": {
+        "commit": "5934e3adc0f3154988b81b9850247e2818760ab7",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact revision restores the harmful 1050008 path and preserves each action in useful 1023905. The adverse case avoids 450 first-second damage at equal outgoing and recovers four placement points. Fresh 1055002 adds a two-point gain over the approved gear parent with verified same-target return fire."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Across 120 fresh comparisons it had one two-point gain and zero placement losses, and 88 against the direct parent matched every action. In fresh 1055002 it gained 781.14 outgoing damage by six seconds at 41.4 more incoming. The directed correction avoids 450 damage and retains the favorable lightning control."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Both known controls survive, including the four-point restoration with 450 immediate damage avoided and exact productive arc replay. Fresh approved-parent 1055002 changed only boost and gained two points. Its directed direct-parent effect and fresh whole-policy effect are distinct."
+          }
+        }
+      }
     }
   ]
 }
