@@ -71,6 +71,22 @@ class DecisionTests(unittest.TestCase):
                             "shrink_start": 65, "shrink_end": 100, "dps": 20}
         self.assertEqual(Survival(self.hello).decide(self.obs)["target_id"], 8000)
 
+    def test_squad_fire_finishes_exposed_enemy_under_new_incoming_fire(self):
+        me = self.me
+        me.update(pos=[0, 0, 0], aim=[0, 0])
+        nearby = {"id": 3, "kind": "mech", "pos": [45, 0, 0], "vel": [0, 0, 0],
+                  "aim": [math.pi, 0], "hp": 1400, "max_hp": 1400}
+        injured = dict(nearby, id=6, pos=[85, 0, 0], hp=400)
+        self.obs.update(t=30, mechs=[nearby, injured], events=[
+            {"type": "hit", "target": 6, "amount": 45, "weapon": "gun"},
+            {"type": "damaged", "by": 3, "amount": 45, "weapon": "gun", "bearing": 0}])
+        policy = Loadout(self.hello)
+        policy.decide(self.obs, 0)
+        self.assertEqual(policy.last_decision["target_id"], 6)
+        self.obs.update(t=30.1, mechs=[nearby], events=[])
+        policy.decide(self.obs, 0)
+        self.assertEqual(policy.last_decision["target_id"], 3)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,
