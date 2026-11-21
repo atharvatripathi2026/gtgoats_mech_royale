@@ -1,0 +1,9 @@
+# Alternate to a clear first-step rifle lane · revise
+
+Exact `65ade15db0e6bf1ae6d73883fdf46e66ebecf0b8` on `f995228262f06e394a5b32ea598c908abd22d990` redirects a grounded single rifle trigger when predicted terrain blocks the selected target well before its hull and a nearby rival is reachable on the first step. It requires at least two loaded rounds and leaves locomotion and trigger unchanged.
+
+Six selected simulated controls produce real additional damage at equal initial incoming damage. Under independent phased opponents 1068984 and 1069090 again add 86.4 and 63 damage. The fresh stock squad panel (1069380–95) changes four tapes and loses seven aggregate placement points with two losses and no gains. In 1069390 both paths hit rival 14, with the alternative adding 81 at equal incoming through six seconds, yet placement falls 12→7 and survival drops 62.05s. In 1069395 both paths hit rival 3 and first-six damage ties, yet placement falls 15→13 and total incoming rises 1182.12. First movement changes more than 31 seconds after the aim change in both losses.
+
+The 16 standard four-mech, eight public-upgrade and four independently phased fresh parent pairs all tie on commands and placement. Eight further native pairs match the commit-linked 3.71 reference in kills and placement. Exact build passed 23 unit tests and 300 of 300 timed networkless observations.
+
+All three reviewers voted **revise** after the stock panel. Repeated early damage gains support the mechanic. Existing aim can still contact a closer rival before a nominal terrain obstruction. A follow-up should identify first reachable hull contact along both lanes and seek a fresh consequential elimination or exit before retesting for practice. [Last-round terrain review](7cf1609-revise-collinear-last-rifle-round.md)
