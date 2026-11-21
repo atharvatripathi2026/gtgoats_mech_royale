@@ -1519,6 +1519,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "45e7d6867c4842f7d557be98997183107390ddc1",
+      "summary": "Combine reverse-order recovery confirmation and early laser retention. Both directed effects persist, including the 441-damage beam. All 84 fresh placement comparisons tied. Passed 23 unit tests and 300 networkless observations.",
+      "created_at": "2026-11-21T22:34:16Z",
+      "parents": [
+        "10ac8ca8f303348c04aa1c91701774df488892b2",
+        "76e18f8913f47d0d6088394a5482078f09fd34de"
+      ],
+      "reviews": {
+        "commit": "45e7d6867c4842f7d557be98997183107390ddc1",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Both directed mechanisms reproduce. A surviving cube or missing confirmation still prevents the route change. The staged recovery and laser overlap preserves the attack command. My four independent native pairs tie on actions and placement. The exact units and sandbox pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact merge preserves the split recovery and directed laser hit. The staged overlap clears a stale route while retaining the original laser hold. A fresh action change against the split parent repeats inherited armor mitigation with equal placement and outgoing damage. All 76 parent placements and eight scored-baseline placements tie. Exact checks passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight independent phased comparisons against the two exact parents tie on all commands and placements. Staging pending split recovery on a real held-laser observation clears the recalled pack while matching the laser parent's movement, aim, and trigger. That interaction has not been tested in a naturally simultaneous encounter."
+          }
+        }
+      }
     }
   ]
 }
