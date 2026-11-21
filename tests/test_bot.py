@@ -87,6 +87,22 @@ class DecisionTests(unittest.TestCase):
         policy.decide(self.obs, 0)
         self.assertEqual(policy.last_decision["target_id"], 3)
 
+    def test_gun_path_can_clear_a_ledge_with_vertical_spread(self):
+        class Ledge:
+            def __init__(self, top):
+                self.top = top
+
+            def line_clear(self, start, end):
+                fraction = (30 - start[0]) / (end[0] - start[0])
+                return start[2] + fraction * (end[2] - start[2]) > self.top
+
+        ledge = Ledge(7.5)
+        policy = Loadout(self.hello, ledge)
+        args = ((0, 0, 7), 3, (60, 0, 7), (0, 0, 0), {"spread_deg": .6}, 0, 0)
+        self.assertFalse(policy.blocked_gun_path(*args))
+        ledge.top = 8.5
+        self.assertTrue(policy.blocked_gun_path(*args))
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,

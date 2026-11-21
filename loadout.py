@@ -308,6 +308,32 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
+    def blocked_gun_path(self, muzzle, offset, body, velocity, stats, yaw, pitch):
+        """Check the predicted muzzle and a spread envelope before the intercept."""
+        speed = max(1, stats.get("speed", 252))
+        flight = max(0, math.dist(muzzle, body) - offset) / speed
+        for _ in range(2):
+            future = (body[0] + velocity[0] * flight, body[1] + velocity[1] * flight,
+                      body[2] + velocity[2] * min(flight, .20))
+            flight = max(0, math.dist(muzzle, future) - offset) / speed
+        # Leave room for uncertainty in target motion and contact with its hull.
+        reach = min(flight * speed, stats.get("range", 230)) - 6
+        if reach <= 0:
+            return False
+
+        spread = 2 * math.radians(stats.get("spread_deg", .6))
+        for azimuth, tilt in ((yaw, pitch), (yaw, pitch + spread), (yaw, pitch - spread),
+                              (yaw + spread, pitch), (yaw - spread, pitch),
+                              (yaw + spread, pitch + spread), (yaw - spread, pitch + spread),
+                              (yaw + spread, pitch - spread), (yaw - spread, pitch - spread)):
+            cos_pitch = math.cos(tilt)
+            ray = (math.cos(azimuth) * cos_pitch, math.sin(azimuth) * cos_pitch, math.sin(tilt))
+            origin = tuple(p + step * offset for p, step in zip(muzzle, ray))
+            endpoint = tuple(p + step * reach for p, step in zip(origin, ray))
+            if self.nav.line_clear(origin, endpoint):
+                return False
+        return True
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -423,6 +449,16 @@ class Loadout:
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
                         fire[i] = hit
+                        if hit and kind == "gun" and dist >= 25 and self.nav is not None:
+                            ticks = 2 if w.get("cooldown", 0) > self.step + 1e-8 else 1
+                            delay = ticks * self.step
+                            moving_muzzle = tuple(p + v * delay for p, v in
+                                                  zip(muzzle, me.get("vel", (0, 0, 0))))
+                            fire_yaw = actual[0] + clamp(angle_delta(yaw, actual[0]), -turn * ticks, turn * ticks)
+                            fire_pitch = actual[1] + clamp(pitch - actual[1], -tilt * ticks, tilt * ticks)
+                            target = tuple(p + v * delay for p, v in zip(body, vel))
+                            fire[i] = not self.blocked_gun_path(moving_muzzle, offset, target, vel, ws,
+                                                                 fire_yaw, fire_pitch)
                 action["fire"] = fire
         for w in slots:
             if w and w.get("kind") == "gun" and not w.get("reload", 0):
