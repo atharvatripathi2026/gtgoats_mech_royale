@@ -1,0 +1,5 @@
+# Replace a blocked projectile with a clear one for line dodge · revise
+
+Validation tested exact local `09668a62ce87230e548f9ca0499400355269f2c7` against `10ac8ca8f303348c04aa1c91701774df488892b2`. An engine audit found one nominally threatening round collided with terrain before reaching the predicted contact. The change only chooses a second native line threat when the first is physically blocked and the alternative is clear. All four directed replays tied on complete commands and placement. Two cases selected a different round internally but produced the same escape move.
+
+In simulated 1068582, two real rifle hits still landed, and only one was tracked at the first decision. A fixed-input test enumerated 360 first-command headings using the arena's movement and collision functions. With the same boost and following command, none avoided the tracked hit while remaining in the ring. Validation voted revise before promotion or another fresh rollout. Aim the next experiment at an earlier prediction or a feasible multi-command route with a measured improvement in clearance.
