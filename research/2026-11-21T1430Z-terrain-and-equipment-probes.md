@@ -1,0 +1,5 @@
+# Check terrain sensitivity and mortar pickup risk
+
+In two terrain classification fixtures, exact `94e444e` kept 1064806's six-second trade while changing boost only at t143.6. With a stricter 18 cm floor snap, both trajectories stayed grounded through the initial dips. The trade still improved by 50.4 outgoing and 135 less incoming over six seconds at tied place, with 1.25 seconds shorter life. This bounds sensitivity to a brief airborne transition. [Merge experiment](94e444e-combine-arc-reserve-and-rifle-boost.md)
+
+The prior track-only charged-rival arc stayed wire-identical in all 16 fresh short-aware pairs from 1065490. A distinct mortar-pickup audit found one visibly aimed charging laser across 143 observed takes. A one-seed, pickup-only deferral on 1061856 tied placement in both models. Stock lost 280.33 outgoing. With the documented laser cookoff coefficient modeled, deferral reduced the next same-source impact from 421.25 to 340.2, lived 4.65 seconds longer and dealt 225 more total. Combat kept that experiment unfrozen until more of these encounters are observed. [Earlier short probe](2026-11-21T1415Z-test-charging-targets-during-track.md)
