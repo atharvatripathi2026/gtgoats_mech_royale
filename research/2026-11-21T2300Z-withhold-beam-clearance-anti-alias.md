@@ -1,0 +1,5 @@
+# Bracket the early beam ray against terrain sampling · withheld
+
+Combat tested an uncommitted approximation against current `45e7d6867c4842f7d557be98997183107390ddc1`, patch SHA-256 `3cc4898c45ab9c5c3556bb865ff199d1e8afb3be50fbca9fba73d9c62a34f9be`. It advances the muzzle through the actual charged movement step and requires lateral parallel rays to be clear. In generated pursuit 1068891 the actual ray intersected the rival's hull, but the arena's continuous line-of-sight check rejected the hit. The fast terrain query accepted that centerline. A lateral sample rejected it and the scratch restored every parent action.
+
+Both directed positive beams remained. Native 1068883 still gained the early beam and took an extra 45 through six seconds from the later crossfire. All eight fresh public-equipment pairs tied on commands and placement. Combat withheld the scratch because it repaired the same miss as the dodge gate and left the other adverse branch. Keep the geometry diagnostic for a genuinely distinct active case.
