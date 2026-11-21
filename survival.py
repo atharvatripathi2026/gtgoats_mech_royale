@@ -472,6 +472,14 @@ class Survival:
         if key in recovery:
             self.loot[key] = memory[key]
             self.recalled_cube = key
+            if self.recalled_pack is None or self.recalled_pack[0] != key:
+                recent_pack = {
+                    cube_id for cube_id, (_, location) in self.recovery_cubes.items()
+                    if math.dist(p, location) <= RECOVERY_PACK_SPACING
+                }
+                # Extend the witness to admission only while the pack has a visible member.
+                if any(cube.get("id") in recent_pack for cube in obs.get("cubes") or ()):
+                    self.recalled_pack = key, recent_pack
         if kind == "drop":
             drop = next(o for o in obs["drops"] if o.get("id") == key)
             if d < max(1, drop.get("radius", 8) - 2.0):
