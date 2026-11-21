@@ -23,6 +23,7 @@ class Loadout:
         self.last_hits = {}
         self.last_attacker = None
         self.last_bearing = 0
+        self.last_hit_rear = False
         self.last_swap = -100
         self.last_target = None
         self.sight = {}
@@ -183,6 +184,10 @@ class Loadout:
                     score += 56 * clamp(1 - remaining, 0, 1)
                     since = t - self.last_hits.get(ent.get("id"), -100)
                     score += 16 * clamp(1 - since / 2.4, 0, 1)
+                    # Turning toward a recent rear attacker can protect the
+                    # weaker side while we are under sustained squad pressure.
+                    if attacker and self.last_hit_rear and health < .80:
+                        score += 24 * clamp(1 - (t - self.last_damage) / .85, 0, 1)
                 if pursuer:
                     score += 6
                 opponent = ent.get("weapons", [])
@@ -320,6 +325,7 @@ class Loadout:
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
+                self.last_hit_rear = event.get("rear", False)
         pos = me["pos"]
         muzzle = pos[0], pos[1], pos[2] + stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
         ent, h, engage = self.target(obs, muzzle, evade, target_id)
