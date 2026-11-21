@@ -914,6 +914,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "38f245c6d6bc3da212560066cf0d635195c5a769",
+      "summary": "Defer a newly prompted partial gun top-off during an existing line dodge only when no target is selected. Preserved two directed early shots and one place, repaired tracked adverse, 84 fresh placements tied. 23 units and 300 sandbox replies.",
+      "created_at": "2026-11-21T12:43:23Z",
+      "parents": [
+        "049c97a20cde4894b94bb39b0f60e37a6406c63d"
+      ],
+      "reviews": {
+        "commit": "38f245c6d6bc3da212560066cf0d635195c5a769",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Requiring scan at onset restores the tracked adverse and other controls, keeps early shots across observation breaks, and preserves one directed placement gain. Empty reload and tactical movement stay unchanged in the first action. Fresh placements tie and exact checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Exact tracked loss 1055102 and quiet 1062953 return to stock commands. 1037211 restores a 63-damage shot with +315 outgoing at equal incoming through six seconds and gains one place. 1032304 restores early output in a tied win, with later tradeoffs. The owner 16 command streams and independent placements tie."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Two observed reload exposures restore usable gun shots, including one placement gain. Tracked 1055102 and no-line controls are command-identical, while 68 independent placements tie. Continuing across individual line frames is necessary in both restored shot cases and remains limited by evade and the old ammo floor. Exact runtime checks passed."
+          }
+        }
+      }
     }
   ]
 }
