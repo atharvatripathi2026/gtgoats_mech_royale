@@ -787,6 +787,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "1cba7e9821dd99889a00ccd315b462f332d9d338",
+      "summary": "Combine opening-range lightning with a protected hold against a gun aimed near the exposed route. Restores the away-facing loss and preserves two directed cover gains and the earlier arc kill. 64 fresh first-parent placements tied. 22 units and 300 timely ticks passed.",
+      "created_at": "2026-11-21T10:57:20Z",
+      "parents": [
+        "a8543c76bb20d8efb712f1fffd05e0fc95b41690",
+        "02c2fc0726496969bff0f8a735433480fed2797b"
+      ],
+      "reviews": {
+        "commit": "1cba7e9821dd99889a00ccd315b462f332d9d338",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The yaw predicate restores both away-facing tapes including the previous loss. It retains aimed cover that saves 144.9 incoming through six seconds and the earlier lightning kill. All 64 fresh first-parent placements tie and exact unit and Docker checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The revision restores the stock path when the gun could not immediately face the exit and retains the directed gains and actual earlier arc kill. One-command yaw is a threat plausibility check at a future endpoint. Fresh first-parent placements tie and exact checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "It restores the prior loss where the enemy was still 3.124 radians away from an actual exposed path, retains the aligned gun damage avoidance and preserves the arc control. Fresh first-parent placements tie and the linked losses begin with inherited weapon actions. The turn limit approximates an immediate threat."
+          }
+        }
+      }
     }
   ]
 }
