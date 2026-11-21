@@ -1,0 +1,7 @@
+# Save the last rifle round when the same arc can finish
+
+The combat scratch removes only the last rifle trigger when a simultaneous ready arc can finish the already selected player and another rival is in rifle range. It checks the nearest conductor, safety margins on direct and projected contacts, and lethal damage after armor. The current-parent experiment used `2633ab86c6628da4597b987fee7cc22544f1ce53`.
+
+In the historical `f0e1a8dc44d2144aa2337108b9c425fdc7a0e5dd` public-equipment replay 1025801, the native arc still dealt 60 damage to the selected one-half-HP rival. The saved rifle round hit a second actual rival for 45 damage before the parent would have finished reloading. Incoming damage, full-match damage, kills, lifetime and placement tied. All four fixed shooter and target positions from the two frame phases resolved the same first conductor. The alternate movement-order replay followed a different trajectory and yielded no corroborating contact. The other archived example had no useful second target initially.
+
+All 16 fresh 1066390–6405 trials were command- and placement-identical, and 23 local unit tests passed. The scratch was withheld before freezing a candidate or requesting votes because only one historical replay demonstrated a useful activation. The next useful evidence would be a second independent real-contact replay with a distinct reachable rival. All results are simulated. [Earlier dual-trigger family](acc96a4-trust-an-in-flight-gun-finisher.md)
