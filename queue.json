@@ -1014,6 +1014,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "5aebe265e03a26ba107963e1dd649c5397626ed9",
+      "summary": "Merge airborne mortar steering with grounded idle lightning and prepared rifle. Reproduced both directed physical benefits. 224 fresh paired placements tied, including 32 moving-hull and 8 score-linked baseline pairs. Three exact approvals and 300 timely sandbox replies.",
+      "created_at": "2026-11-21T13:56:07Z",
+      "parents": [
+        "f5aba453c0a6d00fcd3d0d353e95c21ce47b5eeb",
+        "45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555"
+      ],
+      "reviews": {
+        "commit": "5aebe265e03a26ba107963e1dd649c5397626ed9",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Both directed physical effects and exact no-clearance controls were preserved across 224 fresh placement ties including moving hull. Fresh 1064562 worsens six-second trade at tied place and reproduces the arc parent without airborne steering."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "True byte-preserving parents and disjoint grounded and airborne gates. Both directed benefits reproduce against the opposite parent with 224 fresh placement ties. The inherited 1064562 reserve cost interrupts boost and warrants a separate reserve experiment."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All 32 independent moving-hull placements tied. The 16 pairs against 45c were wire-identical. Against airborne only 1064562 differs, an inherited adverse trade without coactivation. Directed shell save and canonical arc controls were preserved."
+          }
+        }
+      }
     }
   ]
 }
