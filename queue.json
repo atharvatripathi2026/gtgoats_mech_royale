@@ -989,6 +989,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555",
+      "summary": "Spend an idle ready lightning pulse on one clearly aimed nearby threat without retargeting. Fresh exact replay added 184.8 damage at equal incoming while preserving native hits; all 100 fresh placements tied. 23 units and 300 timed replies.",
+      "created_at": "2026-11-21T13:42:06Z",
+      "parents": [
+        "e35d7d070e8d0ee8736769e8592b9d162b2f5380"
+      ],
+      "reviews": {
+        "commit": "45c1b03d2f167ad5c5bf7f8970723e5ba2cd0555",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Independently verified frozen fresh 1064348 added two hits of 92.4 against nearby #3 and preserved all three native target hits, incoming, life and placement. The mixed 1061083 later energy/exposure trade deserves recording. All 100 fresh placements and exact runtime checks passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Natural exact 1064348 increases real damage by 184.8 at equal incoming, survival and placement. Remaining directed pulses add 81.6 and 277.2 at equal incoming; 1061083 adds 41.4 incoming and ties place. Aim and intended target are preserved, with a conservative energy reserve. All exact checks passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "A frozen fresh activation adds 184.8 early damage with zero change in early incoming or survival, consistent with two directed equal-incoming pulses. The adverse directed case loses 14 outgoing and adds 41.4 incoming by six seconds with tied score. Three alternate-model controls are command-identical; 100 fresh placements tie."
+          }
+        }
+      }
     }
   ]
 }
