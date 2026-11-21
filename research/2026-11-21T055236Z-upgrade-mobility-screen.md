@@ -1,0 +1,9 @@
+# Retaining the value of mobility upgrades
+
+Across 96 previously paired public-offer campus simulations from five panels, the first action changed in 18 comparisons of the approved gun-throughput policy `8b9f76d` with verified `03a8f93`. In each of the 18, only the upgrade choice changed at that first action. Five placements improved, three regressed, and ten tied.
+
+All three archived losses began with replacing the incumbent mobility or energy choice. None of the five gains had that first choice. The losses replaced efficient jets with a drum magazine in standard 1014214 (−8) and joint 1014214 (−1), and replaced reactor with gun damage in standard 1014210 (−3). The upgrades occurred at 32.4, 66.0, and 100 energy respectively. Before the picks, the prior ten seconds had boost at 45%, 36%, and 23% of decisions and evade on 73%, 68%, and 48%.
+
+The new two-parent combination supplied an independent example, joint 1026902. It chose the drum over efficient jets at full energy and 16% recent boost. The first six seconds were combat-neutral, but it ended on 5 placement points against 10 for the late-jet parent. Joint 1026904 gained four points and first replaced projectile speed with gun damage. These observations show that a guard based only on low energy or over 20% recent boosting would miss the new mobility-related regression.
+
+For a prospective test, preserve the incumbent choice when it is efficient jets or reactor, and keep the throughput adjustment on other offers. Use separate fresh matched panels and include archived standard 1014214 and new joint 1026902 as pick-restoration fixtures. Also confirm that gun-velocity-to-damage positive 970414 and 1026904 still choose the new gun upgrade. The comparison cannot attribute the eventual placement change to a specific later fight. [Prior model calibration](2026-11-21T022130Z-upgrade-model-calibration.md)
