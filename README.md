@@ -70,3 +70,23 @@ python3 -m training.tune --kit /path/to/mechfight-kit \
     --output-dir /tmp/astra-training --rounds 3 --train-seeds 3 \
     --validation-seeds 3 --test-seeds 4 --apply
 ```
+
+For two different gameplay commits, use `python3 -m training.compare --help` to run paired matches on generated layouts and the kit's campus. Add `--traces` to keep the decisions and outcomes from every game.
+
+## GT Goats practice submissions
+
+The Chrome helper submits tested commits from this team's public candidate queue through the Builders practice form. It runs while the computer is awake and the signed-in track tab is open. It stops at 11 a.m. Eastern on Sunday, November 22, 2026.
+
+1. Download and unzip the [practice helper](https://github.com/atharvatripathi2026/gtgoats_mech_royale/releases/download/submission-helper-v1/gt-goats-practice-helper.zip).
+2. In desktop Chrome, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select the unzipped folder containing `manifest.json`.
+3. Open or refresh the [Builders practice form](https://www.joinbuilders.org/buildathon/tracks/builders#submit) in that Chrome profile. Sign in for GT Goats if prompted. Click **Start GT Goats submissions** in the panel at the bottom right. Use **Stop** there to pause.
+
+The helper reads the site's remaining allowance, waits for a previous run to finish, and spaces its own attempts at least 15 minutes apart. With several candidates available, it gives preference to changes based on higher-scoring entries. Every fourth attempt tries the oldest eligible candidate. Scores, receipts and scorer messages are kept in this Chrome profile and are available under **Export results**. If the site never acknowledges a click, the panel lets you check the official history, stop, and retire that commit before resuming.
+
+Candidates enter the queue after the bot passes local checks and its exact commit is public. From the current main checkout, run the publisher with a short summary of the test results.
+
+```sh
+python3 -m training.publish_candidate --commit FULL_SHA --summary 'Gameplay change and test results'
+```
+
+[Candidate queue](https://github.com/atharvatripathi2026/gtgoats_mech_royale/blob/practice-queue/queue.json)

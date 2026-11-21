@@ -5,6 +5,10 @@ Run from the checkout with an authenticated GitHub CLI:
     python3 -m training.publish_candidate --commit FULL_SHA --summary 'Ground escape update' --dry-run
     python3 -m training.publish_candidate --commit FULL_SHA --summary 'Ground escape update'
 
+New entries record the submitted commit's Git parents. To track gameplay lineage
+across tooling-only commits or combined variants, provide --parent FULL_SHA once
+for each gameplay parent. Every override must resolve in the same public repo.
+
 Dry runs read GitHub and print the proposed queue without writing it. A successful
 write prints a JSON receipt. Rerunning the same commit preserves its original
 entry and queue position. This publishes the candidate for the submission helper;
@@ -76,6 +80,19 @@ def full_sha(value):
     return isinstance(value, str) and SHA.fullmatch(value) is not None
 
 
+def validate_parents(parents, commit):
+    if (not isinstance(parents, list) or not all(full_sha(p) and p != commit for p in parents)
+            or len(set(parents)) != len(parents)):
+        raise QueueError("Gameplay parents must be distinct full public commit SHAs, excluding the candidate.")
+
+
+def verified_commit(sha):
+    record = api("GET", "/commits/" + sha)
+    if not isinstance(record, dict) or record.get("sha") != sha:
+        raise QueueError(f"GitHub did not return the exact commit {sha}.")
+    return record
+
+
 def utc_date(value):
     try:
         result = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -122,6 +139,8 @@ def validate_queue(queue):
         if (not isinstance(entry, dict) or not full_sha(entry.get("commit"))
                 or not isinstance(entry.get("summary"), str) or not entry["summary"].strip()):
             raise QueueError(f"Invalid candidate in {QUEUE_FILE}.")
+        if "parents" in entry:
+            validate_parents(entry["parents"], entry["commit"])
         date = utc_date(entry.get("created_at"))
         if entry["commit"] in seen or (previous is not None and date < previous):
             raise QueueError(f"Queue already contains duplicate or out-of-order candidates.")
@@ -160,7 +179,7 @@ def read_queue(head):
     return queue, file["sha"]
 
 
-def publish_once(commit, summary, dry_run):
+def publish_once(commit, summary, dry_run, parents):
     head = branch_head(BRANCH)
     create_branch = head is None
     if create_branch:
@@ -176,7 +195,7 @@ def publish_once(commit, summary, dry_run):
         return {**receipt, "status": "already_queued", "position": entries.index(existing) + 1,
                 "queue_commit": head, "entry": existing}
     if not existing:
-        entry = {"commit": commit, "summary": summary, "created_at": stamp(now())}
+        entry = {"commit": commit, "summary": summary, "created_at": stamp(now()), "parents": parents}
         entries.append(entry)
         # Stable sorting retains insertion order when multiple commits arrive in
         # the same second and handles clock skew across authorized producers.
@@ -214,9 +233,11 @@ def publish_once(commit, summary, dry_run):
     raise ApiError(409, "The candidate was absent when verifying the published queue.")
 
 
-def publish(commit, summary, dry_run=False):
+def publish(commit, summary, dry_run=False, *, parents=None):
     if not full_sha(commit):
         raise QueueError("Pass a full lowercase 40-character Git commit hash.")
+    if parents is not None:
+        validate_parents(parents, commit)
     summary = summary.strip()
     if not summary or len(summary) > 300 or any(not c.isprintable() for c in summary):
         raise QueueError("Use a single-line strategy summary of 1 to 300 printable characters.")
@@ -226,10 +247,18 @@ def publish(commit, summary, dry_run=False):
             repo = api("GET")
             if repo.get("private") is not False or repo.get("full_name", "").lower() != REPO.lower():
                 raise QueueError("The competition repository must be public.")
-            candidate = api("GET", "/commits/" + commit)
-            if candidate.get("sha") != commit:
-                raise QueueError("GitHub did not return the exact candidate commit.")
-            return publish_once(commit, summary, dry_run)
+            candidate = verified_commit(commit)
+            if parents is None:
+                git_parents = candidate.get("parents")
+                if not isinstance(git_parents, list) or not all(isinstance(p, dict) for p in git_parents):
+                    raise QueueError("Missing Git parent metadata in the verified GitHub commit.")
+                lineage = [p.get("sha") for p in git_parents]
+                validate_parents(lineage, commit)
+            else:
+                lineage = parents
+                for sha in lineage:
+                    verified_commit(sha)
+            return publish_once(commit, summary, dry_run, lineage)
         except ApiError as exc:
             # A conflicting writer may have published this same commit. Read the
             # latest queue before attempting another write, including after a
@@ -244,10 +273,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--commit", required=True, help="The full SHA of the tested public commit")
     parser.add_argument("--summary", required=True, help="A short description of the strategy change")
+    parser.add_argument("--parent", dest="parents", action="append", metavar="FULL_SHA",
+                        help="Gameplay parent in the same repository; repeat to replace Git parent lineage")
     parser.add_argument("--dry-run", action="store_true", help="Read GitHub and preview without publishing")
     args = parser.parse_args()
     try:
-        result = publish(args.commit, args.summary, args.dry_run)
+        result = publish(args.commit, args.summary, args.dry_run, parents=args.parents)
     except QueueError as exc:
         parser.exit(1, f"Could not publish practice candidate: {exc}\n")
     print(json.dumps(result, indent=2, ensure_ascii=False))

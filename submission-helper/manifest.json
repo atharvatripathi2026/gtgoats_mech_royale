@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "GTGoats Mech Royale Practice",
+  "version": "1.0.0",
+  "description": "Submit tested GTGoats commits through the Builders practice form when a team member enables the helper.",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/atharvatripathi2026/gtgoats_mech_royale/practice-queue/queue.json"
+  ],
+  "background": { "service_worker": "worker.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.joinbuilders.org/buildathon/tracks/builders*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
