@@ -1,0 +1,7 @@
+# Downward gun outcomes under two spread models
+
+The independent `62cab809ff23fe3288403466f84808b0c53e9811` evaluator mirrors our mech's Gaussian yaw and pitch deviations while retaining the original calls and variance. `00b648838b36b7aceca582098f4b25e22b24cdb7` keys the player's two Gaussian values to match seed, scenario, slot and physics tick. This keeps future same-tick draws aligned even if an earlier shot is withheld. Both change only the local training arena and passed its 32 unit tests.
+
+In matched 1061820–35 against exact linked `03a8f93`, `1cba7e9` lost one point under native spread and nine under mirrored spread. In directed 1061750 the added shot landed 46.8 under both models. Earlier hits had left the target at 266 HP native and 105.35 mirrored. Native placement changed from nine to three with the new lineage, and both variants won under mirrored spread. In 1061755 the mirror changed the trajectory before the previous trigger and all commands matched. Positive control 1061675 kept a real 45-damage hit in both evaluators as its placement delta flipped from +3 to −1.
+
+With tick-keyed spread the exact lineage and ablation tied command for command on 1061750 and 1061755, and all 20 fresh ablation placements tied on 1061840–59. A different spread sample can change which engagements or firing windows occur before the first tested decision. These closed-loop simulations support continued scrutiny of the placement effect, alongside the real early hits. [Component ablation](ec47fa3-isolate-the-downward-gun-trigger.md)
