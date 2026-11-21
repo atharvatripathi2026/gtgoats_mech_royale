@@ -339,44 +339,61 @@ class Survival:
             and any(distance(rival["pos"], point) < radius + 3
                     and abs(rival["pos"][2] - point[2]) <= 2 for point in pack.values())
         }
-        last, pending, pair = {}, None, None
+        last, older, pending, pair = {}, {}, (), None
         if previous is not None and previous[:2] == (key, tick - stride):
-            last, pending, pair = previous[2:]
+            last, older, pending, pair = previous[2:]
         if visible_pack or (pair is not None and tick - pair[0] > 3 * stride):
-            pending, pair = None, None
+            pending, pair = (), None
 
         def footprint(pos, points, margin):
             return {ident for ident in points if distance(pos, pack[ident]) < radius - margin
                     and abs(pos[2] - pack[ident][2]) <= 2}
 
-        if pending is not None:
-            ident, count, covered = pending
-            if ident in rivals and rivals[ident][0] == count and covered <= footprint(rivals[ident][1], pack, .25):
-                if pair is not None:
-                    return True
-                pair = tick, ident, covered
+        if pending and all(
+            ident in rivals and rivals[ident][0] == count
+            and covered <= footprint(rivals[ident][1], pack, .25)
+            for ident, count, covered in pending
+        ):
+            if pair is not None or len(pending) == 2:
+                return True
+            ident, _, covered = pending[0]
+            pair = tick, ident, covered
 
-        next_pending = None
+        next_pending = ()
         if not visible_pack:
             remaining = set(pack) if pair is None else set(pack) - pair[2]
-            delta = 2 if pair is None else 1
-            arrivals = []
+            sequential, together = [], []
             for ident, (count, pos) in rivals.items():
                 if ident not in last or (pair is not None and ident == pair[1]):
                     continue
                 prior_count, prior_pos = last[ident]
-                if count - prior_count != delta:
+                delta = count - prior_count
+                if delta not in ((1, 2) if pair is None else (1,)):
                     continue
                 covered = footprint(pos, remaining, .25)
-                if (len(covered) == delta and covered == footprint(pos, remaining, 0.)
-                        and not covered & footprint(prior_pos, remaining, 0.)
-                        and not any(cube.get("id") not in pack and "pos" in cube
-                                    and distance(pos, cube["pos"]) <= radius
-                                    and abs(pos[2] - cube["pos"][2]) <= 4 for cube in obs["cubes"] or ())):
-                    arrivals.append((ident, count, covered))
-            if len(arrivals) == 1:
-                next_pending = arrivals[0]
-        self.recalled_collectors = key, tick, rivals, next_pending, pair
+                if (len(covered) != delta or covered != footprint(pos, remaining, 0.)
+                        or any(cube.get("id") not in pack and "pos" in cube
+                               and distance(pos, cube["pos"]) <= radius
+                               and abs(pos[2] - cube["pos"][2]) <= 4 for cube in obs["cubes"] or ())):
+                    continue
+                claim = ident, count, covered
+                if not covered & footprint(prior_pos, remaining, 0.):
+                    if delta == (2 if pair is None else 1):
+                        sequential.append(claim)
+                    if pair is None:
+                        together.append(claim)
+                elif pair is None and ident in older:
+                    earlier_count, earlier_pos = older[ident]
+                    # Some collection orders report cargo one observation after entry.
+                    if (prior_count == earlier_count and covered == footprint(prior_pos, remaining, .25)
+                            and not covered & footprint(earlier_pos, remaining, 0.)):
+                        together.append(claim)
+            if (len(together) == 2 and sum(len(claim[2]) for claim in together) == len(pack)
+                    and together[0][2].isdisjoint(together[1][2])):
+                next_pending = tuple(together)
+            elif len(sequential) == 1:
+                next_pending = tuple(sequential)
+        self.recalled_collectors = key, tick, rivals, last, next_pending, pair
         return False
 
     def _forget_recalled_cube(self, key):
