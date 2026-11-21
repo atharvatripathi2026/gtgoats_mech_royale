@@ -89,8 +89,21 @@ class Loadout:
                           "pierce": .04, "chain": .08, "energy": -.25,
                           "cone_deg": .13}
 
+        gun_fields = {"damage", "mag", "cooldown", "reload"}
+        gun = {"damage": 45, "mag": 12, "cooldown": .24, "reload": 2.4}
+        gun.update(self.weapons.get("gun", {}))
+        gun.update(held.get("gun", {}))
+        sustain = "gun" in held and not late and health >= .7
+
+        def sustained_damage(weapon):
+            rounds = max(1, weapon["mag"])
+            cycle = rounds * max(.05, weapon["cooldown"]) + max(0, weapon["reload"])
+            return max(1, weapon["damage"]) * rounds / cycle
+
         def score(choice):
             total = 0.
+            upgraded_gun = None
+            gun_credit = 0.
             for effect in self.upgrades.get(choice.get("id"), choice).get("effects", []):
                 path = effect.get("path", "").split(".")
                 field = path[-1]
@@ -109,7 +122,19 @@ class Loadout:
                     continue
                 scale = max(.1 if field == "armor" else 1, abs(current))
                 change = effect.get("mul", 1) - 1 + effect.get("add", 0) / scale
-                total += change * weight
+                value = change * weight
+                total += value
+                if sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
+                    if upgraded_gun is None:
+                        upgraded_gun = gun.copy()
+                    upgraded_gun[field] = upgraded_gun[field] * effect.get("mul", 1) + effect.get("add", 0)
+                    gun_credit += value
+            if upgraded_gun is not None:
+                # A large magazine and a quicker reload work together across
+                # repeated bursts. Keep the extra credit bounded so defense
+                # stays competitive and still wins when the hull is vulnerable.
+                gain = sustained_damage(upgraded_gun) / sustained_damage(gun) - 1
+                total += clamp(.95 * gain - gun_credit, 0, .12)
             return total
 
         return max(range(len(choices)), key=lambda i: score(choices[i]))
