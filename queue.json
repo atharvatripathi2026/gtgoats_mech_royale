@@ -662,6 +662,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "258d8c63654e9d24dacfa6c4c6a675e4b63b6e5f",
+      "summary": "Shorten mortar lead when a grounded target is approaching a broad blocked route. One fresh placement gain and two separate campus damage gains in 88 pairs, with no placement losses. All 24 unit tests and 300 timed Docker observations passed.",
+      "created_at": "2026-11-21T09:24:33Z",
+      "parents": [
+        "79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61"
+      ],
+      "reviews": {
+        "commit": "258d8c63654e9d24dacfa6c4c6a675e4b63b6e5f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "A fresh same-target hit and kill gained one point without extra incoming. Two fresh campus matches gained outgoing at equal incoming and survival. Directed replays also saw genuine wall-stop contacts."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "One of 88 fresh pairs gained a point, with two separate campus outgoing gains of 738 and 499 and no placement losses. The directed case gained six points after an actual direct hit and splash replaced splash alone. The model can misread a wall slide or turn."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The fresh aim-only change dealt 117.63 to the same target at equal incoming and life and gained one point. Directed controls confirm actual new contacts, and no fresh placement regressed. The projected stop can discard tangential motion along a wall."
+          }
+        }
+      }
     }
   ]
 }
