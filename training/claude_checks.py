@@ -309,6 +309,45 @@ def _paired(baseline, candidate, kit, workdir, image):
         return result
 
 
+# Bound untrusted Docker output before the official checker's queue sees it.
+# Its validation, timing budgets and retry rules are otherwise untouched.
+OFFICIAL_READER = """
+import importlib.util
+import os
+import sys
+import time
+
+spec = importlib.util.spec_from_file_location("official_check", sys.argv[1])
+checker = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(checker)
+sys.argv = sys.argv[1:]
+
+def bounded_read(self):
+    pending = bytearray()
+    count = 0
+    while count < 400:
+        chunk = os.read(self.proc.stdout.fileno(), 8192)
+        if not chunk:
+            self.lines.put((time.perf_counter(), None))
+            return
+        pending.extend(chunk)
+        while b"\\n" in pending and count < 400:
+            line, _, pending = pending.partition(b"\\n")
+            if len(line) > 65536:
+                count = 400
+                break
+            self.lines.put((time.perf_counter(), line + b"\\n"))
+            count += 1
+        if len(pending) > 65536 or count >= 400:
+            break
+    self.lines.put((time.perf_counter(), b"output limit exceeded"))
+    self.lines.put((time.perf_counter(), None))
+
+checker.Bot._read = bounded_read
+sys.exit(checker.main())
+"""
+
+
 def run_checks(candidate, kit, *, baseline=None, output=None):
     """Return mandatory unit and official replay evidence for an exact snapshot."""
     _docker()
@@ -333,7 +372,8 @@ def run_checks(candidate, kit, *, baseline=None, output=None):
         unit["ok"] = unit["ok"] and unit["tests"] > 0
 
         name = f"astra-claude-{uuid.uuid4().hex}"
-        checker = [sys.executable, "-I", str(trusted_kit / "check" / "check.py"), "--map-dir", "/arena"]
+        checker = [sys.executable, "-I", "-c", OFFICIAL_READER,
+                   str(trusted_kit / "check" / "check.py"), "--map-dir", "/arena"]
         sandbox = _sandbox(name, bot, trusted_kit, image)
         docker, log = _check([*checker, "--", *sandbox], name, workdir, output, "docker")
         timing = re.search(
