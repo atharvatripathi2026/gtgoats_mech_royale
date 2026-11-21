@@ -45,6 +45,8 @@ class Bot:
         self.ground_line_boost_tick = None
         self.pending_ground_line_boost_tick = None
         self.last_escape_grace = -math.inf
+        self.outbound_hold_until = -math.inf
+        self.outbound_hold_phase = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -180,6 +182,41 @@ class Bot:
         return (abs(self.nav.surface(*end) - z) < .25
                 and self.nav._ground_segment(x, y, *end, *self.nav._dimensions(radius)))
 
+    def quiet_outbound_hold(self, obs, plan, action):
+        me, zone = obs["self"], obs.get("zone") or {}
+        t = obs["t"]
+        phase = zone.get("shrink_start", t)
+        if (plan["mode"] != "zone" or plan["dodge"] or not me.get("grounded") or not me.get("in_zone")
+                or phase - t < 10 or zone.get("dps", 0) < 70 or action.get("jump") or action.get("boost")
+                or obs.get("mechs") or obs.get("projectiles") or any(action.get("fire", ()))
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+            self.outbound_hold_until = -math.inf
+            return False
+        if t < self.outbound_hold_until:
+            return True
+        if self.outbound_hold_phase == phase or not self.nav.loaded or len(plan["goal"]) != 2:
+            return False
+        xy, vel = me["pos"][:2], me["vel"][:2]
+        center, radius = zone["center"], zone["radius"]
+        stats = me.get("stats", {})
+        speed = stats.get("walk_speed", 11.7)
+        accel = stats.get("ground_accel", 58.5)
+        motion = math.hypot(*vel)
+        if motion < .6 * speed or accel <= 0:
+            return False
+        ground = self.nav._dimensions(stats.get("radius", 2.5))
+        ux, uy = action["move"]
+        native = xy[0] + speed * ux, xy[1] + speed * uy
+        braking = tuple(x + v * motion / (2 * accel) for x, v in zip(xy, vel))
+        if (math.dist(native, center) < radius or math.dist(braking, center) >= radius - 1
+                or math.dist(plan["goal"], center) >= math.dist(xy, center) - 20
+                or self.nav._ground_segment(*xy, *plan["goal"], *ground)
+                or not self.nav._ground_segment(*xy, *native, *ground)):
+            return False
+        self.outbound_hold_phase = phase
+        self.outbound_hold_until = t + 1.2
+        return True
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -227,6 +264,8 @@ class Bot:
         if escape_grace:
             action["boost"] = True
             self.last_escape_grace = obs["t"]
+        if self.quiet_outbound_hold(obs, plan, action):
+            action["move"] = [0., 0.]
         shell_steer = self.survival.airborne_mortar_step(obs, action, plan["dodge"])
         self.pending_ground_line_boost_tick = (
             obs["tick"] if grounded and plan["dodge"] == "line" and action["boost"] and not action["jump"]
