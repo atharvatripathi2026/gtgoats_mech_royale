@@ -1,0 +1,7 @@
+# Retest whether persistent retreat makes the safe hold useful
+
+Exact `f0263cb19cf09380b7b3e47ba5c83bf8a8709b81` and approved comparator `8b9f76db264c8aa33e6c70b8ef67c741cb56f60d` emitted 64,479 identical commands with identical outcomes in 24 fresh traced simulated campus pairs. Both the default and strict movement acknowledgement used seeds 1058700–1058711. There were 12 stock gun-space probes in each mode, with five default and six strict safe holds. None faced a gun opponent already moving and aiming away at the probe. [Original safe-hold review](f0263cb-defer-space-probe-only-in-safe-hold.md)
+
+Among 76 additional archived traces, a new directed replay on 1054511 found a sustained retreat and gained three placement points after a movement-only change. Both sides dealt and received the same damage through the following 24 seconds. The directed differences in 1055702 and 1058211 also yielded equal or mixed first exchanges. One genuine retreat failed a three-previous-observation persistence gate, and an outward-facing opponent in 970409 was actually closing because of the bot's own movement.
+
+All three reviewers retained **revise** for the exact existing commit. Validation found no direct exchange gain to justify a new gate. Survival noted that the fresh traces never exercised the rule. Combat found no dependable close contact benefit. No new variant was committed. Test a physically measurable cover, alignment or reacquisition boundary and require a sooner same-target hit at equal incoming.
