@@ -1,0 +1,5 @@
+# Escape jump delay · revise
+
+Candidate `dfe633735653710da2727b22d4378a51bd375bde` against `742246aaa181b45d34e4e7ee5c6a8740e8130b35`. The exact patch suppressed the first jump while escaping with low HP and a clear forward lane. In simulated native campus seed 1067975 at 280.7s, the first command changed only jump. The first six seconds recorded 620.3 less incoming and 38.4 less outgoing damage. Survival rose 3.5s at equal placement. All 56 fresh paired placements tied, including four-mech, native, alternate opponent, and scored-baseline comparisons. The exact build passed 23 unit tests and 300 sandbox observations.
+
+Survival and combat approved for practice based on the observed trade, unchanged initial firing, and fresh ties. Validation voted revise. The candidate became airborne after one command on a shallow drop and started boosting. The replay supports a delayed jump and lower initial altitude. Test actual continuous support and landing over the next held movement before considering a grounded escape policy.
