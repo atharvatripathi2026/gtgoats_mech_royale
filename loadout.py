@@ -147,6 +147,11 @@ class Loadout:
         health = me.get("hp", 1) / max(1, me.get("max_hp", 1))
         late = obs.get("alive", 16) <= 3 or obs.get("zone", {}).get("radius", 560) < 55
         armed = {w["kind"] for w in me.get("weapons", []) if w}
+        gun = next((w for w in me.get("weapons", []) if w and w.get("kind") == "gun"), None)
+        gun_stats = (gun or {}).get("stats") or self.weapons.get("gun", {})
+        damage = gun_stats.get("damage", 45)
+        remaining = min((gun or {}).get("ammo", 0), 1.4 / max(.05, gun_stats.get("cooldown", .24)))
+        burst = damage * remaining if (gun or {}).get("reload", 0) < .5 else damage
         priority = []
         for ent in (*obs.get("mechs", []), *obs.get("crates", [])):
             px, py, pz = ent["pos"]
@@ -157,6 +162,13 @@ class Loadout:
             if kind == "mech":
                 facing = abs(angle_delta(yaw + math.pi, ent.get("aim", [yaw, 0])[0])) < .43
                 wounded = ent.get("hp", 1e4) < me.get("max_hp", 1400) * .23
+                # Placement immediately improves when a rival falls. An exposed
+                # target within one short burst can be more valuable than the
+                # nearest healthy pursuer. Discount distant low-probability hits.
+                enemy_hp = ent.get("hp", float("inf"))
+                fraction = enemy_hp / max(1, ent.get("max_hp", 1400))
+                finish_range = gun_stats.get("range", 230) * .86
+                finish = enemy_hp <= max(damage * 1.2, burst * .90) and dist < finish_range
                 vx, vy, _ = ent.get("vel", (0, 0, 0))
                 approaching = (vx * (x - px) + vy * (y - py)) / max(1, dist) > 3
                 pursuer = facing or approaching or attacker
@@ -166,8 +178,13 @@ class Loadout:
                 fight = (late or attacker or dist < 45 or
                          (health >= .82 and dist < (198 if pursuer else 166)) or
                          (health >= .65 and pursuer and dist < 120) or
-                         (wounded and dist < (145 if pursuer else 100)))
+                         (wounded and dist < (145 if pursuer else 100)) or
+                         (finish and health > .56))
                 score = (150 if fight else 30) - dist * .23 + 18 * attacker + 8 * wounded
+                if fight:
+                    score += 23 * max(0, 1 - fraction)
+                    if finish:
+                        score += 34
                 if pursuer:
                     score += 6
                 opponent = ent.get("weapons", [])
