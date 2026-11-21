@@ -104,6 +104,23 @@ class DecisionTests(unittest.TestCase):
         self.obs["zone"]["next_radius"] = 90
         self.assertEqual(pick("gun_mag", "armor"), "armor")
 
+    def test_reload_protects_torso_only_when_other_weapons_cannot_fire(self):
+        gun = {"kind": "gun", "ammo": 0, "reload": .95}
+        self.me.update(pos=[0, 0, 0], aim=[0, 0], weapons=[gun, None])
+        rival = {"id": 7, "kind": "mech", "hp": 1000, "pos": [65, 0, 0],
+                 "vel": [0, 0, 0], "aim": [math.pi, 0]}
+        self.obs.update(t=30, alive=7, mechs=[rival], events=[
+            {"type": "damaged", "weapon": "gun", "bearing": math.pi, "by": 3, "rear": True}])
+        policy = Loadout(self.hello)
+        defended = policy.decide(self.obs, 0)
+        self.assertTrue(policy.last_decision["defensive_yaw"])
+        self.assertLess(abs(math.remainder(defended["aim"][0] - math.pi, math.tau)), math.pi / 2)
+        self.assertNotIn("reload", defended)
+        self.me["weapons"][1] = {"kind": "laser", "charge": .1, "cooldown": .7}
+        unchanged = policy.decide(self.obs, 0)
+        self.assertNotIn("defensive_yaw", policy.last_decision)
+        self.assertEqual(unchanged["aim"][0], 0)
+
     def test_final_point_zone(self):
         self.obs.update(t=420, zone={"center": [0, 0], "radius": 0,
                                     "next_center": [0, 0], "next_radius": 0,

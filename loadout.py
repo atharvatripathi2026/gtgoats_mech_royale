@@ -22,6 +22,7 @@ class Loadout:
         self.last_damage = -100
         self.last_attacker = None
         self.last_bearing = 0
+        self.last_damage_rear = False
         self.last_swap = -100
         self.last_target = None
         self.sight = {}
@@ -335,6 +336,38 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
+    def protect_reloading_torso(self, obs, aim, action):
+        if not self.last_damage_rear or obs.get("t", 0) - self.last_damage > .45:
+            return
+        if (not isinstance(self.last_attacker, (float, int))
+                or not 0 <= self.last_attacker < self.config.get("match", {}).get("mechs", 16)
+                or any(action.get("fire", ()))):
+            return
+        me = obs["self"]
+        slots = [weapon for weapon in me.get("weapons", []) if weapon]
+        gun = next((weapon for weapon in slots if weapon.get("kind") == "gun"), None)
+        if gun is None or gun.get("reload", 0) < .45:
+            return
+        ready_after = gun["reload"]
+        for weapon in slots:
+            if weapon.get("kind") != "gun":
+                cooldown = weapon.get("cooldown", 0)
+                if weapon.get("charge", 0) > 0 or cooldown < .35:
+                    return
+                ready_after = min(ready_after, cooldown)
+        stats = me.get("stats", {})
+        front = math.radians(stats.get("front_arc_deg", self.mech.get("front_arc_deg", 180))) / 2
+        if abs(angle_delta(aim[0], self.last_bearing)) <= front + .18:
+            return
+        turn_rate = stats.get("turn_rate", self.mech.get("turn_rate", 4))
+        actual_err = angle_delta(me.get("aim", aim)[0], self.last_bearing)
+        edge = max(0, front - .18)
+        protected_err = clamp(actual_err, -edge, edge)
+        if abs(protected_err - actual_err) <= turn_rate * ready_after:
+            # Use the nearest protected yaw to limit the turn back to combat.
+            aim[0] = angle_delta(self.last_bearing + protected_err, 0)
+            self.last_decision["defensive_yaw"] = True
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -343,6 +376,7 @@ class Loadout:
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
+                self.last_damage_rear = event.get("rear", False)
         pos = me["pos"]
         muzzle = pos[0], pos[1], pos[2] + stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
         ent, h, engage = self.target(obs, muzzle, evade, target_id)
@@ -453,5 +487,7 @@ class Loadout:
                 ammo = w.get("ammo", mag)
                 if ammo == 0 or (not engage and ammo < mag * .80):
                     action["reload"] = True
+        if engage:
+            self.protect_reloading_torso(obs, aim, action)
         action["aim"] = aim
         return action
