@@ -29,6 +29,7 @@ class Bot:
         if hello.get("protocol") != "mechfight/1":
             raise ValueError("Unsupported protocol")
         self.slot = hello["slot"]
+        self.storm_native_until = -1.
         self.match_rules = hello.get("config", {}).get("match", {})
         self.nav = Navigator(hello["map"]["dir"], hello["config"])
         settings = load_policy() if policy is None else policy
@@ -41,9 +42,31 @@ class Bot:
         self.trace = os.environ.get("MECHFIGHT_TRACE") == "1"
         self.scan_yaw = (self.slot % 16) * math.tau / 16
 
+    def storm_exit_walled(self, pos, direction, stats):
+        x, y, z = pos
+        dx, dy = direction
+        body_height = stats.get("height", 9)
+        # Sample up to three seconds of walking beyond the ingress approach.
+        horizon = stats.get("walk_speed", 11.7) * 3
+        consecutive_wall = 0
+        for d in range(3, int(horizon) + 1, 3):
+            px, py = x + d * dx, y + d * dy
+            cell = self.nav._index(px, py)
+            if any(top - z + self.nav.step_up >= body_height for _, top in self.nav.solids[cell]):
+                consecutive_wall += 1
+                if consecutive_wall == 2:
+                    return True
+            else:
+                consecutive_wall = 0
+        return False
+
     def storm_ingress(self, obs, plan, action, jet):
         me = obs["self"]
         zone = obs["zone"]
+        if me.get("in_zone", True):
+            self.storm_native_until = -1.
+        if obs.get("t", 0) < self.storm_native_until:
+            return None
         if (plan["mode"] != "zone" or obs.get("t", 0) < 175 or zone.get("dps", 0) < 55
                 or me.get("in_zone", True) or not me.get("grounded") or not self.nav.loaded
                 or jet or plan["dodge"] or any(action.get("fire", ()))
@@ -108,6 +131,14 @@ class Bot:
                            for previous, point in zip(((x, y), *path), path))):
                 continue
             best, next_move = eta, direction
+        if (next_move is not None
+                and sum(a * b for a, b in zip(next_move, action["move"])) < -.5
+                and self.storm_exit_walled(me["pos"], next_move, stats)
+                and not self.storm_exit_walled(me["pos"], action["move"], stats)):
+            # Keep the native approach until it has had a chance to reach the
+            # wall or initiate a climb, even if a cell moves past our horizon.
+            self.storm_native_until = now + 1.25
+            return None
         return next_move
 
     def act(self, obs):
