@@ -1,0 +1,7 @@
+# Use the confirmed repeated shooter when several gun hits arrive together
+
+Candidate `504e2dd551ec11df9a240d9af37e79f09139980b` descends from `8b9f76db264c8aa33e6c70b8ef67c741cb56f60d`. In a grounded, low-urgency state with no active line dodge, it uses recent confirmed gun damage as the leading evasion bearing when two tracked player sources hit together and one materially dominates. It discards the cached evade route on that decision. Recent hits identify a past source and cannot establish the next one.
+
+Directed 970416 saved 315 incoming damage through six seconds at equal outgoing damage. It finished tied in placement and incoming damage, with 61.2 more outgoing and 1.5 seconds longer survival. Four additional archived probes on other controllers had mixed directional tradeoffs. Only five of 390 multi-source simultaneous-hit observations in the original archive passed the narrow screen. The owner 16 and independent 48 campus pairs against the direct parent, four-mech 48 and 12 native campus pairs against verified `03a8f93` all tied on measured outcomes. All 24 unit tests and 300 timed Docker observations passed.
+
+Combat voted approve for the measured immediate avoidance in a true multi-shooter case. Survival and validation voted revise because the direct independent set showed no change and the archive follow-ups point to different next shooters. The full 124 prospective ties preserve that decision. Withheld. Check whether a recently dominant bearing also predicts the next incoming direction before expiring the existing route.
