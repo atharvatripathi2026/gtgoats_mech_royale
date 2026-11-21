@@ -1342,6 +1342,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "2c56019db176a140a0ec30fa0d63463b396fe859",
+      "summary": "Use an aligned airborne rifle alternative only with the nominal offset flight ray clear. Repairs the wall case and retains actual early hits in multiple replays. 64 fresh placements tied, 23 unit tests and 300 timely sandbox replies.",
+      "created_at": "2026-11-21T16:28:24Z",
+      "parents": [
+        "1d135a08dcf92df0f1f1d336bfbaf93885f53259"
+      ],
+      "reviews": {
+        "commit": "2c56019db176a140a0ec30fa0d63463b396fe859",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact stepped offset ray retains the three independently rechecked physical shot gains including the fresh boosted dodge hit for 63 at equal incoming. Fresh placement tied and exact sandbox passed. The forecast still has nominal terrain and spread assumptions and an intervening rival can intercept."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The footprint repair rejects the wall and retains both independently replayed gains including the 1067728 trajectory, delayed by one command, and the terminal +63 hit. Exact fresh comparisons show no adverse placement and checker passed all 300. Terrain behind early hull contact can veto a viable shot."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight independent phased fresh pairs match all decisions and placements. The original obstructed translation declines and the clear control fires. In a second geometry case all four nominal simulated flight segments clear before the hull, although small muzzle perturbations can obstruct some rays."
+          }
+        }
+      }
     }
   ]
 }
