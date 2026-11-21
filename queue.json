@@ -236,6 +236,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "57b8da24d01a8315e94faa21cb6e0c811cf7ea66",
+      "summary": "Walk toward the same crate during a safe idle reload only when combat is targeting it. Fixed the archived enemy-target loss and reproduced earlier pickups. Against the 8b9f76d baseline, 56 campus pairs had one gain, 54 ties and one loss; four-mech 48 ties. Docker 300/300.",
+      "created_at": "2026-11-21T03:37:49Z",
+      "parents": [
+        "e6b711864eb2b5cf79aa8a4ca28791cf17e896c6"
+      ],
+      "reviews": {
+        "commit": "57b8da24d01a8315e94faa21cb6e0c811cf7ea66",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The precise target guard restores the incumbent in the archived enemy-target failure. Earlier pickup replicated in both known fixtures and the independent scaled game, and was present even in the owner loss. Campus placements show one gain, 54 ties and one loss over 56, with a concentrated gain. Four-mech ties and Docker 300/300."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The grounded same-crate and numeric charge checks protect current aim and firing. Independent scaled seed 1000708 destroyed the same crate and collected a cube 0.3 seconds earlier. The owner loss had an earlier pickup but different follow-up mortar geometry. Campus gained ten total points with no four-mech placement change."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The actual target check repairs seed 991713 and still gives a reproducible earlier pickup after the same lethal hit in 1000708. One gain and one loss over 56 pairs leave the placement effect concentrated. All 48 four-mech placements tied and unit and Docker checks passed."
+          }
+        }
+      }
     }
   ]
 }
