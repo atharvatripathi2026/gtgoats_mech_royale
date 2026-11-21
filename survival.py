@@ -438,6 +438,68 @@ class Survival:
                 return goal
         return end
 
+    def _avoid_crossing_shot(self, obs, goal, radius, circle, boost):
+        """Choose a reachable deflection before an observed bullet crosses our path."""
+        me = obs["self"]
+        x, y, z = me["pos"]
+        gx, gy = goal[0]-x, goal[1]-y
+        length = math.hypot(gx, gy)
+        if length < 3 or not obs.get("projectiles"):
+            return goal
+        stats = me.get("stats") or {}
+        speed = stats.get("boost_speed", 19.5) if boost else stats.get("walk_speed", 11.7)
+        acceleration = max(1, stats.get("ground_accel", 58.5))
+        vx, vy = me.get("vel", (0,0))[:2]
+        shots = []
+        for shot in obs["projectiles"]:
+            if shot.get("kind") not in ("gun", "npc") or "vel" not in shot or "pos" not in shot:
+                continue
+            sx, sy, sz = shot["vel"]
+            px, py, pz = shot["pos"]
+            rx, ry = sx-vx, sy-vy
+            mag = math.hypot(rx, ry)
+            if mag < 1:
+                continue
+            nx, ny = -ry/mag, rx/mag
+            eta = -((px-x)*rx + (py-y)*ry)/(mag*mag)
+            if not .05 < eta < .75 or not -0.5 < pz+sz*eta-z < stats.get("height",9)+.5:
+                continue
+            offset = (px-x)*nx + (py-y)*ny
+            if abs(offset) < radius + speed*eta + 1:
+                shots.append((eta, offset, nx, ny))
+        if not shots:
+            return goal
+
+        def clearance(ux, uy):
+            ax, ay = speed*ux-vx, speed*uy-vy
+            ramp = max(.001, math.hypot(ax, ay)/acceleration)
+            margin = 20
+            for eta, offset, nx, ny in shots:
+                factor = eta-.5*ramp if eta >= ramp else .5*eta*eta/ramp
+                margin = min(margin, abs(offset-factor*(ax*nx+ay*ny)))
+            return margin
+
+        ux, uy = gx/length, gy/length
+        original = clearance(ux, uy)
+        if original >= radius+.55:
+            return goal
+        best, waypoint = min(radius+.8, original), goal
+        span = min(13, length)
+        for _, _, nx, ny in sorted(shots)[:3]:
+            for side in (-1,1):
+                ax, ay = side*nx, side*ny
+                point = (x+span*ax, y+span*ay)
+                if distance(point,circle[0])+radius > circle[1]:
+                    continue
+                fit = min(radius+.8,clearance(ax,ay)) - .30*(1-ax*ux-ay*uy)
+                if fit <= best+.35:
+                    continue
+                if self.nav and any(not self.nav.walkable(x+f*span*ax, y+f*span*ay, radius)
+                                    for f in (.33,.66,1.0)):
+                    continue
+                best, waypoint = fit, point
+        return waypoint
+
     def decide(self, obs):
         me, t = obs["self"], obs.get("t", 0)
         pos = me["pos"]
@@ -494,6 +556,12 @@ class Survival:
             if flank != goal:
                 reason = "flank_wounded_opponent"
                 goal = flank
+        if (mode in ("evade", "zone") and urgency < .55 and me.get("grounded",True)
+                and len(goal) == 2 and not (dodge and dodge[0] == "blast")):
+            away = self._avoid_crossing_shot(obs,goal,radius,circle,self.boosting)
+            if away != goal:
+                goal, reason = away, "predict_crossing_shot"
+                dodge = dodge or ("line",)
         return {"goal": goal, "mode": mode, "urgency": max(urgency, pressure),
                 "reason": reason, "zone_urgency": urgency, "enemy_pressure": pressure,
                 "dodge": dodge[0] if dodge else None,

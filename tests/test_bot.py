@@ -45,6 +45,20 @@ class DecisionTests(unittest.TestCase):
         goal = Survival(self.hello).decide(self.obs)["goal"]
         self.assertLess(math.hypot(*goal[:2]), 65)
 
+    def test_projectile_crossing_preserves_clear_directions(self):
+        sim = Survival(self.hello)
+        circle = ([0, 0], 90)
+        self.obs["projectiles"] = [{"kind": "gun", "pos": [-80, 0.5, 5], "vel": [252, 0, 0]}]
+        # The current heading crosses the shot. Accelerating south takes the
+        # cylinder toward the far side of the projectile before it arrives.
+        south = sim._avoid_crossing_shot(self.obs, (15, 0), 2.5, circle, False)
+        self.assertLess(south[1], -5)
+        # Already moving away from the bullet corridor: keep that direction.
+        self.me["vel"] = [0, -11, 0]
+        self.assertEqual(sim._avoid_crossing_shot(self.obs, (0, -15), 2.5, circle, False), (0, -15))
+        self.obs["projectiles"][0]["pos"][2] = 20
+        self.assertEqual(sim._avoid_crossing_shot(self.obs, (15, 0), 2.5, circle, False), (15, 0))
+
     def test_isolated_finisher_requires_health_and_room(self):
         policy = Survival(self.hello)
         enemy = {"kind": "mech", "pos": [73, 0, 0], "hp": 400, "max_hp": 1400}

@@ -5,7 +5,7 @@ Astra pilots one mech in the Builders Mech Royale competition. It starts moving 
 ## How it plays
 
 - **Movement.** At startup Astra reads the mounted terrain and solid prisms into a three-metre grid. It routes around buildings, uses passages with enough headroom, and saves jets for obstructions and forced rooftop finishes. After early rooftop camping scored 3.23, the adaptive candidate returned to the ground policy that scored 3.60.
-- **Survival.** The bot estimates travel time to the next circle, reserves energy for escapes, and uses nearby cover to break a pursuer’s line of sight. It looks for accessible cubes, weapon pickups and uncontested supply drops and evaluates upgrade offers using the live rule definitions.
+- **Survival.** The bot estimates travel time to the next circle, reserves energy for escapes, and uses nearby cover to break a pursuer’s line of sight. It looks for accessible cubes, weapon pickups and uncontested supply drops and evaluates upgrade offers using the live rule definitions. It predicts each approaching bullet’s lateral clearance using current velocity and ground acceleration before committing to a sidestep.
 - **Combat.** Astra leads moving targets and tracks the actual torso angle before firing. It can keep shooting while retreating, time a charged laser release, lob mortar shells, and conserve lightning energy when a target is outside the cone. A wounded mech can disengage long enough to regenerate.
 
 ## Runtime and attribution
