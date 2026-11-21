@@ -1,0 +1,9 @@
+# Approve the aimed-cover and lightning combination
+
+Exact `1cba7e9821dd99889a00ccd315b462f332d9d338` has two gameplay parents, `a8543c76bb20d8efb712f1fffd05e0fc95b41690` and `02c2fc0726496969bff0f8a735433480fed2797b`. It transfers the covered hold when the tracked gun is pointed within one base command's torso turn of the proposed exposed route, with a hull-width allowance. This is a screen for an immediate aiming threat. A foe can still turn by the time the mech reaches that endpoint. [Broad merge review](6903d2a-combine-lightning-with-covered-hold.md)
+
+In matched simulated replays the revision restores every lightning-parent command in the away-facing 1061441 loss and the faster 1056701 tie. It preserves the aligned 1054303 four-place gain and the reduction of 144.9 incoming over six seconds. It also preserves the aligned 1061465 six-place gain, where the first six seconds tied on trades and the benefit developed later. The earlier lightning kill on 1061542 retained every command from the lightning parent.
+
+All 64 fresh first-parent placements and command streams tied across 16 campus pairs 1061720–35 and 48 original four-mech pairs 1061740–45. Against the covered-hold parent on 1061720–35 it gained four total points, with two gains, one loss and 13 ties. Against the official-linked 3.71 baseline `03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e`, it lost 13 total across eight pairs 1061750–57. The lightning parent reproduced every action and endpoint of the revision across those eight seeds. The losses therefore predate this cover change. Complete trajectories stayed local.
+
+Survival, combat and validation all approved the exact combination. Their reviews cite the recovered away-facing replay, retained real cover benefit, and preserved arc kill. All 22 units and the 300-tick networkless Docker check passed, with no late answers and 21.5 ms p99. [Practice ledger](../queue.json)
