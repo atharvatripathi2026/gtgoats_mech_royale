@@ -1191,6 +1191,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "d861298bda31b4facbdca96f9cc932a8c1308951",
+      "summary": "Keep a recovery approach while a neighboring cube remains visible. Preserved one actual pickup and avoided 180 early damage at tied place in partial loss. Full-loss and normal tapes identical. 108 fresh placement ties and 300 timely replies.",
+      "created_at": "2026-11-21T15:21:01Z",
+      "parents": [
+        "2633ab86c6628da4597b987fee7cc22544f1ce53"
+      ],
+      "reviews": {
+        "commit": "d861298bda31b4facbdca96f9cc932a8c1308951",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Both controlled moving rival races preserve baseline placement and ordinary response. Partial removal keeps the verified pack route, avoids 180 incoming over six seconds and ends with 297 more health, while losing 93.6 early output and one kill at equal placement. Fresh108 ties and sandbox passes."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "An observed nearby cube is real payload for the existing route. The controlled partial case retains its pickup and place, costs less early damage and more time without fighting. Stock and full-loss controls are wire-identical. All 108 fresh placements tie, units and timed check pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Sixteen phased fresh comparisons match every command and place. Reveals by 20.8 preserve actual pickup and avoid 180 early incoming. Late 21.0 reveal matches the parent and exposes the evidence-latency limit. Whole-pack cancellation remains available."
+          }
+        }
+      }
     }
   ]
 }
