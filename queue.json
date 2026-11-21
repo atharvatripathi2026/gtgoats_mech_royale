@@ -1141,6 +1141,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "1bb0b916781827814681c830172e2a31e2b0d944",
+      "summary": "Recall a recently seen cube pair after a confirmed elimination when calm loot resumes and health is low. Persist only the selected route. Two real directed pickups, 74 fresh placement ties, three exact approvals and 300 timely replies.",
+      "created_at": "2026-11-21T14:59:08Z",
+      "parents": [
+        "6a9e8bedb98563aa6b2fbcf1bb136a053c355777"
+      ],
+      "reviews": {
+        "commit": "1bb0b916781827814681c830172e2a31e2b0d944",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact variant admits only the chosen cache target through the existing calm loot branch. Both physics orders retain two actual pickups and one directed placement point, all 74 fresh placements tie and 23 units pass. The no-HP-credit control isolates a separate health margin from route separation. Exact sandbox required."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The transient overlay excludes unchosen cache entries, preserves all 450 directed commands and the earlier rifle action, and still acquires both cubes. All 74 fresh placements tie, 23 units pass and intended native cache continuity bridges the short concealment. Exact sandbox required."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent phased positive retains two true pickups and the original rifle carry with +1 placement. All six independent fresh pairs preserve the full wire and placement. Selected-only scope excludes unwanted cache changes while retaining the directed recovery route."
+          }
+        }
+      }
     }
   ]
 }
