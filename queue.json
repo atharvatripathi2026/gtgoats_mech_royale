@@ -1090,6 +1090,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "ca47e8f72e7814debca23fc8eff3213964482828",
+      "summary": "Carry one grounded line-dodge boost through a rifle trigger when a follow-up round remains. Three directed benefits retained and last-round regression removed. All 108 fresh placements tied. Three exact approvals and 300 timely sandbox replies.",
+      "created_at": "2026-11-21T14:25:31Z",
+      "parents": [
+        "5aebe265e03a26ba107963e1dd649c5397626ed9"
+      ],
+      "reviews": {
+        "commit": "ca47e8f72e7814debca23fc8eff3213964482828",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "A follow-up round remains after the gun trigger, restoring all commands on the last-round loss and preserving three directed benefits. Controlled speed and energy tests isolate the early physical avoidance. Fresh placements tie and the phased later trade is mixed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The round reserve restores the adverse trace in both comparators while retaining the actual rifle hits and early benefits in 1064562 and 1064806. An independent fractional replay retains the mixed trade at tied placement. Unit and exact timing checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The round filter restores last-round parity in two actor orders and keeps all three positive directed activations. Eight independent fresh placements tie. One true activation adds 37.8 incoming over six seconds, with equal final incoming and 2.5 seconds longer life."
+          }
+        }
+      }
     }
   ]
 }
