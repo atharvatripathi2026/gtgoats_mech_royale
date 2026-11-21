@@ -41,6 +41,8 @@ class Survival:
         self.recovery_cubes = {}
         self.recalled_cube = None
         self.recalled_absence = None
+        self.recalled_rivals = None
+        self.recalled_pickup = None
         self.chase_id = None
         self.chase_record = (0, 0)
         self.skip_until = {}
@@ -292,16 +294,61 @@ class Survival:
         self.recovery_cubes.update((cube["id"], (now, tuple(cube["pos"])))
                                    for cube in (obs.get("cubes") or ()) if "id" in cube and "pos" in cube)
 
+    def _rival_collected_recovery(self, obs, key, point, missing):
+        previous, self.recalled_rivals = self.recalled_rivals, None
+        candidate, self.recalled_pickup = self.recalled_pickup, None
+        tick = obs["tick"]
+        stride = self.rules.get("match", {}).get("decide_every", 2)
+        radius = self.rules.get("cubes", {}).get("pickup_radius", 3.5)
+        close, gained, inside = {}, {}, {}
+        for rival in obs.get("mechs") or ():
+            if rival.get("kind") != "mech" or type(rival.get("cubes")) is not int:
+                continue
+            xy = distance(rival["pos"], point)
+            dz = abs(rival["pos"][2] - point[2])
+            if xy > radius + 3 or dz > 2:
+                continue
+            ident, count = rival["id"], rival["cubes"]
+            close[ident] = count
+            if xy >= radius - .25:
+                continue
+            inside[ident] = count
+            if (missing and previous is not None and previous[:2] == (key, tick - stride)
+                    and ident in previous[2] and count == previous[2][ident] + 2):
+                gained[ident] = count
+        if close:
+            self.recalled_rivals = key, tick, close
+        if gained:
+            self.recalled_pickup = key, tick, gained
+        return bool(missing and candidate is not None and candidate[:2] == (key, tick - stride)
+                    and any(inside.get(ident) == count for ident, count in candidate[2].items()))
+
+    def _forget_recalled_cube(self, key):
+        self.loot.pop(key, None)
+        self.recovery_cubes.pop(key, None)
+        self.recalled_cube = self.chase_id = None
+        self.recalled_rivals = None
+        self.recalled_pickup = None
+
     def _cancel_missing_recovery(self, obs, pos, stats):
         key = self.recalled_cube
         previous, self.recalled_absence = self.recalled_absence, None
         if key is None or key != self.chase_id:
             return
         record = self.loot.get(key)
-        if (record is None or not self.nav or not self.nav.loaded or not obs["self"].get("grounded")
-                or "cubes" not in obs or any(cube.get("id") == key for cube in (obs["cubes"] or ()))):
+        if record is None or "cubes" not in obs:
+            self.recalled_rivals = None
             return
         point = record[1]
+        missing = not any(cube.get("id") == key for cube in (obs["cubes"] or ()))
+        pack_missing = missing and not any(
+            "pos" in cube and math.dist(point, cube["pos"]) <= 2.
+            for cube in (obs["cubes"] or ()))
+        if self._rival_collected_recovery(obs, key, point, pack_missing):
+            self._forget_recalled_cube(key)
+            return
+        if not missing or not self.nav or not self.nav.loaded or not obs["self"].get("grounded"):
+            return
         near = self.rules.get("vision", {}).get("near_range", 45)
         if distance(pos, point) > .8 * near or abs(pos[2] - point[2]) > 1.5:
             return
@@ -317,9 +364,7 @@ class Survival:
         if previous != (key, tick - stride):
             self.recalled_absence = key, tick
             return
-        self.loot.pop(key, None)
-        self.recovery_cubes.pop(key, None)
-        self.recalled_cube = self.chase_id = None
+        self._forget_recalled_cube(key)
 
     def _recovery_pack(self, obs, pos, radius, foes):
         me = obs["self"]
