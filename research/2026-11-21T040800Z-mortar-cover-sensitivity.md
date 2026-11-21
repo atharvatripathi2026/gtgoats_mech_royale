@@ -1,0 +1,7 @@
+# Simulated mortar splash and wall cover
+
+The starter protocol says walls block mortar splash. The bundled local arena applies otherwise eligible splash without a line-of-sight check. A local-only diagnostic on top of the [joint hull and impact arena](2026-11-21T033805Z-joint-hull-impact-model.md) adds a torso-height sight ray. For a wall or ground impact it starts the ray on the last clear part of the shell segment and leaves the original radial falloff and other rules intact. A fixture kept 92.1 damage on the blast side while removing 109.4 damage behind a wall. Coarse map geometry and the assumed target-height ray remain approximations.
+
+We repeated the same 16 campus pairs starting at 1010701. The guard blocked nine splash contributions across 32 games, all from the player bot, across four unique seeds. The mean for `cc76284` changed from 8.938 to 8.750 placement points. `57b8da2` stayed at 8.750. In seed 1010708, blocking collateral splash against two mechs in one blast contributed to a three-point placement loss in `cc76284` while `57b8da2` held its placement. The rankings were a 3-point total advantage for `cc76284` before the guard and a tie afterward. This replay isolates a model weakness for judging crowded mortar shots. The original local arena, official score and gameplay commits are unchanged.
+
+[Starter kit protocol and map](https://www.joinbuilders.org/buildathon/tracks/builders/files/mechfight-kit.tar.gz)
