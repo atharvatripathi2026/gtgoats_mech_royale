@@ -73,14 +73,13 @@ class Bot:
         points = ((x, y), (x + .3 * vx, y + .3 * vy), (x + .45 * walk * ux, y + .45 * walk * uy))
         if not all(z - self.nav.surface(*point) >= 5 for point in points):
             return False
-        gun = next((w for w in me.get("weapons", ()) if w and w.get("kind") == "gun"), None)
-        if gun is None:
+        held = {w["kind"]: w for w in me.get("weapons", ()) if w}
+        gun = held.get("gun")
+        if gun is None or me["vel"][2] <= 4:
             return True
         # Releasing the jet helps only if the selected mech can enter a firing
         # angle before an extended descent leaves the bot exposed.
         horizon = 1.25
-        if gun.get("reload", 0) > horizon or gun.get("cooldown", 0) > horizon:
-            return False
         sx = x + horizon * (vx + walk * ux) * .5
         sy = y + horizon * (vy + walk * uy) * .5
         own_z = max(self.nav.surface(sx, sy), z + horizon * me["vel"][2]
@@ -89,11 +88,25 @@ class Bot:
         target = tuple(p + horizon * v for p, v in zip(opponent["pos"], opponent.get("vel", (0., 0., 0.))))
         _, height = self.loadout.dimensions(opponent)
         hull = (*target[:2], target[2] + .49 * height)
+        if not self.nav.line_clear(muzzle, hull):
+            return False
+        minimum, maximum = stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)
+        lightning = held.get("lightning")
+        if lightning and lightning.get("cooldown", 0) <= horizon:
+            arc = self.loadout.weapons.get("lightning", {}) | lightning.get("stats", {})
+            pitch = math.atan2(hull[2] - muzzle[2], math.dist(hull[:2], muzzle[:2]))
+            spread = math.radians(arc.get("cone_deg", 30)) * .8
+            if (math.dist(muzzle, hull) <= arc.get("range", 45) - 1
+                    and minimum - spread <= pitch <= maximum + spread
+                    and me.get("energy", 0) >= arc.get("energy", 3)):
+                return True
         weapon = self.loadout.weapons.get("gun", {}) | gun.get("stats", {})
+        if (gun.get("reload", 0) > horizon or gun.get("cooldown", 0) > horizon
+                or gun.get("ammo", 1) == 0 and weapon.get("reload", 2.4) > horizon):
+            return False
         aim = self.loadout.solution("gun", muzzle, hull, opponent.get("vel", (0., 0., 0.)),
-                                    weapon, stats.get("radius", 2.5) + .5, stats.get("max_pitch", 1.3))
-        return bool(aim and stats.get("min_pitch", -.7) <= aim[1] <= stats.get("max_pitch", 1.3)
-                    and self.nav.line_clear(muzzle, hull))
+                                    weapon, stats.get("radius", 2.5) + .5, maximum)
+        return bool(aim and minimum <= aim[1] <= maximum)
 
     def act(self, obs):
         if self.trace:
