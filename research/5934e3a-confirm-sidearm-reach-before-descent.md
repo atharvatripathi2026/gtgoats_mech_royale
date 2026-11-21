@@ -1,0 +1,7 @@
+# Check current lightning reach before cutting rising thrust
+
+Candidate `5934e3adc0f3154988b81b9850247e2818760ab7` descends from `07324d676a25ff0216176b094cdf377a905e4268`. It preserves the original behavior only when vertical velocity is nonpositive. During active ascent it requires both current and projected reach when lightning is the reason to descend, and it uses remaining gun reload time. The trajectory model still approximates visibility, enemy motion and resource costs.
+
+In 1050008 the revised path avoided 450 first-second incoming damage with zero outgoing in either controller, recovered four points and matched all 3,729 actions of the protective gun forecast. It reproduced all 3,164 actions from favorable lightning replay 1023905. All 88 fresh direct-parent comparisons matched every action and placement. An additional 24 campus comparisons against approved `8b9f76d` and eight native campus pairs against verified `03a8f93` yielded one gain and 31 ties. In standard 1055002 the boost-only release was followed by 781.14 more outgoing and 41.4 more incoming through six seconds, then a two-point placement gain and 439.85 less incoming over the whole game. The bot held a gun and mortar in that fresh case, so the gain applies to the complete descent policy. All 25 units and all 300 timed Docker observations passed.
+
+All three Sol reviewers approved the exact commit after the two directed controls and the fresh approved-parent gain. The fresh direct-parent ties show that the latest guard itself was not exercised in those 88 comparisons.
