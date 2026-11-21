@@ -102,7 +102,7 @@ class Loadout:
             cycle = rounds * max(.05, weapon["cooldown"]) + max(0, weapon["reload"])
             return max(1, weapon["damage"]) * rounds / cycle
 
-        def score(choice):
+        def score(choice, credit_sustain=True):
             total = 0.
             upgraded_gun = None
             gun_credit = 0.
@@ -126,7 +126,7 @@ class Loadout:
                 change = effect.get("mul", 1) - 1 + effect.get("add", 0) / scale
                 value = change * weight
                 total += value
-                if sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
+                if credit_sustain and sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
                     if upgraded_gun is None:
                         upgraded_gun = gun.copy()
                     upgraded_gun[field] = upgraded_gun[field] * effect.get("mul", 1) + effect.get("add", 0)
@@ -144,8 +144,9 @@ class Loadout:
                 and self.arm_damage["laser"] > self.arm_damage["gun"]):
             gun_slot = next((w for w in me.get("weapons", ()) if w and w.get("kind") == "gun"), None)
             if gun_slot and gun_slot.get("reload", 0) <= 0 and gun_slot.get("ammo", 0) >= .8 * gun["mag"]:
-                return next((i for i, choice in enumerate(choices) if choice.get("id") == "laser_damage"),
-                            selected)
+                without_bonus = max(range(len(choices)), key=lambda i: score(choices[i], credit_sustain=False))
+                if choices[without_bonus].get("id") == "laser_damage":
+                    return without_bonus
         return selected
 
     def dimensions(self, entity):
