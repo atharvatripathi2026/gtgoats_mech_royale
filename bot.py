@@ -170,14 +170,21 @@ class Bot:
                 # recovery hops only at the reached quiet ground waypoint.
                 action["jump"] = False
                 self.nav.anchor = None
+        shell_steer = self.survival.airborne_mortar_step(obs, action, plan["dodge"])
+        reason = "reachable_zone_anchor" if quiet_move is not None else base["reason"]
+        if shell_steer is not None:
+            action["move"], shell_id = shell_steer
+            reason = "airborne_mortar_clearance"
         self.last_decision = {
-            "mode": plan["mode"], "reason": "reachable_zone_anchor" if quiet_move is not None else base["reason"], "goal": list(goal),
+            "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
             "zone_urgency": round(base["zone_urgency"], 3),
             "enemy_pressure": round(base["enemy_pressure"], 3), "dodge": base["dodge"],
             "jet_advised": jet, "combat": self.loadout.last_decision,
             "learning": self.adaptation.diagnostics(),
         }
+        if shell_steer is not None:
+            self.last_decision["airborne_shell"] = shell_id
         if self.trace:
             elapsed = (time.perf_counter() - start) * 1000
             mechfight.log(f'tick={obs["tick"]} hp={me["hp"]} mode={plan["mode"]} '

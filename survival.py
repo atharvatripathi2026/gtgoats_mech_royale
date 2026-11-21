@@ -179,6 +179,98 @@ class Survival:
                 best, dodge = priority, item
         return dodge
 
+    def airborne_mortar_step(self, obs, action, dodge):
+        """Choose one air-steer command when the current shell line hits the rising hull."""
+        me = obs["self"]
+        if (dodge or not self.nav or not self.nav.loaded or me.get("grounded", True)
+                or not me.get("in_zone") or not action.get("boost") or action.get("jump")
+                or any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
+            return None
+        pos = me["pos"]
+        vel = me.get("vel") or (0., 0., 0.)
+        move = action["move"]
+        if vel[2] <= 0 or math.hypot(*move) < .25:
+            return None
+        stats = self.rules.get("mech", {}) | (me.get("stats") or {})
+        dt = 1 / self.rules.get("match", {}).get("tick_hz", 20)
+        horizon = .70
+        lift = stats.get("jet_accel", 34) - stats.get("gravity", 22)
+        drain = max(stats.get("jet_drain", 15), stats.get("boost_drain", 17))
+        if lift <= 0 or me.get("energy", 0) <= drain * (horizon + dt):
+            return None
+        radius, height = stats.get("radius", 2.5), stats.get("height", 9.)
+        speed = stats.get("walk_speed", 11.7)
+        nearby = [shot for shot in obs.get("projectiles") or ()
+                  if shot.get("kind") == "mortar" and distance(shot["pos"], pos)
+                  <= (math.hypot(*shot["vel"][:2]) + max(speed, math.hypot(*vel[:2]))) * horizon + radius]
+        if len(nearby) != 1:
+            return None
+        shot = nearby[0]
+        shell = tuple(shot["pos"])
+        sx, sy, sz = shot["vel"]
+        gravity = self.rules.get("weapons", {}).get("mortar", {}).get("gravity", 22)
+        shell_radius = self.rules.get("projectile", {}).get("mortar_radius", 0.)
+        segments = []
+        for _ in range(math.ceil(horizon / dt)):
+            end = (shell[0] + sx * dt, shell[1] + sy * dt, shell[2] + sz * dt)
+            if not self.nav.line_clear(shell, end):
+                break
+            segments.append((shell, end))
+            shell = end
+            sz -= gravity * dt
+        if not segments:
+            return None
+
+        def forecast(command):
+            x, y, z = pos
+            vx, vy, vz = vel
+            ux, uy = command
+            normalization = max(1., math.hypot(ux, uy))
+            tx, ty = ux * speed / normalization, uy * speed / normalization
+            closest = math.inf
+            path = []
+            for start, end in segments:
+                dx, dy = tx - vx, ty - vy
+                fraction = min(1., dt * stats.get("air_accel", 12) / max(.001, math.hypot(dx, dy)))
+                vx, vy = vx + fraction * dx, vy + fraction * dy
+                vz = min(stats.get("max_rise_speed", 10), vz + dt * lift)
+                x, y, z = x + vx * dt, y + vy * dt, z + vz * dt
+                path.append((x, y, z))
+                dx, dy = end[0] - start[0], end[1] - start[1]
+                along = clip(((x - start[0]) * dx + (y - start[1]) * dy) / max(.00001, dx*dx + dy*dy))
+                px, py = start[0] + along * dx, start[1] + along * dy
+                pz = start[2] + along * (end[2] - start[2])
+                separation = max(math.hypot(x - px, y - py) - radius, z - pz, pz - z - height) - shell_radius
+                closest = min(closest, separation)
+            return closest, path
+
+        native_margin, _ = forecast(move)
+        if native_margin > 0:
+            return None
+        ux, uy = move
+        zone = obs.get("zone") or {}
+        alternatives = []
+        for turn in (-math.pi / 4, math.pi / 4, -math.pi / 2, math.pi / 2):
+            c, s = math.cos(turn), math.sin(turn)
+            option = [ux*c - uy*s, ux*s + uy*c]
+            margin, path = forecast(option)
+            if margin < .20:
+                continue
+            previous = pos
+            for step in path:
+                if (distance(step, zone.get("center", pos)) + radius > zone.get("radius", 560)
+                        or not self.nav.line_clear((*previous[:2], previous[2] + .20), (*step[:2], step[2] + .20))
+                        or not self.nav.line_clear((*previous[:2], previous[2] + height * .8),
+                                                   (*step[:2], step[2] + height * .8))):
+                    break
+                previous = step
+            else:
+                alternatives.append((margin, option))
+        if alternatives:
+            _, steering = max(alternatives, key=lambda item: item[0])
+            return steering, shot.get("id")
+        return None
+
     def _loot_goal(self, obs, now, pos, radius, health, foes, circle, final, until):
         me = obs["self"]
         held = {w.get("kind") for w in me.get("weapons", []) if w}
