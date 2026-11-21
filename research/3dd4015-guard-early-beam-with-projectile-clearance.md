@@ -1,0 +1,7 @@
+# Require extra projectile clearance for an early beam release · queued
+
+Exact `3dd401585c16880fc49703ddcb950253da6a0eb6` on `45e7d6867c4842f7d557be98997183107390ddc1`. The new moving-beam release waits through native projectile dodges and near-ready rifle shots. During an active charge, it asks the existing projectile forecast for another 0.5m of lateral clearance before allowing the shot. The margin is a conservative reaction to visible projectile geometry, and it cannot identify an unseen shooter.
+
+It preserves parent actions in the earlier native rifle loss 1068636, native crossfire 1068883 and both generated adverse cases 1068889 and 1068891. The visible round in native 1068883 passed within a projected 4.20m laterally in 0.083s. The known directed beam hits of 270.816 and 414.54 remain. The latter retained a local one-place gain. An independent phased public replay reproduced the 270.816 beam and matching rifle hit at equal incoming.
+
+All 28 fresh parent comparisons tied on actions and placement, with eight native, 16 four-mech and four phased campus. Eight fresh scored-reference placements also tied. Survival, combat and validation approved the exact commit. It passed 23 unit tests and all 300 networkless sandbox observations and is queue entry 65. [Dodge-only review](1ec76dd-revise-preserve-charge-through-dodge.md) · [Earlier rifle guard](ad98acf-revise-laser-release-with-rifle-guard.md)
