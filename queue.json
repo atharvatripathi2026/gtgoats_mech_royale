@@ -160,6 +160,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "8b9f76db264c8aa33e6c70b8ef67c741cb56f60d",
+      "summary": "Transfer the tested gun upgrade scorer to the verified 3.71 gameplay base. Three 64-pair public-upgrade panels together gained 0.266 placement points per game, five gains and no losses, including a hull-growth panel. All 48 four-mech placements tied. Docker 300/300.",
+      "created_at": "2026-11-21T02:53:45Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e",
+        "367287e08745649c728a9cbee2ad2311ac781156"
+      ],
+      "reviews": {
+        "commit": "8b9f76db264c8aa33e6c70b8ef67c741cb56f60d",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "All three public-upgrade panels were positive on the exact confirmed 3.71 base. Five gains and no losses across 64 pairs, including three gains in 24 with hull growth. The drum change increased three-second damage in a holdout, though movement also diverged."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The gun-upgrade scorer is isolated on a different gameplay base. The two standard public blocks gained three total points and the scaled block gained fourteen, with 59 ties and no placement loss over 64 games. All 48 four-mech placements tied."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact transplant gained 17 total points across 64 fresh public-upgrade comparisons, five improvements and no losses. Gains were seen in both hull models. All 48 four-mech pairs tied, and 23 unit tests and 300 replay observations passed."
+          }
+        }
+      }
     }
   ]
 }
