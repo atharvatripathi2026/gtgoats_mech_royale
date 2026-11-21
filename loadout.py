@@ -22,6 +22,7 @@ class Loadout:
         self.step = 1 / max(1, self.config.get("match", {}).get("tick_hz", 20))
         self.scan_phase = (hello.get("seed", 0) % 360) * math.pi / 180
         self.last_damage = -100
+        self.last_hits = {}
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
@@ -254,6 +255,15 @@ class Loadout:
         health = me.get("hp", 1) / max(1, me.get("max_hp", 1))
         late = obs.get("alive", 16) <= 3 or obs.get("zone", {}).get("radius", 560) < 55
         armed = {w["kind"] for w in me.get("weapons", []) if w}
+        rivals = sum(e.get("kind") == "mech" and math.dist(e["pos"][:2], (x, y)) <= 165
+                     for e in obs.get("mechs", []))
+        hold = self.step * self.config.get("match", {}).get("decide_every", 2)
+        last_rifle_round = any(slot and slot.get("kind") == "gun" and slot.get("ammo") == 1
+                               and not slot.get("reload", 0) and slot.get("cooldown", 0) <= hold
+                               for slot in me.get("weapons", ()))
+        ready_beam = any(slot and slot.get("kind") == "laser" and slot.get("cooldown", 0) <= self.step
+                         and not slot.get("charge", 0) for slot in me.get("weapons", ()))
+        engaged_squad = rivals >= 2 and (t - self.last_damage < 3 or late) and last_rifle_round and ready_beam
         priority = []
         for ent in (*obs.get("mechs", []), *obs.get("crates", [])):
             px, py, pz = ent["pos"]
@@ -274,7 +284,18 @@ class Loadout:
                          (health >= .82 and dist < (198 if pursuer else 166)) or
                          (health >= .65 and pursuer and dist < 120) or
                          (wounded and dist < (145 if pursuer else 100)))
+                hull = max(1, self.mech.get("hp", 1400))
+                remaining = ent.get("hp", hull) / hull
+                since = t - self.last_hits.get(ent.get("id"), -100)
+                focus = engaged_squad and 0 <= since <= hold + 1e-8
+                if focus and remaining < .42 and dist <= 145:
+                    fight = True
                 score = (150 if fight else 30) - dist * .23 + 18 * attacker + 8 * wounded
+                if focus:
+                    # Keep pressure on a proven target through the handoff
+                    # from the last rifle round to an available laser.
+                    score += 56 * clamp(1 - remaining, 0, 1)
+                    score += 16 * clamp(1 - since / 2.4, 0, 1)
                 if pursuer:
                     score += 6
                 opponent = ent.get("weapons", [])
@@ -714,6 +735,10 @@ class Loadout:
             if (measure and event.get("type") == "hit" and arm in self.arm_damage
                     and type(target) is int and 0 <= target < self.config.get("match", {}).get("mechs", 16)):
                 self.arm_damage[arm] += event.get("amount", 0.)
+            if event.get("type") == "hit":
+                target = event.get("target")
+                if isinstance(target, (int, float)) and 0 <= target < self.config.get("match", {}).get("mechs", 16):
+                    self.last_hits[target] = t
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
