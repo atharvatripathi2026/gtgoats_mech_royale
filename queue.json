@@ -211,6 +211,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "cc7628485b7b5ea5b53f51af18baec5e624bd86a",
+      "summary": "Hold the gun trigger when cooldown ends on the second physics tick and the original aim will align by then. Placement gained 0.286 points per game across 56 campus pairs, six gains and one loss. All 48 four-mech pairs tied. Docker 300/300.",
+      "created_at": "2026-11-21T03:12:26Z",
+      "parents": [
+        "8b9f76db264c8aa33e6c70b8ef67c741cb56f60d"
+      ],
+      "reviews": {
+        "commit": "cc7628485b7b5ea5b53f51af18baec5e624bd86a",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The trigger is scoped to the gun still cooling through the first physics tick. Controlled replay saved the shot with unchanged movement and aim and gained 45 outgoing damage without extra incoming damage. All three separate campus panels improved and the 48 four-mech pairs tied."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "All three campus sets improved, for six gains, 49 ties and one loss over 56 pairs. Independent seed 982511 gained 57.6 first-second damage with no additional incoming damage after the gun-only trigger changed. The later result remains sensitive to trajectory."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The public protocol holds triggers across two ticks. The cooldown check excludes first-tick fire. Pooled exact results were +0.286 across 56 campus pairs with positive independent standard and scaled sets. Four-mech tied and Docker answered all 300 observations."
+          }
+        }
+      }
     }
   ]
 }
