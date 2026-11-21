@@ -1,0 +1,9 @@
+# Forecast the next native gun decision
+
+Candidate `e87064a570567f6b47d37f4606bd3e843bb68f7e` descends from `944ff81e89d4cdfb37da7d38c42ad87c2917f4ae`. Before adding a held-ray trigger during a line threat, it forecasts the next native decision using projected hulls and aim, cooldown and fresh sight. It defers when the same gun shot is forecast on the next observation, uses a shooter inference only with a unique plausible match, and checks each projected flight segment against terrain.
+
+All 112 fresh simulated placements tied, across 48 four-mech, 52 campus against approved `00192aa` and 12 matched campus comparisons against the direct parent from a shared standard split. Faster campus 1044903 added 111.6 damage through six seconds and total. Faster 1044908 added 63 damage from the first second onward. Incoming damage and survival tied in both. An intervening mech intercepted one earlier projectile in 1044908.
+
+The exact directed run in 1043505 retained an extra 63-damage hit before the native target change. The previous nine-point loss 1043311 reproduced all approved actions. The segmentation check rejected the previously blocked ray. In an archived forecast check, all nine imminent same-target native shots were vetoed and two out of five real switching opportunities were kept. The policy gives up some genuine shots when there is insufficient evidence of a closing window. All 22 unit tests and 300 timed Docker observations passed, with 30.3 ms p99.
+
+All three Sol reviewers approved the exact commit for practice on the replay repair and independently observed extra damage. The native forecast projects known movement and visible actors. Later acceleration, occlusion or shooter attribution can change the actual result. Compare placements on independent practice seeds when receipts become available.
