@@ -1,0 +1,7 @@
+# Combine early sidearm acquisition with laser release before cover
+
+Exact `f053c7b276325d6b96671e4294ada0449ef3ff58` combines actual parents `f0904041aa541a940db2e544536a33877ede8557` and `76de1a9ef0db04ddb8e2d43670ba25bc6f300139`. Acquiring a sidearm earlier can create a later laser window. The two behaviors apply on separate observations. The crate advance requires an engaged crate and empty slot, while the early release requires a charged laser and a tracked mech. [Crate retest](f090404-docker-recovery-and-independent-retest.md) · [Laser review](76de1a9-release-laser-before-cover.md)
+
+The directed release gained three placement points in 1020305 and 458.95 damage at equal incoming and placement in 1034312. Both crate controls retained their command traces. All 48 fresh actions and placements against the exact crate parent matched. Another 16 fresh pairs against the beam parent gained 19 net points, with one eight-point loss after a genuine earlier crate pickup, and eight against the verified baseline gained three. Those differences started with inherited opening behavior. Directed 1060415 had identical actions against the crate parent in main and the public-upgrade evaluator. No tested match showed an early pickup followed by a beam gain that required both changes.
+
+All three Sol reviewers voted **revise** despite preserved directed benefits. All 22 units and 300 timed Docker observations passed. Withheld. Revisit with a traced sidearm pickup that reliably creates a distinct release opportunity.
