@@ -386,6 +386,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "00192aa51fdef74bb6d7bfd8ad36046c9bef2511",
+      "summary": "Use a legal downward gun aim when cooldown expires on the second physics step. All 120 fresh simulated placements tied, with two genuine first-second hits. Unit tests and all 300 timed Docker ticks passed.",
+      "created_at": "2026-11-21T07:26:05Z",
+      "parents": [
+        "1d146590e77aad09e012b715e22d20770946287a"
+      ],
+      "reviews": {
+        "commit": "00192aa51fdef74bb6d7bfd8ad36046c9bef2511",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The first-step branch remains identical. Later legal gun geometry produced immediate same-target hits of 59.4 and 52.2 in directed tapes and 63 additional damage on a fresh joint seed. All 120 fresh placements tied, and archived placement changes occurred later."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The independent joint seed 1040108 added 63 outgoing damage at equal incoming and retained 63 extra total damage with tied placement. The original first step stays intact. Unit tests and all 300 timed Docker ticks passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Fresh joint 1040108 landed a true second-step hit for 63 extra damage at equal incoming and retained the extra damage. Fresh 1039203 also gained an early same-target hit. All 120 placements tied and an archived extra hit was followed by a placement loss."
+          }
+        }
+      }
     }
   ]
 }
