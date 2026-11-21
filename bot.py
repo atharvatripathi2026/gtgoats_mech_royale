@@ -69,6 +69,31 @@ class Bot:
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet))
+        # A short, unobstructed advance can collect the contents of the first
+        # crate sooner. Keep the current aim/trigger and stop well outside it.
+        combat = self.loadout.last_decision
+        if (obs.get("t", 0) < 40 and me.get("cubes", 0) == 0 and plan["mode"] == "farm"
+                and grounded and self.nav.loaded and not jet and not action["boost"]
+                and not base["dodge"] and base["zone_urgency"] < .2
+                and self.loadout.last_damage < obs.get("t", 0) - 3
+                and base["enemy_pressure"] < .15
+                and all(e.get("kind") != "mech" or math.dist(pos, e["pos"]) > 140
+                        for e in obs.get("mechs") or ())
+                and not any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))
+                and not any(move) and combat.get("intent") == "engage"
+                and combat.get("target_id") == plan["target_id"]):
+            crate = next((c for c in obs.get("crates") or () if c["id"] == plan["target_id"]), None)
+            if crate is not None:
+                px, py, pz = crate["pos"]
+                dx, dy = px - pos[0], py - pos[1]
+                span = math.hypot(dx, dy)
+                if 12.5 < span <= 17 and abs(pz - pos[2]) < 1.5:
+                    scale = (span - 12.5) / span
+                    ex, ey = pos[0] + dx * scale, pos[1] + dy * scale
+                    clearance, height = self.nav._dimensions(stats.get("radius", 2.5))
+                    if self.nav._ground_segment(*pos[:2], ex, ey, clearance, height):
+                        strength = min(.55, (span - 12.5) * .25)
+                        action["move"] = [strength * dx / span, strength * dy / span]
         self.last_decision = {
             "mode": plan["mode"], "reason": base["reason"], "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
