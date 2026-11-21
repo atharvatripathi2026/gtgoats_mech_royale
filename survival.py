@@ -362,13 +362,13 @@ class Survival:
         next_pending = ()
         if not visible_pack:
             remaining = set(pack) if pair is None else set(pack) - pair[2]
-            sequential, together = [], []
+            sequential, together, single = [], [], []
             for ident, (count, pos) in rivals.items():
                 if ident not in last or (pair is not None and ident == pair[1]):
                     continue
                 prior_count, prior_pos = last[ident]
                 delta = count - prior_count
-                if delta not in ((1, 2) if pair is None else (1,)):
+                if delta not in ((1, 2) if pair is None else (len(remaining),)):
                     continue
                 covered = footprint(pos, remaining, .25)
                 if (len(covered) != delta or covered != footprint(pos, remaining, 0.)
@@ -378,8 +378,10 @@ class Survival:
                     continue
                 claim = ident, count, covered
                 if not covered & footprint(prior_pos, remaining, 0.):
-                    if delta == (2 if pair is None else 1):
+                    if delta == (2 if pair is None else len(remaining)):
                         sequential.append(claim)
+                    elif pair is None:
+                        single.append(claim)
                     if pair is None:
                         together.append(claim)
                 elif pair is None and ident in older:
@@ -393,6 +395,8 @@ class Survival:
                 next_pending = tuple(together)
             elif len(sequential) == 1:
                 next_pending = tuple(sequential)
+            elif not sequential and len(together) == len(single) == 1:
+                next_pending = tuple(single)
         self.recalled_collectors = key, tick, rivals, last, next_pending, pair
         return False
 
