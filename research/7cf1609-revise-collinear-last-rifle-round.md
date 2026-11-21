@@ -1,0 +1,9 @@
+# Preserve a rifle line through an intervening rival · revise
+
+Exact `7cf160914462b1cfa038a60ea5051d887b8f75a5` on `f995228262f06e394a5b32ea598c908abd22d990` skips the last-round focus bonus when a recent rifle hit came from aiming at a farther rival and that prior aim still projects a clear contact through the nearer rival's hull.
+
+Simulated 1069100 confirms that both arms fired the final projectile at physics time 133.25s and both landed the earlier projectile. Only the revision landed the final round, on rival 6 for 55.8 damage. Fixed-geometry replay found a lateral obstruction. Raising the focus pitch by 0.005 to 0.040 radians still blocked contact, while moving yaw back by 0.006259 radians cleared contact at the same height. The revision restored the older trace's 2,298 commands, including the later dodge, and ended at 8 instead of 15 placement points with 138.35s less survival. Six-second incoming damage tied at 180. The useful redirected hit in 1068517 remained intact.
+
+All commands and placements tied in 12 fresh native squad pairs (1069200–11), 16 original four-mech scenario and map pairs (1069220–23), and five phased pairs (1069131 and 1069260–63). Six more pairs (1069240–45) tied on placements and kills against the commit-linked 3.71 reference. The exact candidate passed 23 unit tests and 300 of 300 timed networkless sandbox observations.
+
+All three reviewers voted **revise**. Survival traced the reproduced loss through the later dodge. Combat independently confirmed the recovered hit and unsustained placement. Validation found no beneficial active case and noted that the nominal test omits launch and spread uncertainty. Revisit on a fresh consequential intercept using first reachable hull contact and evaluating the later escape separately. [Parent review](f995228-confirm-target-through-last-rifle-round.md) · [Dodge intervention](d2c0bb0-revise-grounded-rifle-dodge.md)
