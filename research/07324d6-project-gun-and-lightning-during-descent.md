@@ -1,0 +1,5 @@
+# Check both available weapons before cutting rising thrust
+
+Candidate `07324d676a25ff0216176b094cdf377a905e4268` descends from `2a7f803ada41256f0d7b3fc22d47a68939a4515e`. It preserves the original decision when vertical velocity is at most 4 m/s and otherwise checks projected lightning availability alongside the gun. The forecast uses approximate range, pitch and terrain, and the gun check can overlook a nearly completed active reload. All 72 fresh simulated placements tied. All 24 units and all 300 timed Docker observations passed.
+
+The revision restored every action in favorable 1023905 and preserved final-duel 1030611. In 1050008 it kept thrust at the original failure but cut it at 340.9 s at vertical speed 3.6 m/s. Incoming damage rose from 45 to 495 in the first second at zero outgoing for either build. Placement fell from 12 points to eight versus the gun-only revision. All three Sol reviewers voted revise. The next test should keep already falling separate from still rising and use the actual remaining reload for each weapon.
