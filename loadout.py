@@ -1,4 +1,5 @@
 """Weapon, sensing and upgrade policy for the mechfight/1 game."""
+from copy import copy
 import math
 
 
@@ -345,6 +346,99 @@ class Loadout:
                 return False
         return True
 
+    def gun_flight_clear(self, origin, point, speed):
+        length = math.dist(origin, point)
+        if length <= 0:
+            return False
+        stride = speed * self.step
+        if stride <= 0:
+            return False
+        start = origin
+        for index in range(1, math.ceil(length / stride) + 1):
+            fraction = min(1., index * stride / length)
+            end = tuple(a + fraction * (b - a) for a, b in zip(origin, point))
+            if not self.nav.line_clear(start, end) or (fraction < 1 and end[2] <= self.nav.ground(*end[:2])):
+                return False
+            start = end
+        return True
+
+    def imminent_gun_attacker(self, obs, duration):
+        me = obs["self"]
+        pos = me["pos"]
+        own_vel = me.get("vel", (0., 0., 0.))
+        stats = me.get("stats", {})
+        radius, height = stats.get("radius", 2.5), stats.get("height", 9)
+        rivals = [entity for entity in obs.get("mechs", ()) if entity.get("kind") == "mech"]
+        if len(rivals) < 2:
+            return None
+        hits = []
+        for shot in obs.get("projectiles", ()):
+            if shot.get("kind") != "gun" or "vel" not in shot or "pos" not in shot:
+                continue
+            relative = tuple(a - b for a, b in zip(shot["vel"], own_vel))
+            delta = tuple(a - b for a, b in zip(shot["pos"], pos))
+            norm = relative[0] ** 2 + relative[1] ** 2
+            if norm < 1:
+                continue
+            eta = -sum(delta[k] * relative[k] for k in (0, 1)) / norm
+            if (not 0 < eta <= duration
+                    or math.hypot(*(delta[k] + eta * relative[k] for k in (0, 1))) > radius * .8
+                    or not 0 <= delta[2] + eta * relative[2] <= height):
+                continue
+            impact = tuple(x + eta * v for x, v in zip(shot["pos"], shot["vel"]))
+            if not self.nav.line_clear(shot["pos"], impact):
+                continue
+            vx, vy = shot["vel"][:2]
+            speed = math.hypot(vx, vy)
+            if speed < 1:
+                continue
+            behind = []
+            for rival in rivals:
+                dx = shot["pos"][0] - rival["pos"][0]
+                dy = shot["pos"][1] - rival["pos"][1]
+                along = (dx * vx + dy * vy) / speed
+                lateral = abs(dx * vy - dy * vx) / speed
+                if 0 < along <= 235 and lateral <= self.dimensions(rival)[0] + 1:
+                    behind.append(rival["id"])
+            if len(behind) == 1:
+                hits.append((eta, behind[0], math.atan2(-vy, -vx)))
+        return max(hits, default=None)
+
+    def next_gun_on_same_target(self, obs, ent, aim, gun_index, travel_yaw, evade, target_id, climbing):
+        """Forecast a native next decision without consuming a gun round."""
+        stride = self.config.get("match", {}).get("decide_every", 2)
+        duration = self.step * stride
+        me = obs["self"]
+        stats = me.get("stats", {})
+
+        def projected(entity):
+            if "vel" not in entity:
+                return entity
+            return dict(entity, pos=[x + duration * v for x, v in zip(entity["pos"], entity["vel"])])
+
+        projected_me = projected(me).copy()
+        actual_yaw, actual_pitch = me["aim"]
+        turn = stats.get("turn_rate", 4) * duration
+        tilt = stats.get("pitch_rate", 3) * duration
+        projected_me["aim"] = (actual_yaw + clamp(angle_delta(aim[0], actual_yaw), -turn, turn),
+                               clamp(actual_pitch + clamp(aim[1] - actual_pitch, -tilt, tilt),
+                                     stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)))
+        projected_me["weapons"] = [dict(w, cooldown=max(0., w.get("cooldown", 0) - duration)) if w else None
+                                   for w in me.get("weapons", ())]
+        attacker = self.imminent_gun_attacker(obs, duration)
+        events = []
+        if attacker:
+            _, source, bearing = attacker
+            events.append({"type": "damaged", "by": source, "bearing": bearing})
+        next_obs = dict(obs, self=projected_me, t=obs.get("t", 0) + duration,
+                        events=events, offer=None,
+                        mechs=[projected(entity) for entity in obs.get("mechs", ())])
+        forecast = copy(self)
+        forecast.sight = {}
+        next_action = forecast.decide(next_obs, travel_yaw, evade, target_id, climbing)
+        return (forecast.last_decision["target_id"] == ent["id"]
+                and next_action.get("fire", (False, False))[gun_index])
+
     def gun_second_ray_reaches(self, me, target, muzzle, aim, weapon, offset):
         """Check the held ray when the gun becomes ready only on the second tick."""
         if not self.nav or not self.nav.loaded:
@@ -379,7 +473,7 @@ class Loadout:
             feet = tuple(x + v * (delay + flight) for x, v in zip(position, target_velocity))
             if (math.dist(point[:2], feet[:2]) > .8 * radius
                     or not .12 * height <= point[2] - feet[2] <= .88 * height
-                    or not self.nav.line_clear(origin, point)):
+                    or not self.gun_flight_clear(origin, point, speed)):
                 return False
         return True
 
@@ -514,7 +608,9 @@ class Loadout:
                     for i, (_, _, _, weapon_kind, weapon_stats, weapon) in shots.items():
                         if (weapon_kind == "gun" and weapon.get("ammo", 0) >= 2
                                 and weapon.get("cooldown", 0) > self.step + 1e-7
-                                and self.gun_second_ray_reaches(me, ent, muzzle, aim, weapon_stats, offset)):
+                                and self.gun_second_ray_reaches(me, ent, muzzle, aim, weapon_stats, offset)
+                                and not self.next_gun_on_same_target(obs, ent, aim, i, travel_yaw,
+                                                                     evade, target_id, climbing)):
                             fire[i] = True
                 action["fire"] = fire
         for w in slots:
