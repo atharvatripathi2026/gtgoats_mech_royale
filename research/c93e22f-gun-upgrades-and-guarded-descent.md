@@ -1,0 +1,5 @@
+# Combine sustained gun upgrades with guarded descent
+
+Candidate `c93e22f7ecc482ff8ef412a6e450f1fd5b8baa0f` combines `1007d94d9de578353be95597a11a7ba6049e81be` and `8b9f76db264c8aa33e6c70b8ef67c741cb56f60d`. It keeps the existing final-duel exception and adds the healthy sustained gun choice. Across 116 fresh pairs it lost four points against the gear parent in joint 1050008, tied 12 standard gear pairs, and lost one net point across 28 pairs against the jet parent. All 60 verified native and four-mech placements tied. All 24 units and 300 timed Docker observations passed.
+
+In 1050008 the boost-only cut left the same target and movement. Incoming damage rose by 180 through six seconds at zero outgoing for either build. The combination finished four points lower. The descent fired with eight mechs alive, outside the final-duel veto. Survival voted reject, and combat and validation voted revise. The next trial conditioned the descent on a projected return shot. [Gun forecast](2a7f803-projected-gun-return-after-descent.md)
