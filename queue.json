@@ -1241,6 +1241,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "a3db6c06a65e22d41c2b0befe8653eb1b1e3d9e0",
+      "summary": "Combine visible-neighbor recovery and rival pickup confirmation. Remember distinct cubes across an active chase so a rival gaining two cannot erase a known three-cube pack. Retains directed one-place gain on true two-cube collection; 116 fresh paired placements tied and all 300 sandbox ticks passed.",
+      "created_at": "2026-11-21T15:43:39Z",
+      "parents": [
+        "758762f7f5fe6a0cadfc757e4fc1998e19e11d2d",
+        "d861298bda31b4facbdca96f9cc932a8c1308951"
+      ],
+      "reviews": {
+        "commit": "a3db6c06a65e22d41c2b0befe8653eb1b1e3d9e0",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "All three controlled sibling variants match the sibling parent's 450 commands and collect the surviving cube, including staggered visibility and reveal on confirmation. Genuine two-cube collection retains its directed place gain. Eight independent fresh public-equipment pairs match the rival-confirmation parent. A larger earlier observed pack can defer rival cancellation to native terrain and visibility checks."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact merge restores the staggered replay, retains the near two-cube pickup gain and matches the gap and partial controls. Fresh pairs and exact sandbox passed. Active-chase tracking may include a member collected earlier and omits a neighbor seen only before admission."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight independent phased-public fresh pairs match commands and place. The exact staggered physical replay restores the sibling parent's commands and placement. The genuine two-cube control matches the rival parent and gains one place over the sibling parent. The witnessed-ID scope is the selected chase."
+          }
+        }
+      }
     }
   ]
 }
