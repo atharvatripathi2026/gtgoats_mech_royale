@@ -1,0 +1,7 @@
+# Direction of the arriving hit in local armor tests
+
+The public protocol assigns rear armor from a bullet's travel direction, a beam's origin or a shell's blast point. The existing simulator used the shooter's current position for each. Isolated local tooling `455dcb7858ab569320ff2d4562102abc3dd0b824` under `/tmp/gtg-impact-bearing-RflzpW` passes the corresponding directional bearing to damage and rear classification. The separate `research/impact-bearing` ref retains the experiment. All 38 unit tests passed. Other projectile and splash simplifications remain. [Public rules](https://www.joinbuilders.org/buildathon/tracks/builders/files/protocol.md)
+
+Compared the published reload guard `a1ae1d7` with `367287e` using public upgrade rules and fixed hulls. The old arena favored the candidate by +0.500 points per game on 970801–970816. The impact-direction arena tied all placement pairs on those seeds and all 16 on fresh seeds 981001–981016. In corrected 970813 the same reload turn still changed one 67.5 HP rear hit to a 45 HP frontal hit at 10.4 seconds, with equal outgoing damage. Both versions eventually placed at five local points. Corrected 970802 also saved 20.7 HP in the first second after the turn with equal outgoing damage. Both placements tied.
+
+The direct armor effect persists under the directional model. The old eight-place improvement in 970813 was sensitive to the arena. Keep the existing practice entry available and judge later behavior with commit-linked official results when available.
