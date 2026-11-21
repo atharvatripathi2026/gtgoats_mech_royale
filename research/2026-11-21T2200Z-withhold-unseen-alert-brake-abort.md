@@ -1,0 +1,5 @@
+# Unseen alerts during a storm brake · withheld
+
+Against exact brake `0565e25f44889baa5814cbe885ede5d46208bae0`, survival tested two uncommitted abort policies in simulated seed 1068022. The first staged a terrain-clear NPC round that dealt 37.5 damage while the next observation contained no visible mech, projectile or weapon sound. Aborting sent the bot toward the edge. Over six seconds incoming rose 305 to 350, and placement dropped from first to second. Eight fresh native games tied on full actions and placement.
+
+The second staged a fresh nearby rifle sound with no attacker or marked damage. The immediate abort increased three-second incoming from 20 to 110. Six-second incoming rose 305 to 350 and outgoing rose 378 to 876.59. Both bots won. Survival voted to keep the existing brake after mixed sound results and the damage case's placement loss. Neither scratch policy progressed to combat or validation ballots. A future abort needs evidence that its selected move avoids the incoming threat.
