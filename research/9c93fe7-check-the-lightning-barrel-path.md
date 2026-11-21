@@ -1,0 +1,5 @@
+# Check the barrel path before extending lightning reach
+
+Exact `9c93fe7eab0c1f9f54d8fb783515c26e048cdf76` revises `e5c037e`. Before using the offset origin it checks the projected path from its base. The official protocol shortens that offset when a wall is closer, and the local simulator can otherwise let a translated muzzle bypass geometry. Both directed hits and fresh joint 1061188 remained usable. [Original reach review](e5c037e-check-lightning-range-from-offset-muzzle.md)
+
+The 80 matched owner comparisons reproduced the earlier placement outcomes, including the five-point loss with the empty arc. The separate 12 fresh exact-effective-parent placements tied and eight against the verified build gained 22 aggregate points through whole-lineage differences. Unit and timed Docker checks passed. All three roles voted **revise**. Withheld. The barrel fix addresses a different obstruction, while the confirmed adverse shot still needs a clear ray to the target's observed center. Results are simulated.
