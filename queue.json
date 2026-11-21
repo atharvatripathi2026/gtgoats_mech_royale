@@ -536,6 +536,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61",
+      "summary": "Transfer the approved mortar swap onto the exact crossing dodge. Fresh simulated placement gained 26 points over 56 dodge-parent pairs and 11 over 40 mortar-parent pairs. All 60 verified baseline placements tied. A faster gear case lost nine points. Unit and 300-tick Docker checks passed.",
+      "created_at": "2026-11-21T08:39:25Z",
+      "parents": [
+        "d8b45cd8cc1cb71077aa77f0c40f861744a0f92c",
+        "08f3a69150895622e401fc90c1fe60d45a26d0e8"
+      ],
+      "reviews": {
+        "commit": "79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Three fresh comparisons against the dodge parent show equipment-first gains with real follow-up mortar damage at equal incoming. The combined results are up 26 points against the dodge and 11 against the mortar parent. Directed dodge controls remain exact, while the faster placement loss is an inherited gear trade."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Across all 156 comparisons, three genuine mortar hits produced 26 total placement points with no losses in 56 pairs against the dodge. The candidate also gains 11 across 40 mortar-parent pairs and ties 60 verified pairs. The faster cohort still has a nine-point gear-related loss."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All three gains over exact dodge begin with taken and dropped equipment and show real favorable damage. Both exact dodge controls and both corresponding mortar actions survive. The combined plus 11 against the mortar parent includes a minus nine gear case. This is evidence for mortar transfer and separate retained mechanics."
+          }
+        }
+      }
     }
   ]
 }
