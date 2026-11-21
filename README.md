@@ -77,7 +77,7 @@ For two different gameplay commits, use `python3 -m training.compare --help` to 
 
 The Chrome helper submits tested commits from this team's public candidate queue through the Builders practice form. It runs while the computer is awake and the signed-in track tab is open. It stops at 11 a.m. Eastern on Sunday, November 22, 2026.
 
-1. Download and unzip the [practice helper](https://github.com/atharvatripathi2026/gtgoats_mech_royale/releases/download/submission-helper-v1/gt-goats-practice-helper.zip).
+1. Download and unzip the [practice helper](https://github.com/atharvatripathi2026/gtgoats_mech_royale/archive/refs/tags/submission-helper-v1.zip).
 2. In desktop Chrome, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select the unzipped folder containing `manifest.json`.
 3. Open or refresh the [Builders practice form](https://www.joinbuilders.org/buildathon/tracks/builders#submit) in that Chrome profile. Sign in for GT Goats if prompted. Click **Start GT Goats submissions** in the panel at the bottom right. Use **Stop** there to pause.
 
