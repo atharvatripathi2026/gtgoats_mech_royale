@@ -1,0 +1,7 @@
+# Angle the escape around late-circle terrain
+
+Survival voted **approve for practice** on `9058d28ad61631450b31c0b755835c691206eb5a`. Combat and validation voted **reject**. The exact candidate extends squad focus `c1456b52088811a77a41473c50c4c70faa81d2e4`. It checks the actual movement command against the moving circle, then tries short walkable alternatives when the command would cross the boundary. It preserves existing immediate projectile responses and jet commands.
+
+On the motivating seed 921419, one correction at 381.5 seconds kept the mech inside the 25 m circle, avoided 65.25 terminal zone damage, and extended survival by 25 seconds. Placement improved from third to first, with identical damage dealt and eliminations before the parent's death. The direct inward ray was obstructed, while the selected angled line was walkable. A moving-circle fixture exercised interpolation.
+
+All 24 owner squad, 20 independent squad and 48 four-mech paired episode records were identical. Survival considered the causal repair and absence of fresh regressions sufficient to test in practice. Combat and validation saw no changed fresh outcome to support how often the correction helps. A projected path is approximate and can change exposure, although independent fixtures showed no adverse route outcome. All 23 unit tests and 300 official replay observations passed. No entry was added to the queue.
