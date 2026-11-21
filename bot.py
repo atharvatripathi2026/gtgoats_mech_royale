@@ -80,6 +80,7 @@ class Bot:
                 and all(e.get("kind") != "mech" or math.dist(pos, e["pos"]) > 140
                         for e in obs.get("mechs") or ())
                 and not any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))
+                and sum(bool(w) for w in me.get("weapons", ())) < 2
                 and not any(move) and combat.get("intent") == "engage"
                 and combat.get("target_id") == plan["target_id"]):
             crate = next((c for c in obs.get("crates") or () if c["id"] == plan["target_id"]), None)
