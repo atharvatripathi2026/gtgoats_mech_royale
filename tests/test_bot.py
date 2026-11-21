@@ -12,10 +12,11 @@ import sys
 import tempfile
 from threading import Thread
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import mechfight
 
+from bot import Bot
 from loadout import Loadout
 from navigation import Navigator
 from survival import Survival
@@ -35,6 +36,32 @@ class DecisionTests(unittest.TestCase):
         self.me = self.obs["self"]
         self.me.update(pos=[0, 0, 0], aim=[0, 0], vel=[0, 0, 0])
         self.obs["offer"] = None
+
+    def test_crossed_gun_rays_briefly_adjust_grounded_evasion(self):
+        bot = Bot.__new__(Bot)
+        bot.match_rules = {"tick_hz": 20, "decide_every": 2}
+        bot.nav = Mock()
+        bot.nav.loaded = True
+        bot.nav.surface.return_value = 0
+        bot.nav.line_clear.return_value = True
+        bot.nav._dimensions.return_value = (2.5, 9)
+        bot.nav._ground_segment.return_value = True
+        self.me.update(vel=[-1.5446, -15.0059, 0], energy=33, in_zone=True, grounded=True)
+        self.obs.update(zone={"center": [0, 0], "radius": 100},
+                        mechs=[{"kind": "mech"}, {"kind": "mech"}],
+                        projectiles=[
+                            {"id": 1, "kind": "gun", "pos": [1.9668, 5.2140, 4.4719],
+                             "vel": [236.9858, -82.9502, -21.4705]},
+                            {"id": 2, "kind": "gun", "pos": [-3.5938, -14.7582, 6.1184],
+                             "vel": [110.4156, 226.4675, -4.9880]},
+                        ])
+        plan = {"mode": "evade", "dodge": "line", "zone_urgency": 0}
+        action = {"move": [0.0228, -.9997], "boost": True}
+        move = bot.cross_shot_move(self.obs, plan, action, False)
+        self.assertIsNotNone(move)
+        self.assertLess(move[0], -.4)
+        action["fire"] = [True, False]
+        self.assertIsNone(bot.cross_shot_move(self.obs, plan, action, False))
 
     def test_future_zone_overrides_loot_outside(self):
         self.obs.update(t=100, zone={"center": [0, 0], "radius": 50,
