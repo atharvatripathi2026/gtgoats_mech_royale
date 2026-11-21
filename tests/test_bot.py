@@ -45,6 +45,21 @@ class DecisionTests(unittest.TestCase):
         goal = Survival(self.hello).decide(self.obs)["goal"]
         self.assertLess(math.hypot(*goal[:2]), 65)
 
+    def test_reload_crate_approach_preserves_active_laser(self):
+        policy = Survival(self.hello)
+        policy.nav = unittest.mock.Mock(loaded=True)
+        policy.nav.ground.return_value = 0
+        policy.nav._dimensions.return_value = (2, 9)
+        policy.nav._ground_segment.return_value = True
+        self.me.update(grounded=True, in_zone=True, weapons=[
+            {"kind": "gun", "reload": 1.0},
+            {"kind": "laser", "cooldown": 0.5, "charge": 0.4},
+        ])
+        crate = (15, 0, 0)
+        self.assertIsNone(policy._reload_crate_approach(self.me, self.me["pos"], crate, 2.5))
+        self.me["weapons"][1]["charge"] = 0
+        self.assertEqual(policy._reload_crate_approach(self.me, self.me["pos"], crate, 2.5), (7, 0))
+
     def test_isolated_finisher_requires_health_and_room(self):
         policy = Survival(self.hello)
         enemy = {"kind": "mech", "pos": [73, 0, 0], "hp": 400, "max_hp": 1400}

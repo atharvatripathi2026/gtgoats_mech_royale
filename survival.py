@@ -274,7 +274,7 @@ class Survival:
                    for weapon in weapons):
             return None
         if any(weapon.get("kind") != "gun"
-               and (weapon.get("cooldown", 0) < .4 or weapon.get("charging"))
+               and (weapon.get("cooldown", 0) < .4 or weapon.get("charge", 0) > 0)
                for weapon in weapons):
             return None
         gap = distance(pos, crate)
