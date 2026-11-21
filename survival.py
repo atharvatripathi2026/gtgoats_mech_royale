@@ -37,6 +37,8 @@ class Survival:
         self.last_contact = (-100.0, 0.0, 0.0)
         self.sight = {}
         self.loot = {}
+        self.recent_player_kill = -math.inf
+        self.recovery_cubes = {}
         self.chase_id = None
         self.chase_record = (0, 0)
         self.skip_until = {}
@@ -274,6 +276,34 @@ class Survival:
             return steering, shot.get("id")
         return None
 
+    def _observe_recovery_cubes(self, obs, now, health):
+        count = self.rules.get("match", {}).get("mechs", 16)
+        if any(event.get("type") == "kill" and type(event.get("target")) is int
+               and 0 <= event["target"] < count for event in (obs.get("events") or ())):
+            self.recent_player_kill = now
+            self.recovery_cubes.clear()
+        if health >= .55 or now - self.recent_player_kill > 2.5:
+            self.recovery_cubes.clear()
+            return
+        self.recovery_cubes = {key: item for key, item in self.recovery_cubes.items()
+                               if now - item[0] <= .35}
+        self.recovery_cubes.update((cube["id"], (now, tuple(cube["pos"])))
+                                   for cube in (obs.get("cubes") or ()) if "id" in cube and "pos" in cube)
+
+    def _recovery_pack(self, obs, pos, radius, foes):
+        me = obs["self"]
+        if (foes or not me.get("grounded") or not me.get("in_zone") or not self.nav or not self.nav.loaded
+                or me.get("cubes", 0) >= self.rules.get("cubes", {}).get("stat_cap", 10)):
+            return {}
+        cubes = self.recovery_cubes
+        visible = {cube.get("id") for cube in (obs.get("cubes") or ())}
+        dimensions = self.nav._dimensions(radius)
+        return {key: item for key, item in cubes.items()
+                if key not in visible and distance(pos, item[1]) < 55 and abs(pos[2] - item[1][2]) < 2
+                and any(other != key and math.dist(item[1], neighbor[1]) <= 2.
+                        for other, neighbor in cubes.items())
+                and self.nav._ground_segment(*pos[:2], *item[1][:2], *dimensions)}
+
     def _loot_goal(self, obs, now, pos, radius, health, foes, circle, final, until):
         me = obs["self"]
         held = {w.get("kind") for w in me.get("weapons", []) if w}
@@ -291,12 +321,14 @@ class Survival:
                 if field == "pickups" and obj.get("kind") in held:
                     continue
                 self.loot[obj["id"]] = (now, obj["pos"], field, value)
+        recovery = self._recovery_pack(obs, pos, radius, foes)
+        memory = self.loot | {key: (seen, p, "cubes", 52) for key, (seen, p) in recovery.items()}
         best_score, best = 0, None
         options = []
-        for key, (seen, p, field, value) in list(self.loot.items()):
+        for key, (seen, p, field, value) in memory.items():
             if (now - seen > (8 if field in ("pickups", "cubes") else 4.5) or (now > seen and distance(p, pos) < 5)
                     or (field == "pickups" and len(held) >= 2)):
-                del self.loot[key]
+                self.loot.pop(key, None)
                 continue
             if field == "crates" and (health < 0.78 or power >= cap):
                 continue
@@ -334,6 +366,8 @@ class Survival:
             if field in ("pickups", "cubes"):
                 value *= self.loot_priority
             score = value - d * 0.48 + (3.5 if key == self.chase_id else 0)
+            if key in recovery:
+                score += 6.
             if score > best_score:
                 best, best_score = (key, p, field, d), score
         if not best:
@@ -347,6 +381,8 @@ class Survival:
             self.skip_until[key] = now + 14
             self.chase_id = None
             return None
+        if key in recovery:
+            self.loot[key] = memory[key]
         if kind == "drop":
             drop = next(o for o in obs["drops"] if o.get("id") == key)
             if d < max(1, drop.get("radius", 8) - 2.0):
@@ -541,6 +577,7 @@ class Survival:
         speed = stats.get("walk_speed", mech.get("walk_speed", 11.7))
         radius = stats.get("radius", mech.get("radius", 2.5))
         hp = clip(me.get("hp", 1) / max(1, me.get("max_hp", 1)))
+        self._observe_recovery_cubes(obs, t, hp)
         energy = clip(me.get("energy", 100) / max(1, me.get("max_energy", 100)))
         anchor, urgency, circle, final, until = self._zone(obs, pos, speed, radius)
         foes, pressure, bearing = self._enemies(obs, t, pos)
