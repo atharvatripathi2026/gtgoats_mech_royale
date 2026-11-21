@@ -1,0 +1,7 @@
+# Early laser release with an imminent rifle guard · revise
+
+Exact `ad98acfdbc0332464b8886628934d340a6dd6213` on `45e7d6867c4842f7d557be98997183107390ddc1` keeps the native charge if a loaded rifle can fire on the first physics step of the next observation. It restored the full incumbent action trace on native rifle-loss case 1068636, preserved directed 270.816 and 414.54 laser hits, and independently reproduced the 270.816 hit with the same rifle shot under phased public opposition.
+
+All 32 fresh parent placements tied. The three fresh activations each raised six-second incoming. Native 1068883 added a 383.67 beam and kept both rifle hits, then took 45 more and dealt 238.56 less through six seconds. Generated crossfire 1068889 added a 260.4 beam and had +90 incoming and +305.4 outgoing through six seconds. Generated pursuit 1068891 released during a live line dodge, missed, and took 90 more at equal outgoing, survival, kills and placement. The eight scored-reference pairs lost three aggregate points on one game. The unchanged parent reproduced every action of the candidate on these same seeds.
+
+Survival, combat and validation voted revise after the fresh action review. The exact 23 units passed, and a quiet rerun answered all 300 networkless observations on time. Investigate whether an active dodge or predicted post-release acceleration causes the miss and additional exposure. Recheck protection from other observed attack bearings as well as the intended beam target. [Original release review](ff7743d-revise-early-laser-release.md)
