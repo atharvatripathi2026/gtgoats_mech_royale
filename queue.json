@@ -863,6 +863,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "4bba0d7e864811db371908c99729d0fa8df1248f",
+      "summary": "Restore the native Focusing Lens with confirmed laser use in the current phase and a loaded gun when sustained gun credit alone promoted Drum. Two directed one-place gains with stronger matched hits, 76 fresh placement ties, 23 units and 300 timed Docker responses.",
+      "created_at": "2026-11-21T11:56:22Z",
+      "parents": [
+        "4db9aae73510a44cbbcda8ab4fee336106fe743d"
+      ],
+      "reviews": {
+        "commit": "4bba0d7e864811db371908c99729d0fa8df1248f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The rule preserves the unrelated offer choice and an already loaded gun. Two directed placements gain one point with real stronger same-target beams; the second has a worse six-second trade. All 76 fresh placements tie and exact checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Lens returns only if sustained gun credit displaced it. Both directed gains have a real stronger same-target beam and the Armor, reload, cover and low-ammo controls retain stock. All 76 fresh placements tie. Exact 23 units and 300 timed responses pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Re-ranking without the extra credit isolates the actual Lens displacement, repairs the unrelated Armor interaction and retains stronger beams with reactive foes and in the second directed seed. The fresh ties and cumulative hit history limit generalization. Exact checks pass."
+          }
+        }
+      }
     }
   ]
 }
