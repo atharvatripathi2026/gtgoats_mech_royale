@@ -293,6 +293,47 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
+    def gun_can_hit_pitch_edge(self, me, target, origin, yaw, pitch, weapon, offset):
+        """Check a legal downward ray against the moving hull, not its center."""
+        if not self.nav or not self.nav.loaded:
+            return False
+        stats = me.get("stats", {})
+        low = stats.get("min_pitch", -.7)
+        high = stats.get("max_pitch", 1.3)
+        actual_yaw, actual_pitch = me.get("aim", (yaw, pitch))
+        turn = stats.get("turn_rate", 4) * self.step
+        tilt = stats.get("pitch_rate", 3) * self.step
+        next_yaw = actual_yaw + clamp(angle_delta(yaw, actual_yaw), -turn, turn)
+        next_pitch = clamp(actual_pitch + clamp(pitch - actual_pitch, -tilt, tilt), low, high)
+        if abs(next_pitch - pitch) > .02:
+            return False
+        ray = (math.cos(next_yaw) * math.cos(next_pitch),
+               math.sin(next_yaw) * math.cos(next_pitch), math.sin(next_pitch))
+        horizontal = ray[0] ** 2 + ray[1] ** 2
+        if horizontal < .01:
+            return False
+        pos = target["pos"]
+        distance = math.dist(origin[:2], pos[:2])
+        if not 13 <= distance <= 100:
+            return False
+        radius, height = self.dimensions(target)
+        target_velocity = target.get("vel", (0., 0., 0.))
+        velocity = me.get("vel", (0., 0., 0.))
+        speed = max(1, weapon.get("speed", 252))
+        for launch in (0., self.step):
+            muzzle = tuple(x + launch * v + offset * component
+                           for x, v, component in zip(origin, velocity, ray))
+            delay = launch + distance / speed
+            feet = tuple(x + delay * v for x, v in zip(pos, target_velocity))
+            depth = sum((feet[i] - muzzle[i]) * ray[i] for i in (0, 1)) / horizontal
+            point = tuple(x + depth * component for x, component in zip(muzzle, ray))
+            if (not 0 < depth <= weapon.get("range", 230)
+                    or math.dist(point[:2], feet[:2]) > radius * .65
+                    or not feet[2] + .12 * height <= point[2] <= feet[2] + .88 * height
+                    or not self.nav.line_clear(muzzle, point)):
+                return False
+        return True
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -318,6 +359,7 @@ class Loadout:
             "intent": "engage" if engage else "track" if ent else "scan",
         }
         if ent is not None:
+            pitch_edge = None
             body = (*ent["pos"][:2], ent["pos"][2] + h)
             vel = ent.get("vel", (0, 0, 0))
             radius, height = self.dimensions(ent)
@@ -355,7 +397,11 @@ class Loadout:
                 if result is None:
                     continue
                 yaw, pitch = result
-                if kind != "lightning" and not stats.get("min_pitch", -.7) <= pitch <= stats.get("max_pitch", 1.3):
+                low_pitch = stats.get("min_pitch", -.7)
+                if kind != "lightning" and not low_pitch <= pitch <= stats.get("max_pitch", 1.3):
+                    if (kind == "gun" and pitch < low_pitch and ent.get("kind") == "mech"
+                            and aim[1] < low_pitch and w.get("cooldown", 0) <= self.step):
+                        pitch_edge = (i, yaw, low_pitch, ws)
                     continue
                 if kind == "mortar" and self.nav is not None:
                     # A ledge directly in front of the tube can cause self-splash.
@@ -376,6 +422,13 @@ class Loadout:
                     else:
                         score += 2
                 shots[i] = (score, yaw, pitch, kind, ws, w)
+            if (not shots and pitch_edge is not None
+                    and not any(w and w.get("charge", 0) > 0 for w in slots)):
+                i, yaw, pitch, weapon = pitch_edge
+                if self.gun_can_hit_pitch_edge(me, ent, muzzle, yaw, pitch, weapon, offset):
+                    aim = [yaw, pitch]
+                    action["fire"] = [i == 0, i == 1]
+                    self.last_decision["aim_weapon"] = "gun"
             if shots:
                 primary = max(shots.values(), key=lambda shot: shot[0])
                 _, yaw, pitch, kind, _, _ = primary
