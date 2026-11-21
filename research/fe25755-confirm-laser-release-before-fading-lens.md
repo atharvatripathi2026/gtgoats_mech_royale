@@ -1,0 +1,7 @@
+# Check laser availability before discounting older hits
+
+Exact `fe257552c6f528b64d7e70c180ec196258fe8993`, from Lens `4bba0d7e864811db371908c99729d0fa8df1248f`, keeps the native Lens restoration unless the laser has been idle for three nominal charge and cooldown cycles and a rival gun hit occurred within one cycle. Any positive laser hit or same-slot charge drop with a cooldown rise confirms a release. Only rival hit amounts count towards upgrade damage.
+
+All 68 simulated first-parent fresh placements tied, across public campus 1062960–1062979 and the four-mech generated and campus suites 1062980–1062985. Eight native campus comparisons against linked `03a8f93` also tied for both candidate and Lens control, for 84 fresh comparison instances. The archived replay screen examined 181 trajectories and seven joint Lens and Drum offers. It found zero predicted offer changes. Both original gains, the prior recency loss replay, Armor and reload agreed action for action. All 23 units and 300 Docker replies passed.
+
+Survival and combat voted **reject**, validation **revise**. The new gate was inactive in those tests and in adverse 1062953. The documented lightning short can cancel charge, so a state-only release needs a short guard if the service also raises the cooldown field. The next independent test should measure confirmed rifle burst demand before the upgrade. [Availability diagnostics](2026-11-21-confirmed-weapon-release-and-reload-demand.md)
