@@ -612,6 +612,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "02c2fc0726496969bff0f8a735433480fed2797b",
+      "summary": "Keep a native covered hold when an adaptive move would reveal the hull. Two fresh comparisons gained eight and two placement points, with 88 ties. Directed replay gained four points with less early incoming damage. Unit and timed sandbox checks passed.",
+      "created_at": "2026-11-21T08:55:10Z",
+      "parents": [
+        "8b9f76db264c8aa33e6c70b8ef67c741cb56f60d"
+      ],
+      "reviews": {
+        "commit": "02c2fc0726496969bff0f8a735433480fed2797b",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The guard preserves the existing hold, aim and fire, avoids 103.5 first-six-second incoming damage in the directed replay and gains four placement points despite lower early outgoing. It has two fresh placement gains and no losses. The large fast win has no first-six-second exchange difference."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The first actual command preserves a stationary hold and the same aim. The fresh fast panel gains eight points without a direct-parent loss. The directed replay gains four and avoids 103.5 early incoming with offensive cost, and the later fresh benefit is not an immediate first-shot save."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The narrow incoming-ray gate prevents an unnecessary move away from existing cover. The archived four-point gain and fresh eight-point gain support practice, with no immediate same-exchange damage change in the fresh case. The independent native pair adds a two-point placement gain."
+          }
+        }
+      }
     }
   ]
 }
