@@ -1,0 +1,9 @@
+# Pause quiet loot movement before losing rifle cover
+
+Exact `b67986b9d43783aa437ac15fdd8cecc8ca3693f2`, child of `38f245c6d6bc3da212560066cf0d635195c5a769`, stops a grounded quiet loot walk if the chosen step exposes the hull to an armed, aimed rival and stopping preserves terrain cover. Immediate fire, charge, reload and boost keep their normal rules. The geometry uses observed aim and position as a threat proxy. The stop can renew while the conditions persist. Directed runs held up to two seconds continuously.
+
+Directed public 1063105 kept cover from t176.0 to t177.7. Through six seconds the two native hits from rival #13 totaled 112.5, while the candidate took 45 from that same rival and dealt 204.41 instead of 55.8. Placement tied with shorter survival. The +2 detour, roof jet and earlier shots in both queued reload controls survived. The longer joint reload control changes movement only much later in the match.
+
+The 100 fresh simulations gained 30 total placement points across comparators. Public16 had +2, +1, +2 and −5, net zero. Native12 gained nine, original four-mech48 gained four overall despite a two-place loss, and joint16 gained 12 despite one one-place loss. The eight linked 3.71 comparisons gained five, with the exact parent tying all eight on the same seeds. 23 units and all 300 timed sandbox replies passed.
+
+Validation voted **approve for practice**. Combat and survival voted **revise**. The public −5 at 1063409 improved six-second outgoing and reached the first two cubes sooner before losing later kills and survival. Fresh +7 and +9 began while scanning, whereas public −5 and joint −1 started with a selected target. Test a scan-only hold against those cases and the four-mech loss. Also compare a covered lateral route in cases where static shelter can delay useful loot. Withheld.
