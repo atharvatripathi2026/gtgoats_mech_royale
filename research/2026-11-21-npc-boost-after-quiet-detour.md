@@ -1,0 +1,5 @@
+# Suppressing the first NPC dodge boost after a quiet detour
+
+The approved detour `814569c` and parent `1cba` tied with identical commands on 16 fresh public campus simulations 1062760–1062775. In the directed 1062049 detour gain, the first warning at t295.4 came from one NPC round. A scratch delayed only the boost when a projected ray crossed terrain. Both paths avoided the NPC shot. The scratch took 44.712 less later gun damage by six seconds and dealt 60.27 less, then fell from score 15 to 12 with two fewer kills and 9.1 seconds less survival. Quiet storm and valid roof controls were exact.
+
+Survival withheld the scratch before freezing a candidate. A closest-point ray crossed terrain while the first possible entry into a conservative expanded swept hull could still expose the mech. The next probe should classify projectile occlusion at that earlier contact, then test on a fresh exposure with rivals present. [Approved detour review](814569c-require-a-quiet-buffered-ground-detour.md)
