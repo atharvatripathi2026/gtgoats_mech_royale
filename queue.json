@@ -1570,6 +1570,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "f995228262f06e394a5b32ea598c908abd22d990",
+      "summary": "Favor a recently hit rival under squad pressure with one loaded rifle round and an idle ready laser. A directed hit shifted to that rival and its elimination advanced 0.2s. All 28 fresh parent comparisons tied. Passed 23 units and 300 sandbox observations.",
+      "created_at": "2026-11-21T23:25:16Z",
+      "parents": [
+        "3dd401585c16880fc49703ddcb950253da6a0eb6"
+      ],
+      "reviews": {
+        "commit": "f995228262f06e394a5b32ea598c908abd22d990",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "A directed replay redirects a real 61.2 rifle hit to the recently hit rival and advances its elimination by 0.2 seconds at equal six-second trades. The prior major losses are absent and 24 fresh main comparisons tie on actions and placement. Exact units and sandbox pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The last-round hit shift and earlier elimination give a measured narrow target-continuity benefit. The prior harmful choice disappears and the later changed-aim control retains its actual hits and endpoints. All 28 fresh parent comparisons are action-identical. The terminal placement gain is a directed simulated outcome."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The directed target gets the actual redirected rifle hit and dies 0.2 seconds earlier with unchanged legs and equal six-second total trades. Four fresh phased pairs and the phased focal case tie on every action and placement, as do the 24 main fresh pairs. A ready idle laser does not guarantee a subsequent hit. Exact checks pass."
+          }
+        }
+      }
     }
   ]
 }
