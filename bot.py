@@ -246,7 +246,9 @@ class Bot:
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet,
-                                          line_dodge=plan["dodge"] == "line"))
+                                          line_dodge=plan["dodge"] == "line",
+                                          steady=plan["mode"] == "hold" and grounded and not jet
+                                          and math.hypot(*action["move"]) < .02))
         if plan["dodge"] == "line":
             brace = self.loadout.brace_for_incoming_round(obs, action)
             if brace is not None:

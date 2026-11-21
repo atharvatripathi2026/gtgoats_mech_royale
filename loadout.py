@@ -30,6 +30,7 @@ class Loadout:
         self.arm_evidence_stage = None
         self.arm_damage = {"gun": 0., "laser": 0.}
         self.last_target = None
+        self.laser_contact = None
         self.last_gun_hit = None
         self.used_gun_hit = None
         self.sight = {}
@@ -597,7 +598,46 @@ class Loadout:
             return None
         return yaw + math.copysign(abs(gap) - front + .08, gap)
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
+    def hold_occluded_laser(self, obs, action, selected, engage, aim, muzzle, steady):
+        previous, self.laser_contact = self.laser_contact, None
+        own = obs["self"]
+        laser = next(((i, slot) for i, slot in enumerate(own.get("weapons", ())[:2])
+                      if slot and slot.get("kind") == "laser"), None)
+        if laser is None or not steady or not self.nav or not self.nav.loaded:
+            return aim
+        index, slot = laser
+        if engage and selected.get("kind") == "mech" and action.get("fire", [False, False])[index]:
+            self.laser_contact = selected["id"], obs["t"], None
+            return aim
+        if selected is not None or previous is None or not self.safe_zone_time(obs):
+            return aim
+        ident, last, lost = previous
+        hold = self.step * self.config.get("match", {}).get("decide_every", 2)
+        if obs["t"] - last > hold + 1e-6 or (lost is not None and obs["t"] - lost >= 3 * hold - 1e-6):
+            return aim
+        params = self.weapons.get("laser", {}) | slot.get("stats", {})
+        if not params.get("min_charge", .15) <= slot.get("charge", 0) < params.get("charge", .75):
+            return aim
+        targets = [e for e in obs.get("mechs", ()) if e.get("kind") == "mech"]
+        target = next((e for e in targets if e["id"] == ident), None)
+        if target is None or any(math.dist(own["pos"], e["pos"]) < 100 for e in targets):
+            return aim
+        _, height = self.dimensions(target)
+        velocity = target.get("vel", (0., 0., 0.))
+        body = (*target["pos"][:2], target["pos"][2] + .49 * height)
+        aim_at_target = self.solution("laser", muzzle, body, velocity, params, 0.,
+                                      own.get("stats", {}).get("max_pitch", 1.3))
+        if aim_at_target is None:
+            return aim
+        if lost is None and not all(self.nav.line_clear(muzzle, tuple(x + dt * v for x, v in zip(body, velocity)))
+                                    for dt in (self.step, hold)):
+            return aim
+        fire = action.setdefault("fire", [False, False])
+        fire[index] = True
+        self.laser_contact = ident, obs["t"], obs["t"] if lost is None else lost
+        return aim_at_target
+
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False, steady=False):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -738,6 +778,7 @@ class Loadout:
                 if backup is not None:
                     fire = action.setdefault("fire", [False, False])
                     fire[backup] = True
+        aim = self.hold_occluded_laser(obs, action, ent, engage, aim, muzzle, steady)
         gun_slot = next((w for w in slots if w and w.get("kind") == "gun"), None)
         mag = (gun_slot.get("stats", {}).get("mag", self.weapons.get("gun", {}).get("mag", 12))
                if gun_slot else None)
