@@ -46,6 +46,7 @@ class Bot:
         if (not action["boost"] or me.get("grounded", True) or jet or plan["dodge"]
                 or plan["mode"] not in ("evade", "zone") or len(plan["goal"]) != 2
                 or obs.get("t", 0) < 170 or obs.get("zone", {}).get("next_radius", 560) > 110
+                or obs.get("alive", 16) <= 2
                 or not me.get("in_zone", True) or not self.nav.loaded
                 or any(action.get("fire", ()))):
             return False
