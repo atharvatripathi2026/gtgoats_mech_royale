@@ -75,7 +75,7 @@ class Bot:
             return False
         held = {w["kind"]: w for w in me.get("weapons", ()) if w}
         gun = held.get("gun")
-        if gun is None or me["vel"][2] <= 4:
+        if gun is None or me["vel"][2] <= 0:
             return True
         # Releasing the jet helps only if the selected mech can enter a firing
         # angle before an extended descent leaves the bot exposed.
@@ -96,13 +96,19 @@ class Bot:
             arc = self.loadout.weapons.get("lightning", {}) | lightning.get("stats", {})
             pitch = math.atan2(hull[2] - muzzle[2], math.dist(hull[:2], muzzle[:2]))
             spread = math.radians(arc.get("cone_deg", 30)) * .8
-            if (math.dist(muzzle, hull) <= arc.get("range", 45) - 1
+            current_muzzle = x, y, z + stats.get("muzzle_height", 7)
+            current_hull = (*opponent["pos"][:2], opponent["pos"][2] + .49 * height)
+            reach = arc.get("range", 45) - 1
+            if (math.dist(current_muzzle, current_hull) <= reach
+                    and math.dist(muzzle, hull) <= reach
                     and minimum - spread <= pitch <= maximum + spread
                     and me.get("energy", 0) >= arc.get("energy", 3)):
                 return True
         weapon = self.loadout.weapons.get("gun", {}) | gun.get("stats", {})
-        if (gun.get("reload", 0) > horizon or gun.get("cooldown", 0) > horizon
-                or gun.get("ammo", 1) == 0 and weapon.get("reload", 2.4) > horizon):
+        reload_remaining = gun.get("reload", 0)
+        if gun.get("ammo", 1) == 0 and not reload_remaining:
+            reload_remaining = weapon.get("reload", 2.4)
+        if max(reload_remaining, gun.get("cooldown", 0)) > horizon:
             return False
         aim = self.loadout.solution("gun", muzzle, hull, opponent.get("vel", (0., 0., 0.)),
                                     weapon, stats.get("radius", 2.5) + .5, maximum)

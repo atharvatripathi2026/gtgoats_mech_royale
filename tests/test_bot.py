@@ -52,6 +52,26 @@ class DecisionTests(unittest.TestCase):
             action["aim"][1] = -.1
             self.assertFalse(bot.jet_obscures_return_fire(self.obs, plan, action, False))
 
+    def test_rising_descent_uses_lightning_only_if_currently_in_reach(self):
+        from bot import Bot
+
+        bot = Bot(self.hello)
+        bot.loadout.last_decision = {"target_id": 4}
+        self.me.update(pos=[0, 0, 35], vel=[0, 0, 5], grounded=False,
+                       in_zone=True, energy=100,
+                       weapons=[{"kind": "gun"}, {"kind": "lightning"}])
+        opponent = {"id": 4, "kind": "mech", "pos": [22, 0, 0]}
+        self.obs.update(t=340, mechs=[opponent])
+        self.obs["zone"]["next_radius"] = 25
+        plan = {"mode": "evade", "goal": [60, 0], "dodge": None}
+        action = {"move": [1, 0], "aim": [0, -.96], "boost": True}
+        with patch.object(bot.nav, "surface", return_value=0), \
+                patch.object(bot.nav, "line_clear", return_value=True), \
+                patch.object(bot.loadout, "solution", return_value=None):
+            self.assertTrue(bot.jet_obscures_return_fire(self.obs, plan, action, False))
+            opponent["pos"][0] = 38
+            self.assertFalse(bot.jet_obscures_return_fire(self.obs, plan, action, False))
+
     def test_future_zone_overrides_loot_outside(self):
         self.obs.update(t=100, zone={"center": [0, 0], "radius": 50,
                                     "next_center": [0, 0], "next_radius": 35,
