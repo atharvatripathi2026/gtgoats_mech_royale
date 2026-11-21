@@ -888,6 +888,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "049c97a20cde4894b94bb39b0f60e37a6406c63d",
+      "summary": "Combine phase-confirmed Lens with quiet grounded detours. Fresh campus +0.10 against Lens and +0.60 against detour across 20 paired seeds per parent, native 16 and four-mech 64 tied. Preserved both directed Lens gains. Three Sol approvals, 23 units, 300 sandbox replies.",
+      "created_at": "2026-11-21T12:09:39Z",
+      "parents": [
+        "4bba0d7e864811db371908c99729d0fa8df1248f",
+        "0933c1381ec3505e8722d8731db4382227b00409"
+      ],
+      "reviews": {
+        "commit": "049c97a20cde4894b94bb39b0f60e37a6406c63d",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Fresh direct Lens comparison 1062806 starts with a single changed move and saves 604.8 incoming damage through six seconds, gaining two places. No direct-parent loss and both Lens controls held. Cave 1060208 incurred 184 extra storm damage. Exact runtime condition cleared at 300 of 300."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The only fresh change in placement against Lens is a two-place gain that starts with quiet routing and saves 604.8 incoming damage in six seconds. Both Lens controls are wire-identical. The cave sent more outgoing damage but took 184 additional storm damage. Exact runtime condition cleared at 300 of 300."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Fresh 1062806 connects the added movement to lower incoming damage and better placement while retaining both directed Lens gains and incurring no fresh losses against the Lens parent. Directed cave still shows storm risk. The separate exact runtime rerun passed."
+          }
+        }
+      }
     }
   ]
 }
