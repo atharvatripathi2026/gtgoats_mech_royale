@@ -184,9 +184,12 @@ class Survival:
         held = {w.get("kind") for w in me.get("weapons", []) if w}
         cap = self.rules.get("cubes", {}).get("stat_cap", 10)
         power = me.get("cubes", 0)
+        opening = (now < 55 and len(held) < 2 and health >= .87 and circle[1] > 145
+                   and not self.pursuer and not any(visible and d < 85 for _, _, d, visible in foes)
+                   and sum(d < 145 for _, _, d, _ in foes) <= 1)
         table = (("cubes", 52 if power < cap else 15),
-                 ("pickups", 50 if len(held) < 2 else 0),
-                 ("crates", 17 if health >= 0.78 and power < cap else 0))
+                 ("pickups", 78 if opening else 50 if len(held) < 2 else 0),
+                 ("crates", 42 if opening and power < 3 else 17 if health >= 0.78 and power < cap else 0))
         for field, value in table:
             if not value:
                 continue
@@ -465,6 +468,8 @@ class Survival:
             goal = self._evade(t, pos, radius, stats.get("height", 9), foes, bearing,
                                dodge, anchor, circle, urgency)
             mode = "evade"
+        early = (t < 55 and circle[1] > 145 and hp >= .87 and not all(me.get("weapons", []))
+                 and urgency < .25 and sum(f[2] < 145 for f in foes) <= 1)
         reason = {
             "zone": "reach_forecast_circle", "evade": "incoming_projectile" if dodge else "avoid_exposure",
             "hold": "safe_position", "shelter": "break_line_of_sight", "farm": "reach_or_destroy_crate",
@@ -494,6 +499,11 @@ class Survival:
             if flank != goal:
                 reason = "flank_wounded_opponent"
                 goal = flank
+        if (early and mode == "loot" and target is not None and energy > .65 and not dodge
+                and me.get("grounded", True) and distance(pos, goal) > 10
+                and not self.pursuer and (not foes or foes[0][2] > 90)
+                and any(p.get("id") == target for p in obs.get("pickups") or ())):
+            self.boosting = True
         return {"goal": goal, "mode": mode, "urgency": max(urgency, pressure),
                 "reason": reason, "zone_urgency": urgency, "enemy_pressure": pressure,
                 "dodge": dodge[0] if dodge else None,
