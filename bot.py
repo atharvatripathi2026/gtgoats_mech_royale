@@ -155,7 +155,8 @@ class Bot:
             "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
-                                          target_id=plan["target_id"], climbing=jet))
+                                          target_id=plan["target_id"], climbing=jet,
+                                          line_dodge=plan["dodge"] == "line"))
         fallback = self.zone_anchor_fallback
         zone = obs.get("zone") or {}
         settled = (fallback is not None and fallback[0] == tuple(zone.get("next_center", ()))

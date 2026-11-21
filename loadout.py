@@ -23,6 +23,8 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
+        self.last_gun_capacity = None
+        self.dodge_reload_floor = None
         self.arm_evidence_stage = None
         self.arm_damage = {"gun": 0., "laser": 0.}
         self.last_target = None
@@ -328,7 +330,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -453,11 +455,19 @@ class Loadout:
                     else:
                         fire[i] = hit
                 action["fire"] = fire
-        for w in slots:
-            if w and w.get("kind") == "gun" and not w.get("reload", 0):
-                mag = w.get("stats", {}).get("mag", self.weapons.get("gun", {}).get("mag", 12))
-                ammo = w.get("ammo", mag)
-                if ammo == 0 or (not engage and ammo < mag * .80):
-                    action["reload"] = True
+        gun_slot = next((w for w in slots if w and w.get("kind") == "gun"), None)
+        mag = (gun_slot.get("stats", {}).get("mag", self.weapons.get("gun", {}).get("mag", 12))
+               if gun_slot else None)
+        previous_mag, self.last_gun_capacity = self.last_gun_capacity, mag
+        if not evade or not gun_slot or gun_slot.get("reload", 0):
+            self.dodge_reload_floor = None
+        if gun_slot and not gun_slot.get("reload", 0):
+            ammo = gun_slot.get("ammo", mag)
+            if (ent is None and evade and line_dodge and previous_mag is not None and mag > previous_mag
+                    and previous_mag * .80 <= ammo < mag * .80):
+                self.dodge_reload_floor = previous_mag * .80
+            protect = self.dodge_reload_floor is not None and ammo >= self.dodge_reload_floor
+            if ammo == 0 or (not engage and ammo < mag * .80 and not protect):
+                action["reload"] = True
         action["aim"] = aim
         return action
