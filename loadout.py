@@ -480,6 +480,63 @@ class Loadout:
             return None
         return index
 
+    def rising_rifle_alternate(self, obs, target, slots, muzzle, native_pitch):
+        me = obs["self"]
+        stats = me.get("stats", {})
+        velocity = me.get("vel", (0., 0., 0.))
+        min_pitch = stats.get("min_pitch", -.7)
+        max_pitch = stats.get("max_pitch", 1.3)
+        if (target.get("kind") != "mech" or me.get("grounded") or velocity[2] <= 0
+                or native_pitch > min_pitch - .10 or not self.nav or not self.nav.loaded
+                or any(w and w.get("charge", 0) > 0 for w in slots)):
+            return None
+        gun = next(((i, w) for i, w in enumerate(slots[:2]) if w and w.get("kind") == "gun"
+                    and w.get("cooldown", 0) <= self.step and w.get("ammo", 0)
+                    and not w.get("reload", 0)), None)
+        if gun is None:
+            return None
+        index, weapon = gun
+        rifle = self.weapons.get("gun", {}) | weapon.get("stats", {})
+        projected = tuple(x + v * self.step for x, v in zip(muzzle, velocity))
+        offset = stats.get("radius", 2.5) + .5
+        actual = me.get("aim", (0., 0.))
+        turn = stats.get("turn_rate", 4) * self.step
+        tilt = stats.get("pitch_rate", 3) * self.step
+        best = None
+        for rival in obs.get("mechs", ()):
+            if rival.get("kind") != "mech" or rival.get("id") == target.get("id"):
+                continue
+            radius, height = self.dimensions(rival)
+            body = (*rival["pos"][:2], rival["pos"][2] + .49 * height)
+            dist = math.dist(muzzle, body)
+            if dist > min(165., rifle.get("range", 230)) or best and dist >= best[0]:
+                continue
+            vel = rival.get("vel", (0., 0., 0.))
+            future = tuple(x + v * self.step for x, v in zip(body, vel))
+            solution = self.solution("gun", projected, future, vel, rifle, offset, max_pitch)
+            if not solution or not min_pitch <= solution[1] <= max_pitch:
+                continue
+            if (abs(angle_delta(solution[0], actual[0])) > turn + math.atan2(.70 * radius, dist)
+                    or abs(solution[1] - actual[1]) > tilt + math.atan2(.30 * height, dist)):
+                continue
+            if not (self.nav.line_clear(muzzle, body) and self.nav.line_clear(projected, future)):
+                continue
+            yaw = actual[0] + clamp(angle_delta(solution[0], actual[0]), -turn, turn)
+            pitch = actual[1] + clamp(solution[1] - actual[1], -tilt, tilt)
+            direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+            bore = tuple(x + offset * component for x, component in zip(projected, direction))
+            reach = min(rifle.get("range", 230), max(0., math.dist(projected, future) - offset))
+            segment = max(.1, rifle.get("speed", 252) * self.step)
+            points = [bore] + [
+                tuple(x + min(reach, step * segment) * component for x, component in zip(bore, direction))
+                for step in range(1, math.ceil(reach / segment) + 1)
+            ]
+            if (not self.nav.line_clear(projected, bore)
+                    or not all(self.nav.line_clear(start, end) for start, end in zip(points, points[1:]))):
+                continue
+            best = dist, solution, rival["id"]
+        return (index, best[1], best[2]) if best else None
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -608,6 +665,12 @@ class Loadout:
                     else:
                         fire[i] = hit
                 action["fire"] = fire
+            if engage and not shots:
+                alternate = self.rising_rifle_alternate(obs, ent, slots, muzzle, aim[1])
+                if alternate is not None:
+                    index, aim, rival = alternate
+                    action["fire"] = [index == i for i in range(2)]
+                    self.last_decision.update(target_id=rival, aim_weapon="gun")
             if engage and not any(action.get("fire", ())):
                 backup = self.direct_lightning_on_threat(
                     obs, ent, aim, muzzle, offset, stats, reserve_boost=evade and not line_dodge,
