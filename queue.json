@@ -10,6 +10,14 @@
       "parents": [
         "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
       ]
+    },
+    {
+      "commit": "74d0c1f895006b573a9fd745a2dba9ae75b57be2",
+      "summary": "Prioritize early equipment while free of a pursuer. On 96 unseen generated and campus pairs, local placement gained 0.115. Docker 300/300, p99 1.5 ms.",
+      "created_at": "2026-11-21T00:21:01Z",
+      "parents": [
+        "03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e"
+      ]
     }
   ]
 }
