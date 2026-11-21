@@ -179,7 +179,7 @@ class Survival:
                 best, dodge = priority, item
         return dodge
 
-    def _loot_goal(self, obs, now, pos, radius, health, foes, circle, final, until, *, farm_advance=False):
+    def _loot_goal(self, obs, now, pos, radius, health, foes, circle, final, until):
         me = obs["self"]
         held = {w.get("kind") for w in me.get("weapons", []) if w}
         cap = self.rules.get("cubes", {}).get("stat_cap", 10)
@@ -257,12 +257,26 @@ class Survival:
             if d < max(1, drop.get("radius", 8) - 2.0):
                 return tuple(pos[:2]), "capture", key
         if kind == "crates" and d < 17:
-            if farm_advance and self.loot[key][0] == now:
-                approach = self._reload_crate_approach(me, pos, p, radius)
-                if approach is not None:
-                    return approach, "farm", key
             return tuple(pos[:2]), "farm", key
         return tuple(p[:2]), ("farm" if kind == "crates" else "loot"), key
+
+    def farm_reload_goal(self, obs, plan, combat):
+        target = plan["target_id"]
+        if (plan["mode"] != "farm" or target is None or combat["target_id"] != target
+                or combat["intent"] != "engage" or plan["zone_urgency"] > .18
+                or plan["enemy_pressure"] > .20 or plan["dodge"]):
+            return None
+        me = obs["self"]
+        pos = me["pos"]
+        if tuple(plan["goal"]) != tuple(pos[:2]):
+            return None
+        if any(enemy.get("kind") == "mech" and "pos" in enemy and distance(pos, enemy["pos"]) < 100
+               for enemy in obs.get("mechs") or ()):
+            return None
+        crate = next((item for item in obs.get("crates") or () if item.get("id") == target), None)
+        if crate is None or "pos" not in crate:
+            return None
+        return self._reload_crate_approach(me, pos, crate["pos"], me.get("stats", {}).get("radius", 2.5))
 
     def _reload_crate_approach(self, me, pos, crate, radius):
         if not (self.nav and self.nav.loaded and me.get("grounded") and me.get("in_zone")):
@@ -481,11 +495,7 @@ class Survival:
         if hp > .80 and len(foes) <= 1 and not all(me.get("weapons", [])):
             loot_pressure += .18 * (self.loot_priority - 1)
         if urgency < 0.5 and pressure < loot_pressure and not dodge:
-            farm_advance = urgency <= .18 and pressure <= .20 and not any(
-                foe_distance < 100 for _, _, foe_distance, _ in foes
-            )
-            loot = self._loot_goal(obs, t, pos, radius, hp, foes, circle, final, until,
-                                   farm_advance=farm_advance)
+            loot = self._loot_goal(obs, t, pos, radius, hp, foes, circle, final, until)
             if loot:
                 goal, mode, target = loot
             elif distance(pos, anchor) < 1 and (len(anchor) == 2 or pos[2] >= anchor[2] - 1.2):

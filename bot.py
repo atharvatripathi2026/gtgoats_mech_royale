@@ -69,6 +69,13 @@ class Bot:
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet))
+        # Use the selected combat target before committing the optional leg movement.
+        approach = self.survival.farm_reload_goal(obs, plan, self.loadout.last_decision)
+        if approach is not None:
+            goal = approach
+            dx, dy = goal[0] - pos[0], goal[1] - pos[1]
+            scale = max(4, math.hypot(dx, dy))
+            action["move"] = [dx / scale, dy / scale]
         self.last_decision = {
             "mode": plan["mode"], "reason": base["reason"], "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],

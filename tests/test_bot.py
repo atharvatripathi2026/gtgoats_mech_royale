@@ -60,6 +60,18 @@ class DecisionTests(unittest.TestCase):
         self.me["weapons"][1]["charge"] = 0
         self.assertEqual(policy._reload_crate_approach(self.me, self.me["pos"], crate, 2.5), (7, 0))
 
+    def test_farm_reload_approach_requires_selected_crate(self):
+        policy = Survival(self.hello)
+        plan = {"mode": "farm", "target_id": 1035, "goal": (0, 0), "zone_urgency": .1,
+                "enemy_pressure": .1, "dodge": None}
+        self.obs["crates"] = [{"id": 1035, "pos": (15, 0, 0)}]
+        with patch.object(policy, "_reload_crate_approach", return_value=(7, 0)) as approach:
+            self.assertIsNone(policy.farm_reload_goal(self.obs, plan, {"target_id": 6, "intent": "engage"}))
+            self.assertIsNone(policy.farm_reload_goal(self.obs, plan, {"target_id": 1035, "intent": "track"}))
+            approach.assert_not_called()
+            goal = policy.farm_reload_goal(self.obs, plan, {"target_id": 1035, "intent": "engage"})
+        self.assertEqual(goal, (7, 0))
+
     def test_isolated_finisher_requires_health_and_room(self):
         policy = Survival(self.hello)
         enemy = {"kind": "mech", "pos": [73, 0, 0], "hp": 400, "max_hp": 1400}
