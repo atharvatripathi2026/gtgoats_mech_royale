@@ -43,15 +43,17 @@ class Bot:
         self.zone_anchor_fallback = None
         self.zone_anchor_retry = 0
 
-    def quiet_ground_anchor(self, obs, plan, action, jet):
+    def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
         zone = obs.get("zone") or {}
         now = obs.get("t", 0)
         if (not self.nav.loaded or not me.get("grounded") or not me.get("in_zone")
-                or jet or action["boost"] or plan["dodge"] or plan["mode"] != "zone"
+                or (jet and not settled) or action["boost"] or plan["dodge"] or plan["mode"] != "zone"
                 or plan["enemy_pressure"] > .1 or not zone.get("next_center")
                 or not zone.get("shrink_start", now + 1) <= now < zone.get("shrink_end", now)
                 or not 25 <= zone.get("next_radius", 0) <= 140
+                or self.loadout.last_decision.get("target_id") is not None
+                or any(e.get("kind") == "mech" for e in obs.get("mechs") or ())
                 or any(action.get("fire", ()))
                 or any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
             self.zone_anchor_fallback = None
@@ -80,6 +82,11 @@ class Bot:
             return None
         self.zone_anchor_retry = now + .75
         original = math.dist((x, y), center)
+        # Match the native future-circle safety buffer before incurring
+        # extra travel to replace its preferred (deeper) approach point.
+        buffered_radius = zone["next_radius"] - min(radius + 14, zone["next_radius"] * .33)
+        if original <= buffered_radius:
+            return None
         safe_radius = min(original - 3, zone["next_radius"] - radius - 7)
         current_radius = zone["radius"] - radius - 3
         current_center = zone["center"]
@@ -129,16 +136,6 @@ class Bot:
         base = self.survival.decide(obs)
         plan = self.adaptation.decide(obs, base)
         goal = plan["goal"]
-        fallback = self.zone_anchor_fallback
-        zone = obs.get("zone") or {}
-        if (fallback and fallback[0] == tuple(zone.get("next_center", ()))
-                and len(fallback[1]) == 1 and math.dist(pos[:2], fallback[1][0]) < .6
-                and plan["mode"] == "zone" and plan["enemy_pressure"] <= .1
-                and not plan["dodge"] and not plan["boost"] and me.get("grounded")
-                and math.dist(pos[:2], zone["center"]) + 5 < zone["radius"]):
-            # The replacement point is already reached. Do not ask the
-            # stuck tracker to pursue the original blocked destination.
-            goal = tuple(pos[:2])
         ux, uy, jet = self.nav.steer(pos, goal, obs["tick"], radius=stats.get("radius", 2.5))
         move = [ux, uy]
         distance = math.dist(pos[:2], goal[:2])
@@ -160,9 +157,19 @@ class Bot:
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet,
                                           line_dodge=plan["dodge"] == "line"))
-        quiet_move = self.quiet_ground_anchor(obs, plan, action, jet)
+        fallback = self.zone_anchor_fallback
+        zone = obs.get("zone") or {}
+        settled = (fallback is not None and fallback[0] == tuple(zone.get("next_center", ()))
+                   and len(fallback[1]) == 1 and math.dist(pos[:2], fallback[1][0]) < .6
+                   and len(goal) == 2 and math.dist(pos[:2], zone["center"]) + 5 < zone["radius"])
+        quiet_move = self.quiet_ground_anchor(obs, plan, action, jet, settled)
         if quiet_move is not None:
             action["move"] = quiet_move
+            if settled:
+                # The native tactical action is already computed. Suppress
+                # recovery hops only at the reached quiet ground waypoint.
+                action["jump"] = False
+                self.nav.anchor = None
         self.last_decision = {
             "mode": plan["mode"], "reason": "reachable_zone_anchor" if quiet_move is not None else base["reason"], "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
