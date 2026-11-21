@@ -23,6 +23,8 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
+        self.arm_evidence_stage = None
+        self.arm_damage = {"gun": 0., "laser": 0.}
         self.last_target = None
         self.sight = {}
 
@@ -137,7 +139,14 @@ class Loadout:
                 total += clamp(.95 * gain - gun_credit, 0, .12)
             return total
 
-        return max(range(len(choices)), key=lambda i: score(choices[i]))
+        selected = max(range(len(choices)), key=lambda i: score(choices[i]))
+        if (choices[selected].get("id") == "gun_mag" and "laser" in held
+                and self.arm_damage["laser"] > self.arm_damage["gun"]):
+            gun_slot = next((w for w in me.get("weapons", ()) if w and w.get("kind") == "gun"), None)
+            if gun_slot and gun_slot.get("reload", 0) <= 0 and gun_slot.get("ammo", 0) >= .8 * gun["mag"]:
+                return next((i for i, choice in enumerate(choices) if choice.get("id") == "laser_damage"),
+                            selected)
+        return selected
 
     def dimensions(self, entity):
         kind = entity.get("kind", "crate")
@@ -322,7 +331,20 @@ class Loadout:
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
+        zone = obs.get("zone") or {}
+        armed = {w.get("kind") for w in me.get("weapons", ()) if w}
+        stage = (zone.get("shrink_start"), zone.get("next_radius")) if armed == {"gun", "laser"} else None
+        measure = stage is not None and stage == self.arm_evidence_stage
+        if stage != self.arm_evidence_stage:
+            self.arm_evidence_stage = stage
+            self.arm_damage = {"gun": 0., "laser": 0.}
         for event in obs.get("events", []):
+            # Stage and equipment changes invalidate the evidence from the
+            # previous interval. NPC and crate work does not count here.
+            arm, target = event.get("weapon"), event.get("target")
+            if (measure and event.get("type") == "hit" and arm in self.arm_damage
+                    and type(target) is int and 0 <= target < self.config.get("match", {}).get("mechs", 16)):
+                self.arm_damage[arm] += event.get("amount", 0.)
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
