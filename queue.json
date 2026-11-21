@@ -1367,6 +1367,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "742246aaa181b45d34e4e7ee5c6a8740e8130b35",
+      "summary": "Merge simultaneous recovery confirmation with offset-ray airborne rifle clearance. Preserves both observed parent benefits and the blocked-wall/no-confirmation controls. All 124 fresh placements tied and 300 ticks passed.",
+      "created_at": "2026-11-21T16:35:43Z",
+      "parents": [
+        "2208a85cd117d37394ada52f681ce1a4b710cab1",
+        "2c56019db176a140a0ec30fa0d63463b396fe859"
+      ],
+      "reviews": {
+        "commit": "742246aaa181b45d34e4e7ee5c6a8740e8130b35",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh native pairs match all commands and placement versus the rifle parent. The merge preserves the simultaneous pickup route gain, missing-confirmation control and active rifle hit. Exact checks pass. Later route changes could affect combat, but no adverse interaction is observed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Both exact parent mechanisms retain their demonstrated effects. The one-command integration test exercises both behaviors and keeps the blocked shot rejected. Placement ties against both parents and exact sandbox passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Two eight-seed phased comparisons against both exact parents match every command and placement. An internally staged simultaneous-state test confirms pack clearance and the clear rifle shot, while the known wall shot remains blocked. This verifies the immediate interaction."
+          }
+        }
+      }
     }
   ]
 }
