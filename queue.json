@@ -637,6 +637,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "d134ad62fa72f64afaf434d5bbf0efa913b737c3",
+      "summary": "Credit a mortar autoloader when separated recent hits establish effective mortar use. Earlier shells landed in directed and fresh matches. The directed match gained one point and all 72 fresh placements tied. Unit tests and timed sandbox checks passed.",
+      "created_at": "2026-11-21T08:55:15Z",
+      "parents": [
+        "79ae4b2c4a4c6ecba435fb3596dc2c7e240aec61"
+      ],
+      "reviews": {
+        "commit": "d134ad62fa72f64afaf434d5bbf0efa913b737c3",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The later mortar shell in fresh 1056805 deals 460.63 where the parent misses, with equal incoming and placement. The separate directed replay gains one point, and forward mortar controls are retained. All 72 fresh placements tie."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The precise upgrade led to earlier actual mortar hits in two different replays. The directed replay gained one point and the fresh replay gained about 624 outgoing at equal incoming and placement, with 72 fresh placement ties overall."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The only initial choice is the bounded autoloader and the first shell is unchanged. A genuinely earlier second shell then lands while the parent misses. The fresh replay adds 624 final outgoing at equal incoming and placement, and the directed replay gains one point after multiple earlier shells."
+          }
+        }
+      }
     }
   ]
 }
