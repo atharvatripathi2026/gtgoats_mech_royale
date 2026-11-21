@@ -1267,6 +1267,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "a311eb94e0dd1025f19494d22e403fdbb9a1c893",
+      "summary": "Seed recovery pack memory when at least one member is visible on the admission observation. Preserves the controlled surviving-cube route and one simulated place. Both complete-depletion controls retain parent actions, 76 fresh placements tied, and 300 sandbox replies passed.",
+      "created_at": "2026-11-21T15:52:40Z",
+      "parents": [
+        "a3db6c06a65e22d41c2b0befe8653eb1b1e3d9e0"
+      ],
+      "reviews": {
+        "commit": "a311eb94e0dd1025f19494d22e403fdbb9a1c893",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh native games match all commands and placement. Controlled engine FOV at admission preserves the survivor and gains one place, at equal first-six-second damage, cubes and lifetime. Two depleted controls match actual commands and results. The visible-witness requirement removes the prior all-absent regression."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact code only carries recent same-pack IDs into a new chase when a member is visible. It preserves the one-place gain in both directed witness cases and actual actions in both depletion controls. Fresh showed no adverse placement and sandbox passed all ticks. A fully obscured pack still starts with the parent state."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh phased public-equipment pairs match all commands and placement. The original true-depletion case restores exact parent behavior, the new current-visible 2+1 depletion case ties all commands and outcomes, and the physical FOV control keeps its gain. The later depleted route risk in the second case is shared with the parent."
+          }
+        }
+      }
     }
   ]
 }
