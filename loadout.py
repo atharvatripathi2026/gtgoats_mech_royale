@@ -105,7 +105,7 @@ class Loadout:
                 action.update(take=item_id, drop=replace)
                 self.last_swap = obs.get("t", 0)
 
-    def upgrade(self, obs, choices):
+    def upgrade(self, obs, choices, *, preserve_servos=False):
         me = obs["self"]
         stats = me.get("stats", {})
         late = obs.get("zone", {}).get("next_radius", 380) < 100
@@ -141,7 +141,7 @@ class Loadout:
             cycle = rounds * max(.05, weapon["cooldown"]) + max(0, weapon["reload"])
             return max(1, weapon["damage"]) * rounds / cycle
 
-        def score(choice):
+        def score(choice, *, credit_throughput=True):
             total = 0.
             upgraded_gun = None
             gun_credit = 0.
@@ -165,7 +165,7 @@ class Loadout:
                 change = effect.get("mul", 1) - 1 + effect.get("add", 0) / scale
                 value = change * weight
                 total += value
-                if sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
+                if sustain and credit_throughput and path[0:2] == ["weapons", "gun"] and field in gun_fields:
                     if upgraded_gun is None:
                         upgraded_gun = gun.copy()
                     upgraded_gun[field] = upgraded_gun[field] * effect.get("mul", 1) + effect.get("add", 0)
@@ -178,7 +178,15 @@ class Loadout:
                 total += clamp(.95 * gain - gun_credit, 0, .12)
             return total
 
-        return max(range(len(choices)), key=lambda i: score(choices[i]))
+        best = max(range(len(choices)), key=lambda i: score(choices[i]))
+        if (preserve_servos and sustain and choices[best].get("id") == "gun_mag"
+                and any(choice.get("id") == "servos" for choice in choices)):
+            current = next(w for w in me["weapons"] if w and w["kind"] == "gun")
+            if current.get("ammo", 0) >= gun["mag"] and not current.get("reload", 0):
+                native = max(range(len(choices)), key=lambda i: score(choices[i], credit_throughput=False))
+                if choices[native].get("id") == "servos":
+                    return native
+        return best
 
     def dimensions(self, entity):
         kind = entity.get("kind", "crate")
@@ -359,7 +367,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, walking_to_loot=False):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -378,7 +386,7 @@ class Loadout:
         self.pickup(obs, action, ent, engage, climbing)
         choices = (obs.get("offer") or {}).get("choices", [])
         if choices:
-            action["pick"] = self.upgrade(obs, choices)
+            action["pick"] = self.upgrade(obs, choices, preserve_servos=walking_to_loot and ent is None)
         energy = me.get("energy", 100)
         slots = me.get("weapons", [])
         aim = self.quiet_aim(obs, travel_yaw)

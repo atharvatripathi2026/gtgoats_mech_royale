@@ -153,7 +153,9 @@ class Bot:
             "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
         }
         action.update(self.loadout.decide(obs, yaw, evade=evade,
-                                          target_id=plan["target_id"], climbing=jet))
+                                          target_id=plan["target_id"], climbing=jet,
+                                          walking_to_loot=(grounded and me.get("in_zone") and not jet
+                                                           and plan["mode"] == "loot" and distance >= 4)))
         cross_step = self.cross_shot_move(obs, plan, action, jet)
         if cross_step is not None:
             action["move"] = cross_step
