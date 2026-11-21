@@ -23,10 +23,47 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
+        self.last_arc_hit = -100
         self.last_target = None
         self.sight = {}
 
-    def pickup(self, obs, action):
+    def mortar_replacement(self, obs, slots, target, engage, climbing):
+        if (not engage or not target or target.get("kind") != "mech" or climbing
+                or obs.get("zone", {}).get("radius", 560) < 100
+                or obs.get("t", 0) - self.last_arc_hit <= 5
+                or not self.safe_zone_time(obs)):
+            return False
+        arc = next((w for w in slots if w and w.get("kind") == "lightning"), None)
+        if not arc or not any(w and w.get("kind") == "gun" for w in slots):
+            return False
+        me = obs["self"]
+        stats = me.get("stats", {})
+        arc_range = (self.weapons.get("lightning", {}) | arc.get("stats", {})).get("range", 45)
+        rivals = [entity for entity in obs.get("mechs", ()) if entity.get("kind") == "mech"]
+        if any(math.dist(me["pos"], entity["pos"]) <= arc_range + 18 for entity in rivals):
+            return False
+        muzzle = (*me["pos"][:2], me["pos"][2] + stats.get("muzzle_height", self.mech.get("muzzle_height", 7)))
+        if math.dist(muzzle, target["pos"]) > 150:
+            return False
+        height = self.dimensions(target)[1]
+        body = (*target["pos"][:2], target["pos"][2] + .49 * height)
+        offset = stats.get("radius", 2.5) + .5
+        limits = stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)
+        origin = (*me["pos"][:2], me["pos"][2] + stats.get("height", 9) + .5)
+        weapon = self.weapons.get("mortar", {})
+        aim = self.solution("mortar", origin, body, target.get("vel", (0., 0., 0.)), weapon, offset, limits[1])
+        if aim is None or not limits[0] <= aim[1] <= limits[1]:
+            return False
+        if self.nav is None:
+            return True
+        reach = weapon.get("splash_radius", 7) + offset + 2
+        yaw, pitch = aim
+        nearby = (origin[0] + reach * math.cos(yaw) * math.cos(pitch),
+                  origin[1] + reach * math.sin(yaw) * math.cos(pitch),
+                  origin[2] + reach * math.sin(pitch))
+        return self.nav.line_clear(origin, nearby)
+
+    def pickup(self, obs, action, target=None, engage=False, climbing=False):
         me = obs["self"]
         x, y, z = me["pos"]
         slots = me.get("weapons", [])
@@ -44,6 +81,7 @@ class Loadout:
             value["lightning"] += ("laser" in opponent)
             value["mortar"] += ("lightning" in opponent) - ("laser" in opponent)
         pool = []
+        replacement = None
         for item in obs.get("pickups", []):
             kind = item.get("kind")
             if kind in held or kind not in value or "id" not in item:
@@ -51,7 +89,10 @@ class Loadout:
             px, py, pz = item["pos"]
             distance = math.hypot(px - x, py - y)
             if distance <= reach and abs(z - pz) <= 4:
-                pool.append((value[kind], -distance, item["id"]))
+                if kind == "mortar" and replacement is None:
+                    replacement = self.mortar_replacement(obs, slots, target, engage, climbing)
+                pool.append((value[kind] + (2.2 if kind == "mortar" and replacement else 0),
+                             -distance, item["id"]))
         if not pool:
             return
         rating, _, item_id = max(pool)
@@ -323,6 +364,10 @@ class Loadout:
         t = obs.get("t", 0)
         stats = me.get("stats", {})
         for event in obs.get("events", []):
+            if (event.get("type") == "hit" and event.get("weapon") == "lightning"
+                    and type(event.get("target")) is int
+                    and 0 <= event["target"] < self.config.get("match", {}).get("mechs", 16)):
+                self.last_arc_hit = t
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
@@ -330,7 +375,7 @@ class Loadout:
         muzzle = pos[0], pos[1], pos[2] + stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
         ent, h, engage = self.target(obs, muzzle, evade, target_id)
         action = {}
-        self.pickup(obs, action)
+        self.pickup(obs, action, ent, engage, climbing)
         choices = (obs.get("offer") or {}).get("choices", [])
         if choices:
             action["pick"] = self.upgrade(obs, choices)
