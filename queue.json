@@ -411,6 +411,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "41425de21c0e2e7bf0c48e0881cd1b0bc5926189",
+      "summary": "Guard an obstructed storm route after a steep reversal. Restored seven placement points in the directed wall replay and preserved two favorable controls. All 120 fresh simulated placements tied. Unit tests and the 300-tick Docker rerun passed.",
+      "created_at": "2026-11-21T07:26:42Z",
+      "parents": [
+        "fe63d42d2743848f7933309c833577e5b204ba35"
+      ],
+      "reviews": {
+        "commit": "41425de21c0e2e7bf0c48e0881cd1b0bc5926189",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The guard restored all 4,156 verified actions and saved 557.8 storm damage and 2,176 total damage on the known failure, yielding seven more placement points. It preserved both positive traces. All 120 placements tied, and no fresh activation was verified."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The veto restores 4,156 verified native actions, seven points and 2,176 less incoming damage in the regression. It retains two favorable trajectories exactly. Fresh endpoints showed no harm, with potential overhang classification and sparse activation as caveats."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact storm parent produced a real building failure. The guard recovers seven points with 4,156 verified native actions and preserves two prior positives. The heading, blockage and short hold scope are appropriate. Overhangs could still produce a false rejection."
+          }
+        }
+      }
     }
   ]
 }
