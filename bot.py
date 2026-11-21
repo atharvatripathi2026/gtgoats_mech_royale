@@ -244,11 +244,20 @@ class Bot:
             "jump": bool(jet and grounded and energy > 7),
             "boost": bool((plan["boost"] or (jet and not grounded)) and energy > 0),
         }
+        release_move = action["move"] if not plan["dodge"] else None
+        if (release_move and obs.get("projectiles")
+                and any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
+            # Preserve the native charge when even a near miss would leave
+            # little margin for the faster movement after release.
+            radius = stats.get("radius", 2.5)
+            if self.survival._dodge(obs, pos, radius + .5):
+                release_move = None
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet,
                                           line_dodge=plan["dodge"] == "line",
                                           steady=plan["mode"] == "hold" and grounded and not jet
-                                          and math.hypot(*action["move"]) < .02))
+                                          and math.hypot(*action["move"]) < .02,
+                                          movement=release_move))
         if plan["dodge"] == "line":
             brace = self.loadout.brace_for_incoming_round(obs, action)
             if brace is not None:

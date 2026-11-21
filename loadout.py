@@ -637,7 +637,63 @@ class Loadout:
         self.laser_contact = ident, obs["t"], obs["t"] if lost is None else lost
         return aim_at_target
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False, steady=False):
+    def first_step_rifle_after_this_command(self, slots):
+        stride = self.config.get("match", {}).get("decide_every", 2)
+        horizon = (stride + 1) * self.step
+        # Releasing a beam lets the body accelerate before the next observation.
+        # Preserve the existing charge movement when the rifle can fire before
+        # a second physics step settles the next observation's aim command.
+        return any(slot and slot.get("kind") == "gun" and slot.get("ammo", 0) > 0
+                   and not slot.get("reload", 0) and slot.get("cooldown", 0) <= horizon + 1e-8
+                   for slot in slots[:2])
+
+    def running_beam_window_closes(self, obs, target, aim, remaining, reach, movement):
+        """Check the future firing step, not the instant charge fills."""
+        if not self.nav or not self.nav.loaded or not movement:
+            return False
+        me = obs["self"]
+        velocity = me.get("vel", (0., 0., 0.))
+        target_velocity = target.get("vel", (0., 0., 0.))
+        speed = math.hypot(*velocity[:2])
+        if (not me.get("grounded") or speed <= 3 or math.hypot(*target_velocity[:2]) < 4
+                or sum(v * move for v, move in zip(velocity[:2], movement)) < .9 * speed):
+            return False
+        stats = me.get("stats", {})
+        offset = stats.get("radius", 2.5) + .5
+        muzzle_height = stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
+        yaw, pitch = aim
+        ray = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+        horizontal = ray[0] ** 2 + ray[1] ** 2
+        if horizontal < .01:
+            return False
+        radius, height = self.dimensions(target)
+
+        def positions(delay):
+            base = tuple(x + delay * v + (muzzle_height if i == 2 else 0.)
+                         for i, (x, v) in enumerate(zip(me["pos"], velocity)))
+            muzzle = tuple(x + offset * d for x, d in zip(base, ray))
+            feet = tuple(x + delay * v for x, v in zip(target["pos"], target_velocity))
+            return base, muzzle, feet
+
+        for delay in (0., self.step):
+            base, muzzle, feet = positions(delay)
+            depth = sum((feet[i] - muzzle[i]) * ray[i] for i in (0, 1)) / horizontal
+            point = tuple(x + depth * d for x, d in zip(muzzle, ray))
+            if (not 0 < depth < reach or math.dist(point[:2], feet[:2]) > .8 * radius
+                    or not feet[2] + .15 * height <= point[2] <= feet[2] + .85 * height
+                    or not self.nav.line_clear(base, muzzle) or not self.nav.line_clear(muzzle, point)
+                    or not self.nav.line_clear(muzzle, (*feet[:2], feet[2] + .5 * height))):
+                return False
+        hold = self.config.get("match", {}).get("decide_every", 2) * self.step
+        scheduled = math.ceil(remaining / hold - 1e-8) * hold + self.step
+        for delay in (scheduled, scheduled + self.step):
+            _, muzzle, feet = positions(delay)
+            if any(self.nav.line_clear(muzzle, (*feet[:2], feet[2] + fraction * height))
+                   for fraction in (.25, .5, .75)):
+                return False
+        return True
+
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False, steady=False, movement=None):
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -737,7 +793,8 @@ class Loadout:
                         score += 2
                 shots[i] = (score, yaw, pitch, kind, ws, w)
             if shots:
-                primary = max(shots.values(), key=lambda shot: shot[0])
+                primary_slot = max(shots, key=lambda index: shots[index][0])
+                primary = shots[primary_slot]
                 _, yaw, pitch, kind, _, _ = primary
                 self.last_decision["aim_weapon"] = kind
                 aim = [yaw, pitch]
@@ -764,6 +821,17 @@ class Loadout:
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
                         fire[i] = hit
+                if (primary[3] == "laser" and ent.get("kind") == "mech" and not climbing
+                        and fire[primary_slot] and sum(fire) == 1
+                        and not self.first_step_rifle_after_this_command(slots)):
+                    full = primary[4].get("charge", .75)
+                    charge = primary[5].get("charge", 0.)
+                    remaining = full - charge
+                    if (.65 * full <= charge and self.step <= remaining <= .35
+                            and self.running_beam_window_closes(
+                                obs, ent, (yaw_next, pitch_next), remaining,
+                                primary[4].get("range", 280), movement)):
+                        fire[primary_slot] = False
                 action["fire"] = fire
             if engage and not shots:
                 alternate = self.rising_rifle_alternate(obs, ent, slots, muzzle, aim[1])
