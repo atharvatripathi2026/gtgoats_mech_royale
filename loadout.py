@@ -345,6 +345,44 @@ class Loadout:
                 return False
         return True
 
+    def gun_second_ray_reaches(self, me, target, muzzle, aim, weapon, offset):
+        """Check the held ray when the gun becomes ready only on the second tick."""
+        if not self.nav or not self.nav.loaded:
+            return False
+        position = target["pos"]
+        if not 12 <= math.dist(position[:2], muzzle[:2]) <= 110:
+            return False
+        stats = me.get("stats", {})
+        yaw, pitch = me.get("aim", aim)
+        turn = 2 * self.step * stats.get("turn_rate", 4)
+        tilt = 2 * self.step * stats.get("pitch_rate", 3)
+        yaw += clamp(angle_delta(aim[0], yaw), -turn, turn)
+        pitch = clamp(pitch + clamp(aim[1] - pitch, -tilt, tilt),
+                      stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3))
+        ray = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+        horizontal = ray[0] ** 2 + ray[1] ** 2
+        velocity = me.get("vel", (0., 0., 0.))
+        target_velocity = target.get("vel", (0., 0., 0.))
+        speed = weapon.get("speed", 252)
+        closing = speed * horizontal - sum(target_velocity[i] * ray[i] for i in (0, 1))
+        if horizontal < .05 or closing <= 0:
+            return False
+        radius, height = self.dimensions(target)
+        for delay in (self.step, 2 * self.step):
+            origin = tuple(x + delay * v + offset * r for x, v, r in zip(muzzle, velocity, ray))
+            crossing = sum((position[i] + delay * target_velocity[i] - origin[i]) * ray[i]
+                           for i in (0, 1))
+            flight = crossing / closing
+            if not 0 < flight * speed <= weapon.get("range", 230):
+                return False
+            point = tuple(x + r * flight * speed for x, r in zip(origin, ray))
+            feet = tuple(x + v * (delay + flight) for x, v in zip(position, target_velocity))
+            if (math.dist(point[:2], feet[:2]) > .8 * radius
+                    or not .12 * height <= point[2] - feet[2] <= .88 * height
+                    or not self.nav.line_clear(origin, point)):
+                return False
+        return True
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False):
         me = obs["self"]
         t = obs.get("t", 0)
@@ -470,6 +508,14 @@ class Loadout:
                         fire[i] = not (hit and (charge >= full - .015 or lethal))
                     else:
                         fire[i] = hit
+                if (primary[3] == "gun" and ent.get("kind") == "mech" and not any(fire)
+                        and self.config.get("match", {}).get("decide_every", 2) >= 2
+                        and not any(w and w.get("charge", 0) > 0 for w in slots)):
+                    for i, (_, _, _, weapon_kind, weapon_stats, weapon) in shots.items():
+                        if (weapon_kind == "gun" and weapon.get("ammo", 0) >= 2
+                                and weapon.get("cooldown", 0) > self.step + 1e-7
+                                and self.gun_second_ray_reaches(me, ent, muzzle, aim, weapon_stats, offset)):
+                            fire[i] = True
                 action["fire"] = fire
         for w in slots:
             if w and w.get("kind") == "gun" and not w.get("reload", 0):
