@@ -1,0 +1,7 @@
+# Combine the storm brake and armor brace · queued
+
+Exact merge `b3d67472a42cae1fd989ca452c8296b2770d8ad1` has two gameplay parents, `0565e25f44889baa5814cbe885ede5d46208bae0` and `e690e7dc4625343b31ce22825aaef76ee11bfb7d`. The brake requires quiet zone travel and forbids a dodge, while the brace requires a line dodge. With a live brake timer staged on a real incoming round, the exact merge cleared the timer immediately and matched the brace parent's full command.
+
+The merge matched the brake parent's full actions in native seed 1068022 and kept its four-place gain over the brace parent. It matched the brace parent's full actions in native seed 1067946 and kept the seven-place native result over the brake parent. That seven-place result was model-sensitive in the original brace review. The public-equipment evaluator reproduced the brace parent's one-place gain in seed 1068158 and matched its entire action trace.
+
+All 76 fresh parent comparisons tied on complete commands and placement, across four-mech, native squad and phased public squad. Eight more fresh native placements tied against the official 3.71 commit `03a8f93fb36afa5db4a08f211d1d1aa6dcbcae8e`. Both behaviors have yet to trigger in the same unmodified match. Survival, combat and validation approved this exact merge. It passed 23 unit tests and 300 networkless sandbox observations and is queue entry 62. [Brake review](0565e25-brake-before-outbound-storm-detour.md) · [Brace review](e690e7d-brace-toward-rifle-round.md)
