@@ -25,6 +25,7 @@ class Loadout:
         self.last_bearing = 0
         self.last_swap = -100
         self.last_arc_hit = -100
+        self.last_long_hit = {}
         self.last_target = None
         self.sight = {}
 
@@ -63,6 +64,27 @@ class Loadout:
                   origin[1] + reach * math.sin(yaw) * math.cos(pitch),
                   origin[2] + reach * math.sin(pitch))
         return self.nav.line_clear(origin, nearby)
+
+    def keeps_effective_ranged_weapon(self, obs, old, pickup, rivals):
+        """Protect a recently successful ranged weapon while no arc can reach."""
+        kind = old.get("kind")
+        if pickup["kind"] != "lightning" or kind not in ("laser", "mortar"):
+            return False
+        hit_at, hit_target = self.last_long_hit.get(kind, (-100, None))
+        if obs.get("t", 0) - hit_at > 4 or not any(e["id"] == hit_target for e in rivals):
+            return False
+        me = obs["self"]
+        own_velocity = me.get("vel", (0., 0., 0.))
+        reach = self.weapons.get("lightning", {}).get("range", 45) + 2
+        ready = max(self.config.get("loot", {}).get("equip_s", 1), 1.5)
+        for entity in rivals:
+            delta = tuple(x - y for x, y in zip(entity["pos"], me["pos"]))
+            velocity = tuple(x - y for x, y in zip(entity.get("vel", (0., 0., 0.)), own_velocity))
+            opposing = -sum(x * y for x, y in zip(delta, velocity))
+            nearest = clamp(opposing / max(.1, sum(v * v for v in velocity)), 0., ready)
+            if math.hypot(*(x + nearest * v for x, v in zip(delta, velocity))) <= reach:
+                return False
+        return True
 
     def pickup(self, obs, action, target=None, engage=False, climbing=False):
         me = obs["self"]
@@ -103,6 +125,9 @@ class Loadout:
             replace = min(range(len(slots)), key=lambda i: value.get(slots[i].get("kind"), 0))
             old = slots[replace]
             if rating > value.get(old.get("kind"), 0) + .45 and old.get("charge", 0) <= 0:
+                item = next(pickup for pickup in obs["pickups"] if pickup.get("id") == item_id)
+                if self.keeps_effective_ranged_weapon(obs, old, item, enemies):
+                    return
                 action.update(take=item_id, drop=replace)
                 self.last_swap = obs.get("t", 0)
 
@@ -523,10 +548,13 @@ class Loadout:
         t = obs.get("t", 0)
         stats = me.get("stats", {})
         for event in obs.get("events", []):
-            if (event.get("type") == "hit" and event.get("weapon") == "lightning"
-                    and type(event.get("target")) is int
+            if (event.get("type") == "hit" and type(event.get("target")) is int
                     and 0 <= event["target"] < self.config.get("match", {}).get("mechs", 16)):
-                self.last_arc_hit = t
+                weapon = event.get("weapon")
+                if weapon == "lightning":
+                    self.last_arc_hit = t
+                elif weapon in ("laser", "mortar"):
+                    self.last_long_hit[weapon] = (t, event["target"])
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
