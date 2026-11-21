@@ -4,6 +4,7 @@ import random
 
 
 SUSTAINED_BOOST_RESERVE = .36
+RECOVERY_PACK_SPACING = 2.
 
 
 def distance(a, b):
@@ -299,9 +300,14 @@ class Survival:
             return
         record = self.loot.get(key)
         if (record is None or not self.nav or not self.nav.loaded or not obs["self"].get("grounded")
-                or "cubes" not in obs or any(cube.get("id") == key for cube in (obs["cubes"] or ()))):
+                or "cubes" not in obs):
             return
         point = record[1]
+        # A visible cube in the pack still gives this approach a real target.
+        if any(cube.get("id") == key
+               or ("pos" in cube and math.dist(point, cube["pos"]) <= RECOVERY_PACK_SPACING)
+               for cube in (obs["cubes"] or ())):
+            return
         near = self.rules.get("vision", {}).get("near_range", 45)
         if distance(pos, point) > .8 * near or abs(pos[2] - point[2]) > 1.5:
             return
@@ -331,7 +337,7 @@ class Survival:
         dimensions = self.nav._dimensions(radius)
         return {key: item for key, item in cubes.items()
                 if key not in visible and distance(pos, item[1]) < 55 and abs(pos[2] - item[1][2]) < 2
-                and any(other != key and math.dist(item[1], neighbor[1]) <= 2.
+                and any(other != key and math.dist(item[1], neighbor[1]) <= RECOVERY_PACK_SPACING
                         for other, neighbor in cubes.items())
                 and self.nav._ground_segment(*pos[:2], *item[1][:2], *dimensions)}
 
