@@ -2048,6 +2048,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "ac22f6ce5613fb463ca7cb8ff22d5627f4de6cd2",
+      "summary": "Taper into a stalled quiet cube approach, checking observed sibling growth and the swept hull through braking. The directed pickup gains one point in stock, closest-pickup, staged growth and missed-command models. All 44 fresh parent pairs tie; 300 timed observations passed.",
+      "created_at": "2026-11-22T06:20:45Z",
+      "parents": [
+        "3bf5589803723b38e740affd5e9123e083a860d4"
+      ],
+      "reviews": {
+        "commit": "ac22f6ce5613fb463ca7cb8ff22d5627f4de6cd2",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact quiet approach reaches the observed selected cube, confirms collection, and stops with the full grown hull clear. It checks every possibly reachable observed sibling and abstains in the staged sibling control. Both staged growth and a missed command preserve the actual pickup and one-point gain. Owner fresh eight pairs tie, and 23 units and 300 timed observations passed. Unseen cubes and local physics remain limitations."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The move-only change is confined to an injured grounded mech with a long-stalled selected cube and no active combat or equipment choice. It revalidates the path through a low-speed stop, including growth from visible siblings. Stock, closest pickup, applied growth and missed-command tests retain the third cube at equal early trades. The staged sibling rejects the maneuver. Future encounters can still change after the pickup."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact closest-mech evaluator records a third cube at 26.4 seconds and a stop by 26.6, one more point at equal 45-second survival and zero early trades. Eight independent fresh pursuit and squad pairs tie on all commands and placement. Staged live growth and a missed observation also preserve the result. The focal pickup was uncontested. Full-match scaling changes the earlier route and does not present the same opportunity."
+          }
+        }
+      }
     }
   ]
 }
