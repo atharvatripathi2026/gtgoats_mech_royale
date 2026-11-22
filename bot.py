@@ -51,7 +51,7 @@ class Bot:
         self.first_cube_rest = False
         self.loot_descent = None
         self.cube_taper = None
-        self.wall_round_slot = None
+        self.wall_round_refill = None
         self.pending_wall_round = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
@@ -523,19 +523,31 @@ class Bot:
 
     def reload_after_wall_round(self, obs, plan, action):
         if "take" in action or "pick" in action:
-            self.wall_round_slot = None
-        slot = self.wall_round_slot
-        match_size = self.loadout.config.get("match", {}).get("mechs", 16)
-        if slot is None or not any(
-            event.get("type") == "kill" and 0 <= event.get("target", match_size) < match_size
-            for event in obs.get("events", ())
-        ):
+            self.wall_round_refill = None
+        pending = self.wall_round_refill
+        if pending is None:
             return
-        self.wall_round_slot = None
+        slot, reloads, was_reloading = pending
         me = obs["self"]
         weapons = me["weapons"]
         rifle = weapons[slot]
-        if (not rifle or rifle.get("kind") != "gun" or rifle.get("reload")
+        if not rifle or rifle.get("kind") != "gun":
+            self.wall_round_refill = None
+            return
+        reloading = bool(rifle.get("reload"))
+        reloads += reloading and not was_reloading
+        if reloads > 1:
+            self.wall_round_refill = None
+            return
+        self.wall_round_refill = slot, reloads, reloading
+        match_size = self.loadout.config.get("match", {}).get("mechs", 16)
+        if not any(
+            event.get("type") == "kill" and type(event.get("target")) is int and 0 <= event["target"] < match_size
+            for event in obs.get("events", ())
+        ):
+            return
+        self.wall_round_refill = None
+        if (reloading
                 or plan["mode"] not in ("loot", "hold") or plan["dodge"] or plan["zone_urgency"] > .10
                 or not me.get("grounded") or not me.get("in_zone")
                 or self.loadout.last_decision.get("intent") != "scan" or action.get("reload")
@@ -677,7 +689,7 @@ class Bot:
     def sent(self, tick, action, on_time=True, applied=False):
         self.adaptation.sent(tick, action, on_time=on_time, applied=applied)
         if on_time and self.pending_wall_round and self.pending_wall_round[0] == tick:
-            self.wall_round_slot = self.pending_wall_round[1]
+            self.wall_round_refill = self.pending_wall_round[1], 0, False
         if on_time and self.pending_ground_line_boost_tick == tick and action.get("boost"):
             self.ground_line_boost_tick = tick
 
