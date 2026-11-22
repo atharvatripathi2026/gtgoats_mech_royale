@@ -2175,6 +2175,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "fab492678d47bf45e2369da53609dbe6be8716c0",
+      "summary": "Skip confirmed wall-blocked rifle shots only when the spent round would still leave the magazine above its top-off floor. Preserves directed rifle gains and restores two immediate-reload controls. 44 fresh paired ties, 23 unit tests and 300 sandbox checks.",
+      "created_at": "2026-11-22T08:05:13Z",
+      "parents": [
+        "5f13d6d461a1a583da3ac34d69e34ce8fbc8989b"
+      ],
+      "reviews": {
+        "commit": "fab492678d47bf45e2369da53609dbe6be8716c0",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh independent stock pairs matched commands and placement. The low-ammo guard restores the immediate-reload control and preserves the 100.8 directed rifle gain. The crossfire case still has a mixed early trade, and the guard gives up the lower-ammo interventions."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact build restores every command in both immediate-reload cases, including fresh 1074114 where the exposure-only alternative lost one point. Fractional cadence preserves the actual 100.8 rifle gain, and the crossfire replay keeps its quiet top-off. All 44 fresh parent pairs tie and the kit checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh raw pairs match commands and placement. Raw collision with fractional cadence preserves the useful rifle hits before and during the parent's reload and restores the immediate-top-off control. The safeguard narrows the affected shots without guaranteeing a later hit."
+          }
+        }
+      }
     }
   ]
 }
