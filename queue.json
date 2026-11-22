@@ -2603,6 +2603,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "9c5f89bd2e77b8049f83a6102ee875998c1f220d",
+      "summary": "Keep the prepared rifle aim through a sole wounded drone’s line dodge. Two recorded stock hits land 0.2 seconds earlier at equal early damage and loot. An interpolated replay ties recorded hit timing. All 28 fresh paired commands and placements tie, with 23 unit tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T12:36:52Z",
+      "parents": [
+        "2e2436e4d1ddda95aac8a86c8a18027e276da03c"
+      ],
+      "reviews": {
+        "commit": "9c5f89bd2e77b8049f83a6102ee875998c1f220d",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The policy preserves native feet and trigger, yields to native projectile bracing, and checks every current NPC round against the retained frontal cone. In stock, both hits land 0.2 seconds earlier at equal first-six-second trades and pickups. Interpolation confirms earlier fire with the same recorded hit time."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Stock advances two actual hits on the same drone by 0.2 seconds at equal early damage, loot, and placement. The alternate model advances only the command. Current fire, reload, boost, pickups, bracing, and aim with a visible player stay native. Fresh panels and exact runtime checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Stock confirms earlier hits with equal early trades and loot. All 12 stock squad and 16 four-mech placements tie. The active interpolated case ties on recorded hits, damage, pickups, survival, and placement. The stock placement ties despite two fewer kills and 12.3 seconds longer survival."
+          }
+        }
+      }
     }
   ]
 }
