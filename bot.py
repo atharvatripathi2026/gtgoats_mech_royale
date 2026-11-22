@@ -863,9 +863,8 @@ class Bot:
         if along < math.hypot(old_x, old_y) * max(.6 * walk, .9 * math.hypot(vx, vy)):
             return
         pickup = self.loadout.config.get("loot", {}).get("pickup_radius", 4.)
-        # Grounded walking cannot outrun either the current speed or its
-        # commanded maximum. Preserve weapons reachable before the rifle can fire.
-        speed = max(walk, math.hypot(vx, vy))
+        # A later command can sprint before the rifle finishes reloading.
+        speed = max(walk, specs.get("boost_speed", 19.5), math.hypot(vx, vy))
         ready = arms[0]["reload"] + self.loadout.step
         if math.dist((x, y), item["pos"][:2]) <= pickup + speed * ready:
             return
