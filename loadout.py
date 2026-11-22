@@ -37,6 +37,7 @@ class Loadout:
         self.laser_contact = None
         self.last_gun_hit = None
         self.last_npc_gun_hit = None
+        self.mortar_window = []
         self.used_gun_hit = None
         self.sight = {}
 
@@ -128,6 +129,11 @@ class Loadout:
         gun.update(self.weapons.get("gun", {}))
         gun.update(held.get("gun", {}))
         sustain = "gun" in held and not late and health >= .7
+        mortar_hits = [(time, dealt) for time, kind, dealt in self.mortar_window if kind == "mortar"]
+        sustain_mortar = ("mortar" in held and not late and health >= .7 and len(mortar_hits) >= 2
+                          and mortar_hits[-1][0] - mortar_hits[0][0] >= 1.6
+                          and sum(dealt for _, dealt in mortar_hits) >= max(
+                              300., sum(dealt for _, kind, dealt in self.mortar_window if kind != "mortar")))
 
         def sustained_damage(weapon):
             rounds = max(1, weapon["mag"])
@@ -158,6 +164,9 @@ class Loadout:
                 change = effect.get("mul", 1) - 1 + effect.get("add", 0) / scale
                 value = change * weight
                 total += value
+                if sustain_mortar and path[:2] == ["weapons", "mortar"] and field == "cooldown":
+                    upgraded_cooldown = max(.05, current * effect.get("mul", 1) + effect.get("add", 0))
+                    total += clamp(.95 * (current / upgraded_cooldown - 1) - value, 0., .12)
                 if credit_sustain and sustain and path[0:2] == ["weapons", "gun"] and field in gun_fields:
                     if upgraded_gun is None:
                         upgraded_gun = gun.copy()
@@ -1542,6 +1551,8 @@ class Loadout:
         stats = me.get("stats", {})
         zone = obs.get("zone") or {}
         armed = {w.get("kind") for w in me.get("weapons", ()) if w}
+        self.mortar_window = ([entry for entry in self.mortar_window if t - entry[0] <= 12.]
+                              if "mortar" in armed else [])
         stage = (zone.get("shrink_start"), zone.get("next_radius")) if armed == {"gun", "laser"} else None
         measure = stage is not None and stage == self.arm_evidence_stage
         if stage != self.arm_evidence_stage:
@@ -1568,6 +1579,9 @@ class Loadout:
                 self.arm_damage[arm] += event.get("amount", 0.)
             if event.get("type") == "hit":
                 target = event.get("target")
+                if ("mortar" in armed and event.get("amount", 0) > 0 and type(target) is int
+                        and 0 <= target < self.config.get("match", {}).get("mechs", 16)):
+                    self.mortar_window.append((t, arm, event["amount"]))
                 if arm == "gun" and event.get("amount", 0) > 0 and any(
                         e.get("id") == target and e.get("kind") == "npc" for e in obs.get("mechs", ())):
                     self.last_npc_gun_hit = (t, target)
