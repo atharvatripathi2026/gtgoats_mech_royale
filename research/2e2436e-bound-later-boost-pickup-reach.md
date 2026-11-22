@@ -1,0 +1,10 @@
+# Bound later boost reach before holding the retreat
+
+Exact `2e2436e4d1ddda95aac8a86c8a18027e276da03c` follows `db8b75f9ffb52c979aa40cc7b589dd46c4b4ad74` and extends the walking bound from queued `6782d54`. The first two physics steps are capped at walking or observed speed. Later steps can reach observed boost speed subject to acceleration. The projection allows a wall to erase an opposing velocity component and uses fractional remaining time plus one physics step. The existing walking protection stays in effect.
+
+- In a staged grounded Campus replay, the 31.235 m lightning pickup with the same later legal boost commands equips at 1.85 s and leaves 0.20 s on the rifle reload. Retaining the former retreat equips at 2.05 s, after reload. The revision preserves the earlier equip. A separate supported-lane stage preserves an actual pickup at 1.20 s with a 1.25 s rifle reload.
+- At 42 m neither staged fork picks up before reload. The revised controller retains the retreat suppressed by the 43.975 m full-speed radius. The acceleration-aware bound is 41.261 m in that fixture. A 39 m control still yields conservatively. This envelope uses observed movement stats and the staged boost continuations do not establish a natural policy activation.
+- All 48 fresh pairs matched every command and placement. These include stock 1076790 and 1076960, faster-close 1076820, original four-mech 1076940 and the immediate parent at 1077000. Directed stock 1076203 also matches exactly. Four score-reference pairs at 1076980 gain seven simulated points in total over `03a8f93`, with all commands and placements inherited from queued `6782d54`.
+- The exact build passed 23 unit tests and 300 timed networkless replies, p99 27.6 ms. All three Sol reviewers approved for practice. The publisher appended the exact candidate at ledger position 106.
+
+[Full-speed trial](db8b75f-revise-full-speed-pickup-forecast.md) · [Walking parent](6782d54-protect-weapon-through-reload.md) · [Queue ledger](../queue.json)
