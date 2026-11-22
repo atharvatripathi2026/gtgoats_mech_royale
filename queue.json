@@ -2754,6 +2754,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "0873ad98e417111d1d0a0cd13826dc942d6fa78b",
+      "summary": "Take a short walking detour when the cached zone path ends away from the next circle. Three directed simulations avoid early storm and gain 4–7 points. The prior adverse and 48 fresh pairs tie. 23 unit tests and 300 timed replies pass. Active Docker reply is 22.9 ms.",
+      "created_at": "2026-11-22T14:42:10Z",
+      "parents": [
+        "76ec85d5a0f171b1164a7545baa5f4b3cecdb59f"
+      ],
+      "reviews": {
+        "commit": "0873ad98e417111d1d0a0cd13826dc942d6fa78b",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The bounded walking bend eliminates early storm in stock, independent all-move and interpolated simulation, with gains of four to seven points. The former adverse and eight owner pairs preserve every command. The actual changed command answered in 22.862 ms in the one-CPU networkless container, clearing the runtime condition. A concurrently loaded raw simulation had a slower active observation."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Native movement is preserved when firing, charging, taking a pickup, selecting an upgrade, dodging, seeing a projectile or facing a close rival. A real walk-only change removed 140 early storm damage with no early combat trade and gained four placement points. All four independent fresh pairs matched on commands and placement. A recorded hitscan beam alone leaves the option available."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent all-move-first simulation removes 1045 total storm damage and gains four points, while the previous adverse and all eight faster fresh games match on commands and placement. A shallow descent is tolerated and a complete cached raster route is conservative evidence to leave native movement in place."
+          }
+        }
+      }
     }
   ]
 }
