@@ -1620,6 +1620,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "d6251aaff583fce5647062c16fb7a5b367710155",
+      "summary": "Combine replan-safe rifle dodges with legal terrain-aware mortar lead. Directed mortar hit +377.68 damage and +2 placement points. Thirty-six fresh parent placements tied. Passed 23 unit tests and 300 timed networkless observations.",
+      "created_at": "2026-11-22T00:22:30Z",
+      "parents": [
+        "2e09c9b95971143dd8c5fdcc1fe829715504283c",
+        "02e756efb79ff95d7be6d82e44e98f51fc1bdba6"
+      ],
+      "reviews": {
+        "commit": "d6251aaff583fce5647062c16fb7a5b367710155",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The corrected mortar adds 377.68 damage and two placement points in the directed replay. The merge preserves the confirmed rifle dodge and leaves 32 fresh modern-parent commands identical match for match. Changed mortar fire could gate a dodge, but that interaction is absent in these replays."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "A real direct plus splash mortar hit gains two places at equal six-second incoming. The older-parent loss is reproduced by the unmerged modern parent. All 32 fresh standard pairs tie on commands, phased placements tie, and the exact package checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The directed replay adds a real 377.68 mortar hit within the first second and gains two places. All 16 fresh native placements and four independent faster-rival placements tie. One faster-rival replay exercises the changed mortar aim without changing fire or damage."
+          }
+        }
+      }
     }
   ]
 }
