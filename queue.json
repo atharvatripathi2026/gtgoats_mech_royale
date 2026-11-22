@@ -2326,6 +2326,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "2c9610518d914383076b47392bfd74459fd2cd65",
+      "summary": "Resume fixed-point cover aim once after a missed observation if actual motion, torso and terrain agree. Stock/raw held stage restores 84.58 early damage at equal incoming. Four invalid stages and 44 fresh parent pairs match commands. 23 tests and 300 timed replies.",
+      "created_at": "2026-11-22T09:34:16Z",
+      "parents": [
+        "2c0602c53305aa2653ee9874b3830192d6d891a9"
+      ],
+      "reviews": {
+        "commit": "2c9610518d914383076b47392bfd74459fd2cd65",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The returned position, velocity and torso agree with the held command in the focal replay. The revision restores the actual first rifle hit, adds 84.58 outgoing and 6.65 seconds of life at equal 45 incoming and the same win. All four invalid continuity stages decline, and eight independent fresh command and placement pairs tie. The guard verifies physical consistency at the new observation."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The staged held observation restores the first hit and adds 84.58 early damage at equal 45 incoming, surviving 6.65 seconds longer at the same winning place. The first resumed command changes only aim. All four invalid continuity controls and uninterrupted stock commands reproduce the parent. This is a staged missed reply mechanism, with no measured frequency or ranking gain."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "An independent raw replay reproduces the 84.58 damage and 6.65 second life gain at equal incoming and the same win. Physical reconstruction matches the next pose with zero residual. Neutral movement, stale aim and two skipped observations preserve the parent commands. All eight fresh faster-close matches tie on wire and placement, and the positive result relies on a deliberately staged gap."
+          }
+        }
+      }
     }
   ]
 }
