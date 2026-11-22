@@ -1,0 +1,3 @@
+# Shelter and zone switching under faster closing
+
+Simulated same-controller sensitivity uses `5f0ace9121f41f8ff702c7e94f5494649c4671da` and fast-close evaluator `2613427e6251f5cee9f9bf43f7c195477ceed92b`. In six-second windows around stock anchor events, the full sequence of shelter versus zone decisions, pose and focal hop matched under faster closing for 1073039, 1072947 and 1073040. The fourth witness, 1072942, died by 219.80 s in the alternate before its original 254.4 s decision. Stock to alternate final placements for the surviving witnesses were 10→12, 15→15 and 15→6 points. These are opponent sensitivity checks on unchanged gameplay and do not estimate a candidate benefit. [Prior evaluator](2026-11-22T0500Z-faster-close-mortar-sensitivity.md)
