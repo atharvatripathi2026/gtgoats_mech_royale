@@ -38,6 +38,7 @@ class Loadout:
         self.last_gun_hit = None
         self.last_npc_gun_hit = None
         self.mortar_window = []
+        self.waited_mortar_offer = None
         self.used_gun_hit = None
         self.sight = {}
 
@@ -1596,12 +1597,25 @@ class Loadout:
         ent, h, engage = self.target(obs, muzzle, evade, target_id)
         action = {}
         self.pickup(obs, action)
-        choices = (obs.get("offer") or {}).get("choices", [])
+        offer = obs.get("offer") or {}
+        choices = offer.get("choices", [])
         slots = me.get("weapons", [])
         if choices:
+            pick = self.upgrade(obs, choices)
             drop = action.get("drop")
             replacing_mortar = ("take" in action and drop is not None and slots[drop]["kind"] == "mortar")
-            action["pick"] = self.upgrade(obs, choices, replacing_mortar=replacing_mortar)
+            if replacing_mortar:
+                native_pick = self.upgrade(obs, choices, replacing_mortar=True)
+                offer_id = offer.get("id")
+                hold = self.step * self.config.get("match", {}).get("decide_every", 2)
+                if (pick != native_pick and offer_id is not None and offer_id != self.waited_mortar_offer
+                        and offer.get("expires", t) > t + hold + 1e-8):
+                    self.waited_mortar_offer = offer_id
+                    pick = None
+                else:
+                    pick = native_pick
+            if pick is not None:
+                action["pick"] = pick
         energy = me.get("energy", 100)
         aim = self.quiet_aim(obs, travel_yaw)
         shots = {}
