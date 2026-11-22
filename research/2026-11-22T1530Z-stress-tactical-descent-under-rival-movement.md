@@ -1,0 +1,5 @@
+# Stress tactical descent against a retreating or lateral rival
+
+On simulated 1023905 an independent evaluator altered only the target's legal movement after the shared drop decision. Straight retreat eliminated the additional same-rival lightning hits, tied placement and shortened the descent arm's life by 5.55 s. Lateral movement preserved earlier same-rival contact, lost a later third-party hit and gained one placement point. Starting the retreat before the decision made outward radial motion observable, but the drop still opened damage against another rival. Outward motion alone does not justify a new veto.
+
+A compressed-circle replay of 1079773 also advanced an observed rival's lightning hit when the mech descended. Both paths crossed into the next circle, so this trade points to altitude exposure. No independent circle change was frozen. The accepted descendant limits the falling branch by projected return fire and preserves original behavior near projected exits. [Queued revision](672baa6-check-return-fire-while-falling-inside-circle.md)
