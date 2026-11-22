@@ -26,6 +26,7 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
+        self.deferred_mortar_swaps = set()
         self.mortar_group = None
         self.last_gun_capacity = None
         self.dodge_reload_floor = None
@@ -872,6 +873,62 @@ class Loadout:
                     and all(blast_reaches(point, end, sample, radius - .35) for sample in (center, stopped))):
                 return aim[0], pitch
         return None
+
+    def defer_firing_mortar_swap(self, obs, action, previous_swap):
+        item_id, slot = action.get("take"), action.get("drop")
+        fire = action.get("fire", ())
+        me = obs["self"]
+        if (item_id is None or item_id in self.deferred_mortar_swaps or slot is None
+                or len(fire) <= slot or sum(fire) != 1 or not fire[slot]
+                or self.last_decision.get("aim_weapon") != "mortar"
+                or not me.get("grounded") or action.get("jump") or action.get("boost")
+                or "pick" in action or not self.nav or not self.nav.loaded):
+            return
+        mortar = me["weapons"][slot]
+        if (not mortar or mortar["kind"] != "mortar" or mortar.get("cooldown", 0) > self.step + 1e-8
+                or not any(item["id"] == item_id and item["kind"] == "laser" for item in obs.get("pickups", ()))
+                or not any(ent["id"] == self.last_decision.get("target_id") and ent.get("kind") == "mech"
+                           for ent in obs.get("mechs", ()))):
+            return
+
+        stats = self.mech | me.get("stats", {})
+        weapon = self.weapons.get("mortar", {}) | mortar.get("stats", {})
+        current_yaw, current_pitch = me["aim"]
+        yaw, pitch = action["aim"]
+        dt = self.step
+        turn = stats.get("turn_rate", 4) * dt
+        tilt = stats.get("pitch_rate", 3) * dt
+        yaw = current_yaw + clamp(angle_delta(yaw, current_yaw), -turn, turn)
+        pitch = current_pitch + clamp(clamp(pitch, stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3))
+                                      - current_pitch, -tilt, tilt)
+        direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+        x, y, z = me["pos"]
+        vx, vy = me["vel"][:2]
+        mx, my = action["move"]
+        walk = stats.get("walk_speed", 11.7) / max(1., math.hypot(mx, my))
+        dx, dy = mx * walk - vx, my * walk - vy
+        ramp = min(1., dt * stats.get("ground_accel", 58.5) / max(.001, math.hypot(dx, dy)))
+        speed = weapon.get("speed", 72.)
+        reach = stats.get("radius", 2.5) + .5 + speed * dt
+        for px, py in ((x, y), (x + dt * (vx + ramp * dx), y + dt * (vy + ramp * dy))):
+            floor = self.nav.surface(px, py)
+            if abs(floor - z) > .20:
+                return
+            for feet in (floor, z):
+                base = (px, py, feet + stats.get("height", 9.) + .5)
+                end = tuple(p + reach * v for p, v in zip(base, direction))
+                if self.nav.short_segment_hits_raw_solid(base, end):
+                    return
+
+        # Let the existing self-blast check inspect the retained shot before
+        # committing to the one-command deferral.
+        probe = {key: value for key, value in action.items() if key not in ("take", "drop")}
+        if self.mortar_self_blast_on_first_step(obs, probe) is not None:
+            return
+        action.pop("take")
+        action.pop("drop")
+        self.last_swap = previous_swap
+        self.deferred_mortar_swaps.add(item_id)
 
     def mortar_self_blast_on_first_step(self, obs, action):
         """Detect a nearly immediate collision inside our own splash radius."""

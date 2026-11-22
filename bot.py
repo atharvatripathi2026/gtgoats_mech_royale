@@ -443,6 +443,7 @@ class Bot:
             radius = stats.get("radius", 2.5)
             if self.survival._dodge(obs, pos, radius + .5):
                 release_move = None
+        previous_swap = self.loadout.last_swap
         action.update(self.loadout.decide(obs, yaw, evade=evade,
                                           target_id=plan["target_id"], climbing=jet,
                                           line_dodge=plan["dodge"] == "line",
@@ -490,6 +491,7 @@ class Bot:
         if shell_steer is not None:
             action["move"], shell_id = shell_steer
             reason = "airborne_mortar_clearance"
+        self.loadout.defer_firing_mortar_swap(obs, action, previous_swap)
         unsafe_tube = self.loadout.mortar_self_blast_on_first_step(obs, action)
         if unsafe_tube is not None:
             action["fire"][unsafe_tube] = False
