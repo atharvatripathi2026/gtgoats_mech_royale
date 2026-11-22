@@ -1747,6 +1747,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "5a920eaf7e6d485f5ee350e73775f0005d857e98",
+      "summary": "Keep mortar over laser after a confirmed hit on a still-clustered group. Directed simulated placement gains of eight in the stock arena and two under independent raw geometry. All 44 fresh parent placements tied. Passed 23 unit tests and 300 networkless observations.",
+      "created_at": "2026-11-22T01:53:49Z",
+      "parents": [
+        "afc107dbd75118e379cf2bf91e393c7a11cf6b1c"
+      ],
+      "reviews": {
+        "commit": "5a920eaf7e6d485f5ee350e73775f0005d857e98",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The swap-only rule preserves the demonstrated open five-rival mortar cluster and later hits. Exact raw-map flight and splash rays confirm the initial group, and the prior productive laser swap and fresh placements were preserved."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Native 1070773 gained eight points and independent raw geometry gained two after the same take-only veto. Retained mortar hit one second before the parent beam and later dealt 324 direct damage. Forty owner and coordinator parent pairs tied commands and the prior 585.9-damage laser swap was preserved."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent raw 1070773 reproduces the same veto and a two-point gain, with 25 less incoming and 49.87 less outgoing over six seconds. Later mortar hits include direct 324. Four fresh raw pairs tied commands and none equipped mortar."
+          }
+        }
+      }
     }
   ]
 }
