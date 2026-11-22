@@ -822,7 +822,7 @@ class Bot:
         phases = zone.get("phases", ())
         stride = self.loadout.config.get("match", {}).get("decide_every", 2)
         if (plan["mode"] not in ("evade", "loot") or plan["dodge"] or plan["zone_urgency"] >= .15
-                or not phases or obs["t"] >= phases[0].get("hold_s", 0.)
+                or stride != 2 or not phases or obs["t"] >= phases[0].get("hold_s", 0.)
                 or not me.get("grounded") or not me.get("in_zone") or not self.nav.loaded
                 or action["boost"] or action["jump"] or any(action.get("fire", ()))
                 or "take" in action or "pick" in action or obs.get("projectiles") or obs.get("beams")
@@ -852,12 +852,15 @@ class Bot:
             if bearings:
                 self.loot_escape_walk = obs["tick"], (mx, my), frozenset(bearings)
             return
-        if previous is None or previous[0] != obs["tick"] - stride or not any(
-            item["id"] == plan["target_id"] for item in obs.get("pickups", ())
-        ):
+        item = next((item for item in obs.get("pickups", ()) if item["id"] == plan["target_id"]), None)
+        if previous is None or previous[0] != obs["tick"] - stride or item is None:
             return
         old_x, old_y = previous[1]
         if old_x * mx + old_y * my > -.75:
+            return
+        vx, vy = me["vel"][:2]
+        along = vx * old_x + vy * old_y
+        if along < math.hypot(old_x, old_y) * max(.6 * walk, .9 * math.hypot(vx, vy)):
             return
         for ident in bearings.keys() & previous[2]:
             ux, uy, body = bearings[ident]
@@ -865,9 +868,36 @@ class Bot:
                     or self.nav.short_segment_hits_raw_solid(origin, body)):
                 continue
             trial = {"move": (old_x, old_y), "boost": False, "jump": False}
-            if self.loadout.late_arc_bases(obs, origin, trial, specs) is not None:
+            retained = self.loadout.late_arc_bases(obs, origin, trial, specs)
+            if retained is not None and not self.reversal_delays_pickup(obs, action, item, origin, specs, retained):
                 action["move"] = [old_x, old_y]
             return
+
+    def reversal_delays_pickup(self, obs, native, item, origin, specs, retained):
+        """Preserve a new weapon the native route reaches earlier in the hold."""
+        position = obs["self"]["pos"]
+        pickup = item["pos"]
+        reach = self.loadout.config.get("loot", {}).get("pickup_radius", 4.)
+        walk = specs.get("walk_speed", 11.7)
+        speed = max(walk, math.hypot(*obs["self"]["vel"][:2]))
+        if math.dist(position[:2], pickup[:2]) > reach + .1 + speed * 2 * self.loadout.step:
+            return False
+        projected = self.loadout.late_arc_bases(obs, origin, native, specs)
+        if projected is None:
+            return True
+        radius = specs.get("radius", 2.5)
+        muzzle_height = origin[2] - position[2]
+
+        def arrival(path, margin):
+            for step, samples in enumerate(path, 1):
+                for point, offset in samples:
+                    height = muzzle_height * (offset - .5) / radius
+                    if (math.dist(point[:2], pickup[:2]) <= reach + margin
+                            and abs(point[2] - height - pickup[2]) <= 4. + margin):
+                        return step
+            return math.inf
+
+        return arrival(projected, .1) < arrival(retained, -.1)
 
     def act(self, obs):
         if self.trace:
