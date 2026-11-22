@@ -1998,6 +1998,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "34187727e17db7fd56b05501608898a0ecaeb411",
+      "summary": "Sidestep a descending shell that would hit the grounded hull before landing. Two movement-only observations avoided the original hit in stock, raw collision and concussion replays. A delayed-shell case still took the hit. All 48 fresh parent pairs tied; 300 timed replies passed.",
+      "created_at": "2026-11-22T05:34:31Z",
+      "parents": [
+        "5f0ace9121f41f8ff702c7e94f5494649c4671da"
+      ],
+      "reviews": {
+        "commit": "34187727e17db7fd56b05501608898a0ecaeb411",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The unchanged non-movement commands and legal sidestep avoid the original hit in stock, raw and concussion models, saving 391.67, 391.67 and 436.67 damage in six seconds. An independently tested nearby rejoin heading also avoids contact but ties placement. Delaying the shell by 0.1 seconds defeats avoidance and ties placement. Truncation at terrain and uneven support remain limitations, with no regression in the fresh panels."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Two movement-only commands on the same live shell prevent the 200 direct hit, splash and follow-up rifle hit in stock. Raw and concussion models reproduce the early avoidance. Eight fresh owner pairs and the exact 23 units and 300 timed checks pass. The delayed case still takes the direct hit and trades 1.70 more incoming for 97.2 more outgoing over six seconds, with tied placement."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "An independent exact raw replay confirms zero incoming versus 391.67 after two revalidated movement-only commands, and all eight raw fresh pairs tie. Concussion preserves the early benefit. The delayed shell disproves a general guarantee across the forecast window when only one command can run, with 1.70 more incoming, 97.2 more output, 1.35 seconds shorter survival and equal placement. The replicated observed contact avoidance supports a practice test."
+          }
+        }
+      }
     }
   ]
 }
