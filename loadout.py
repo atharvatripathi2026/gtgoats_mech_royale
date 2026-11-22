@@ -1082,9 +1082,14 @@ class Loadout:
             floor = self.nav.surface(x, y)
             if floor > z + stats.get("step_up", 1.2):
                 floor = self.nav.ground(x, y)
-            if floor < z - (.03 if step + 1 < firing_step else .25) or floor > z + .08:
+            if floor < z - .25 or floor > z + .08:
                 return None
-            z = max(z - (step + 1) * stats.get("gravity", 22.) * dt * dt, floor)
+            if floor >= z - .03:
+                z = max(z, floor)
+            elif step + 1 < firing_step:
+                return None
+            else:
+                z = max(z - stats.get("gravity", 22.) * dt * dt, floor)
         muzzle_height = stats.get("muzzle_height", 7.)
         spread = math.radians(3 * weapon.get("spread_deg", .6))
         perturbations = ((0., 0.), (-spread, -spread), (-spread, spread),
