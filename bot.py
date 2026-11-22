@@ -55,6 +55,7 @@ class Bot:
         self.pending_wall_round = None
         self.postkill_refill_confirmation = None
         self.loot_scan_until = -math.inf
+        self.loot_scan_point = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -580,12 +581,17 @@ class Bot:
 
     def scan_loot_cover_edge(self, obs, plan, action):
         now = obs["t"]
+        prior_point = self.loot_scan_point
+        self.loot_scan_point = None
         events = obs.get("events", ())
         match_size = self.loadout.config.get("match", {}).get("mechs", 16)
         if any(event.get("type") == "kill" and type(event.get("target")) is int
                and 0 <= event["target"] < match_size for event in events):
             self.loot_scan_until = now + 1.
-        if (now > self.loot_scan_until or not self.nav.loaded or plan["mode"] != "loot"
+            prior_point = None
+        elif prior_point:
+            self.loot_scan_until = -math.inf
+        if ((prior_point is None and now > self.loot_scan_until) or not self.nav.loaded or plan["mode"] != "loot"
                 or plan["dodge"] or plan["zone_urgency"] > .1
                 or self.loadout.last_decision.get("intent") != "scan"
                 or action["jump"] or action["boost"] or action.get("reload")
@@ -607,22 +613,40 @@ class Bot:
         heading = math.atan2(dy, dx)
         if abs(math.remainder(heading - math.atan2(vy, vx), math.tau)) > .2:
             return
+        x, y, z = me["pos"]
+        tick = obs["tick"]
+        stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+        if prior_point:
+            expected_tick, expires, item_id, edge = prior_point
+            if tick != expected_tick or now > expires or plan["target_id"] != item_id:
+                return
+            bearing = math.atan2(edge[1] - y, edge[0] - x)
+            flank = abs(math.remainder(bearing - heading, math.tau))
+            if not .28 <= flank <= .85:
+                return
+            action["aim"] = [bearing, action["aim"][1]]
+            self.loot_scan_point = tick + stride, expires, item_id, edge
+            return
         sweep = math.remainder(action["aim"][0] - heading, math.tau)
         if not .6 <= abs(sweep) <= 1.65:
             return
         side = math.copysign(1., sweep)
         bearing = heading + side * math.pi / 6
         shoulder = heading + side * math.radians(50)
-        x, y, z = me["pos"]
-        eye_height = me.get("stats", {}).get("eye_height", self.loadout.mech.get("eye_height", 8.))
+        stats = me.get("stats", {})
+        eye_height = stats.get("eye_height", self.loadout.mech.get("eye_height", 8.))
         eye = x, y, z + eye_height
         fx, fy = x + vx * .35, y + vy * .35
         ahead = fx, fy, self.nav.ground(fx, fy) + eye_height
         edge = ahead[0] + 25 * math.cos(bearing), ahead[1] + 25 * math.sin(bearing), ahead[2]
         covered = eye[0] + 25 * math.cos(shoulder), eye[1] + 25 * math.sin(shoulder), eye[2]
         if (self.nav.short_segment_hits_raw_solid(eye, covered)
-                and not self.nav.short_segment_hits_raw_solid(ahead, edge)):
-            action["aim"] = [math.remainder(bearing, math.tau), action["aim"][1]]
+                and not self.nav.short_segment_hits_raw_solid(ahead, edge)
+                and self.nav.short_segment_hits_raw_solid(eye, edge)
+                and self.nav.raw_hull_corridor_clear((x, y, z), (fx, fy),
+                    stats.get("radius", self.nav.body_radius), stats.get("height", self.nav.body_height))):
+            action["aim"] = [math.atan2(edge[1] - y, edge[0] - x), action["aim"][1]]
+            self.loot_scan_point = tick + stride, now + .35, plan["target_id"], edge
 
     def act(self, obs):
         if self.trace:
