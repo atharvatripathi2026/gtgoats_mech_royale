@@ -1823,6 +1823,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "ab5877abf8a5765b0aa1767cd15459e873d04a4f",
+      "summary": "Preserve actual feet height on shallow drops and skip the grounded rifle dodge forecast when support is lost. Fixed a staged false avoidance and kept the established positive controls. All 36 fresh parent pairs tied. Passed 23 unit tests and 300 networkless checks.",
+      "created_at": "2026-11-22T02:21:54Z",
+      "parents": [
+        "35662b22040dc59e5aa4a9163505d97e5e62130b"
+      ],
+      "reviews": {
+        "commit": "ab5877abf8a5765b0aa1767cd15459e873d04a4f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Independent replay preserves feet height on the first step and becomes airborne on the second. The staged selector correctly abstains from a grounded forecast. Previously useful controls, fresh placements and the 300 runtime responses were preserved."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Raw geometry and native actor motion show both projected turns remain in the rifle path at the step that loses ground. Correcting support continuity avoids a falsely certified movement change. All 32 fresh stock placements tie, old controls match commands, and unit and sandbox checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Raw independent four fresh pairs match placements and commands. Exact physics reproduces the carried foot height and cumulative loss of support in both staged paths, so the grounded guard should abstain. Positive controls are preserved without demonstrated natural placement gain."
+          }
+        }
+      }
     }
   ]
 }
