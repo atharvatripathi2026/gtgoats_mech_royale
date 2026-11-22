@@ -948,6 +948,8 @@ class Bot:
             brace = self.loadout.brace_for_incoming_round(obs, action)
             if brace is not None:
                 action["aim"] = [brace, action["aim"][1]]
+            elif (drone_aim := self.loadout.retain_aim_on_wounded_drone(obs, action)) is not None:
+                action["aim"] = drone_aim
         fallback = self.zone_anchor_fallback
         zone = obs.get("zone") or {}
         settled = (fallback is not None and fallback[0] == tuple(zone.get("next_center", ()))
