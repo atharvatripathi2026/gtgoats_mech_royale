@@ -862,42 +862,22 @@ class Bot:
         along = vx * old_x + vy * old_y
         if along < math.hypot(old_x, old_y) * max(.6 * walk, .9 * math.hypot(vx, vy)):
             return
+        pickup = self.loadout.config.get("loot", {}).get("pickup_radius", 4.)
+        # Grounded walking cannot outrun either the current speed or its
+        # commanded maximum. Preserve weapons reachable before the rifle can fire.
+        speed = max(walk, math.hypot(vx, vy))
+        ready = arms[0]["reload"] + self.loadout.step
+        if math.dist((x, y), item["pos"][:2]) <= pickup + speed * ready:
+            return
         for ident in bearings.keys() & previous[2]:
             ux, uy, body = bearings[ident]
             if (mx * ux + my * uy <= .5 or old_x * ux + old_y * uy >= -.5
                     or self.nav.short_segment_hits_raw_solid(origin, body)):
                 continue
             trial = {"move": (old_x, old_y), "boost": False, "jump": False}
-            retained = self.loadout.late_arc_bases(obs, origin, trial, specs)
-            if retained is not None and not self.reversal_delays_pickup(obs, action, item, origin, specs, retained):
+            if self.loadout.late_arc_bases(obs, origin, trial, specs) is not None:
                 action["move"] = [old_x, old_y]
             return
-
-    def reversal_delays_pickup(self, obs, native, item, origin, specs, retained):
-        """Preserve a new weapon the native route reaches earlier in the hold."""
-        position = obs["self"]["pos"]
-        pickup = item["pos"]
-        reach = self.loadout.config.get("loot", {}).get("pickup_radius", 4.)
-        walk = specs.get("walk_speed", 11.7)
-        speed = max(walk, math.hypot(*obs["self"]["vel"][:2]))
-        if math.dist(position[:2], pickup[:2]) > reach + .1 + speed * 2 * self.loadout.step:
-            return False
-        projected = self.loadout.late_arc_bases(obs, origin, native, specs)
-        if projected is None:
-            return True
-        radius = specs.get("radius", 2.5)
-        muzzle_height = origin[2] - position[2]
-
-        def arrival(path, margin):
-            for step, samples in enumerate(path, 1):
-                for point, offset in samples:
-                    height = muzzle_height * (offset - .5) / radius
-                    if (math.dist(point[:2], pickup[:2]) <= reach + margin
-                            and abs(point[2] - height - pickup[2]) <= 4. + margin):
-                        return step
-            return math.inf
-
-        return arrival(projected, .1) < arrival(retained, -.1)
 
     def act(self, obs):
         if self.trace:
