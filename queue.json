@@ -2124,6 +2124,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "15aff403bd7773b312fdfd9bc7e3765714acd7bd",
+      "summary": "Require the next rifle engagement under observed relative motion and walked and boosted release-speed bounds. Preserves the original handoff, restores the opening foil and rejects a retreat false positive. All 36 fresh parent pairs tie; 300 timed observations passed.",
+      "created_at": "2026-11-22T07:08:03Z",
+      "parents": [
+        "f82ea28236c9967a2ff9fdc8ea8a1d448d4e19ca"
+      ],
+      "reviews": {
+        "commit": "15aff403bd7773b312fdfd9bc7e3765714acd7bd",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact policy restores a useful rifle window in both physically checked staged closing cases and prevents 183.6 early damage at equal outgoing. It preserves the natural positive and foil and rejects the demonstrated false crossing during retreat by checking release-speed variants. A separate turn stage trades early safety for 49.2 seconds less survival at tied placement. Fresh and runtime checks support a limited practice trial."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact guard rejects a false next-step crossing when beam release restores full movement speed and retains stock and fractional early handoff benefits. Three staged relative approaches preserve the beam and prevent 183.6 or 180 early incoming at equal output, with placements tied. The own movement forecast remains approximate and the staged results do not establish a new natural activation. The exact kit checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Fixed checks reproduce the charged-only false-positive during retreat and the exact guard rejects it. Stock benefit and adverse foil are preserved. Three staged motion perturbations recover early damage protection with the same output. Eight independent faster-closing pairs match every command and placement against the direct parent. The turn stage gives up later survival and observed velocity is a conditional forecast."
+          }
+        }
+      }
     }
   ]
 }
