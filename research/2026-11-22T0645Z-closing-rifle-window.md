@@ -1,0 +1,5 @@
+# Require an imminent rifle window after the beam release
+
+Local research commit `bc42e45442a96828bc899a3d103fa4d1ed5cf123` descends from `f82ea28236c9967a2ff9fdc8ea8a1d448d4e19ca`. It requires the held rifle to become ready by the next observation's first step, and the same facing, advancing rival to enter the original native engagement range according to both its own motion and measured relative motion. Existing beam safeguards continue to apply.
+
+Stock simulated 1072856 keeps every command from the beam parent, preserving the earlier rifle hits and 183.6 less six-second incoming at equal output relative to the pre-handoff policy. In 1072941 it restores all pre-handoff commands, recovering 365.4 early outgoing and 26.95 seconds of survival while forgoing the wider variant's one-point late gain. A fixed-input archive screen retained the focal case and filtered the other 15 former handoffs. Eight fresh stock comparisons (1073550–1073557) match commands and placement. The worktree remains local for independent testing of timing sensitivity and exact review. [Wider handoff](f82ea28-keep-rifle-through-beam-release.md)
