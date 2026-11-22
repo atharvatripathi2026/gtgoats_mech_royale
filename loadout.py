@@ -714,6 +714,88 @@ class Loadout:
                 return False
         return True
 
+    def loft_over_near_roof(self, obs, target, aim, weapon):
+        me = obs["self"]
+        if (not me.get("grounded") or target.get("kind") != "mech"
+                or not self.nav or not self.nav.loaded
+                or math.hypot(*me["vel"][:2]) > 12):
+            return None
+        velocity = target.get("vel", (0., 0., 0.))
+        if math.hypot(*velocity[:2]) > 8 or abs(velocity[2]) > 1:
+            return None
+        stats = me.get("stats", {})
+        step = self.step
+        reference = (*me["pos"][:2], me["pos"][2] + stats.get("height", 9) + .5)
+        origin = tuple(p + step * v for p, v in zip(reference, me["vel"]))
+        body_radius, height = self.dimensions(target)
+        center = (*target["pos"][:2], target["pos"][2] + .5 * height)
+        distance = math.dist(origin[:2], center[:2])
+        if not 30 <= distance <= 124:
+            return None
+        offset = stats.get("radius", 2.5) + .5
+        radius = weapon.get("splash_radius", 7)
+        speed, gravity, ttl = weapon.get("speed", 72), weapon.get("gravity", 22), weapon.get("ttl", 7)
+        actual_yaw, actual_pitch = me["aim"]
+        turn, tilt = stats.get("turn_rate", 4) * step, stats.get("pitch_rate", 3) * step
+        yaw = actual_yaw + clamp(angle_delta(aim[0], actual_yaw), -turn, turn)
+        native_pitch = actual_pitch + clamp(aim[1] - actual_pitch, -tilt, tilt)
+        horizon = min(ttl, distance / (speed * max(.3, math.cos(native_pitch))) + .4)
+
+        def ground_contact(pitch, limit):
+            direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+            previous = tuple(p + offset * d for p, d in zip(origin, direction))
+            if not self.nav.line_clear(origin, previous):
+                return origin, 0., previous
+            velocity = tuple(speed * d for d in direction)
+            for tick in range(1, math.ceil(limit / step) + 1):
+                after = tuple(p + v * step for p, v in zip(previous, velocity))
+                if not self.nav.line_clear(previous, after):
+                    for fraction in (.25, .50, .75, 1.):
+                        point = tuple(p + fraction * (q - p) for p, q in zip(previous, after))
+                        if not self.nav.line_clear(previous, point):
+                            return point, (tick - 1 + fraction) * step, after
+                previous = after
+                velocity = (*velocity[:2], velocity[2] - gravity * step)
+            return None
+
+        def predicted_body(flight):
+            return tuple(p + (flight + step) * v for p, v in zip(center, velocity))
+
+        # A nearby edge can interrupt the rival's linear travel. Bound the
+        # alternative from the current body through a full ground stop.
+        ground_accel = max(1., self.mech.get("ground_accel", 58.5))
+        brake_time = math.hypot(*velocity[:2]) / (2 * ground_accel)
+        stopped = tuple(p + brake_time * v for p, v in zip(center, velocity))
+        clearance, body_height = self.nav._dimensions(body_radius)
+
+        def blast_reaches(point, end, body, distance_limit):
+            return all(math.dist(origin, body) <= distance_limit and self.nav.line_clear(origin, body)
+                       for origin in (point, end))
+
+        impact = ground_contact(native_pitch, horizon)
+        if impact is None or math.dist(impact[0][:2], origin[:2]) > .82 * distance:
+            return None
+        point, flight, end = impact
+        if any(math.dist(impact_point, body) < 1.3 * radius
+               for impact_point in (point, end) for body in (center, stopped, predicted_body(flight))):
+            return None
+        for rise in (.04, .08, .12, .16):
+            pitch = aim[1] + rise
+            if not max(stats.get("min_pitch", -.7), actual_pitch - tilt) <= pitch <= min(
+                    stats.get("max_pitch", 1.3), actual_pitch + tilt):
+                continue
+            landed = ground_contact(pitch, min(ttl, horizon + .5))
+            if landed is None:
+                continue
+            point, flight, end = landed
+            body = predicted_body(flight)
+            if blast_reaches(point, end, body, .75 * radius):
+                return aim[0], pitch
+            if (not self.nav._ground_segment(*center[:2], *body[:2], clearance, body_height)
+                    and all(blast_reaches(point, end, sample, radius - .35) for sample in (center, stopped))):
+                return aim[0], pitch
+        return None
+
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
         """Forecast a shorter lead for a ground target running into a broad wall."""
         if not self.nav or not self.nav.loaded or target.get("kind") != "mech":
@@ -908,6 +990,13 @@ class Loadout:
                                 obs, ent, (yaw_next, pitch_next), remaining,
                                 primary[4].get("range", 280), movement)):
                         fire[primary_slot] = False
+                if (primary[3] == "mortar" and sum(fire) == 1 and fire[primary_slot]
+                        and primary[5].get("cooldown", 0) <= self.step and not climbing
+                        and "take" not in action and "pick" not in action
+                        and not any(slot and slot.get("charge", 0) > 0 for slot in slots)):
+                    loft = self.loft_over_near_roof(obs, ent, aim, primary[4])
+                    if loft is not None:
+                        aim = loft
                 action["fire"] = fire
             if engage and not shots:
                 alternate = self.rising_rifle_alternate(obs, ent, slots, muzzle, aim[1])
