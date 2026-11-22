@@ -1,0 +1,7 @@
+# Withhold a sprint for a visibly contested cube
+
+The archive screen found no candidate where our selected visible cube disappears and a tracked rival enters the pickup cylinder and gains cargo on the next observation. Survival screened 450 tape artifacts with 76 known own acquisitions as a positive control. Validation and the coordinator independently reached the same conclusion on overlapping archives. This screen can miss hidden claimants and pickups inside one observation.
+
+In staged radial controls from simulated 1075066, walking ends the second step 3.77261m from the cube and boosting ends at 3.33386m. A rival at 3.38m on that step loses to the boost under the kit's closest-mech rule. A rival at 3.28m wins under the same rule. Local actor-order collection can award it to our mech in both cases. Survival and validation voted **withhold** before a controller was frozen.
+
+Combat found an existing correct response in 1074752. The native rifle kills the rival before it can acquire two cubes. Omitting one trigger lets the bot reissue the shot in time. Holding back three triggers gives the rival two actual cubes and adds 437.4 damage taken through six seconds at tied placement. Combat withheld the weapon change. Preserve the firing sequence when evaluating future movement near this kind of race. [Kit scoring](https://www.joinbuilders.org/buildathon/tracks/builders/files/mechfight-kit.tar.gz) · [Quiet cube policy](ec95bb3-one-cube-without-upgrade.md)
