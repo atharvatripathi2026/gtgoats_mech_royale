@@ -806,7 +806,7 @@ class Bot:
                                           line_dodge=plan["dodge"] == "line",
                                           steady=plan["mode"] == "hold" and grounded and not jet
                                           and math.hypot(*action["move"]) < .02,
-                                          movement=release_move))
+                                          movement=release_move, motion_command=action))
         if plan["dodge"] == "line":
             brace = self.loadout.brace_for_incoming_round(obs, action)
             if brace is not None:
@@ -864,6 +864,7 @@ class Bot:
             action["fire"][unsafe_tube] = False
         self.reload_after_wall_round(obs, plan, action)
         self.scan_loot_cover_edge(obs, plan, action)
+        self.loadout.confirm_late_arc_command(action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
         if obstructed_rifle is not None:

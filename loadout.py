@@ -450,7 +450,44 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats, *, reserve_boost=False):
+    def late_arc_bases(self, me, origin, command, stats):
+        """Forecast two supported ground steps using the outgoing movement."""
+        if command is None or command["jump"]:
+            return None
+        motion = self.mech | stats
+        x, y, z = me["pos"]
+        muzzle_height = origin[2] - z
+        floor_offset = z - self.nav.surface(x, y)
+        if abs(floor_offset) > .15:
+            return None
+        speed = (motion.get("boost_speed", 19.5) if command["boost"]
+                 else motion.get("walk_speed", 11.7))
+        ux, uy = command["move"]
+        scale = speed / max(1., math.hypot(ux, uy))
+        tx, ty = ux * scale, uy * scale
+        vx, vy = me["vel"][:2]
+        delta = motion.get("ground_accel", 58.5) * self.step
+        radius, height = motion.get("radius", 2.5), motion.get("height", 9.)
+        dims = self.nav._dimensions(radius)
+        bases = []
+        for _ in range(2):
+            dx, dy = tx - vx, ty - vy
+            factor = min(1., delta / max(.001, math.hypot(dx, dy)))
+            vx += dx * factor
+            vy += dy * factor
+            end = x + vx * self.step, y + vy * self.step
+            floor = self.nav.surface(*end) + floor_offset
+            if (not z - .03 <= floor <= z + motion.get("step_up", 1.2)
+                    or not self.nav._ground_segment(x, y, *end, *dims)
+                    or not self.nav.raw_hull_corridor_clear((x, y, z), end, radius, height)):
+                return None
+            x, y = end
+            z = max(z, floor)
+            bases.append((x, y, z + muzzle_height))
+        return bases
+
+    def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats, *,
+                                   reserve_boost=False, motion_command=None):
         """Use an idle arc against a close aimed rival on the existing line."""
         if not self.nav or not self.nav.loaded:
             return None
@@ -468,6 +505,7 @@ class Loadout:
         ws = self.weapons.get("lightning", {}) | weapon.get("stats", {})
         cooldown = weapon.get("cooldown", 0)
         second_step = cooldown > self.step
+        verify_motion = cooldown > self.step + 1e-8
         stride = self.config.get("match", {}).get("decide_every", 2)
         energy = me.get("energy", 0)
         cost = ws.get("energy", 3)
@@ -485,6 +523,9 @@ class Loadout:
                 return None
         current = me.get("aim", aim)
         speed = me.get("vel", (0., 0., 0.))
+        motion_bases = self.late_arc_bases(me, origin, motion_command, stats) if verify_motion else None
+        if verify_motion and motion_bases is None:
+            return None
         turn = self.step * stats.get("turn_rate", 4)
         tilt = self.step * stats.get("pitch_rate", 3)
         sample_steps = (0, 1, 2) if second_step else (0, 1)
@@ -497,14 +538,20 @@ class Loadout:
             yaw = current[0] + clamp(angle_delta(aim[0], current[0]), -slew_steps * turn, slew_steps * turn)
             pitch = current[1] + clamp(aim[1] - current[1], -slew_steps * tilt, slew_steps * tilt)
             direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
-            base = tuple(x + step * self.step * v for x, v in zip(origin, speed))
-            muzzle = tuple(x + offset * v for x, v in zip(base, direction))
-            if not self.nav.line_clear(base, muzzle):
-                return None
-            samples.append((step, yaw, base, muzzle))
+            linear = tuple(x + step * self.step * v for x, v in zip(origin, speed))
+            bases = (linear, motion_bases[step - 1]) if step and motion_bases else (linear,)
+            for base in bases:
+                muzzle = tuple(x + offset * v for x, v in zip(base, direction))
+                if not self.nav.line_clear(base, muzzle):
+                    return None
+                samples.append((step, yaw, base, muzzle))
         reach = ws.get("range", 45)
         cone = math.radians(ws.get("cone_deg", 30))
         hits = []
+        near_after_accel = []
+        # A rival can enter the cone between samples even if its last
+        # velocity carries it just outside. Reserve two steps of acceleration.
+        uncertainty = 3 * self.step ** 2 * self.mech.get("ground_accel", 58.5)
         for ent in (*obs.get("mechs", ()), *obs.get("crates", ())):
             pos = ent["pos"]
             if math.dist(origin, pos) > reach + 12:
@@ -516,13 +563,20 @@ class Loadout:
             projections = []
             for step, yaw, base, muzzle in samples:
                 point = tuple(x + step * self.step * v for x, v in zip(body, velocity))
-                aim_error = abs(angle_delta(math.atan2(point[1] - base[1], point[0] - base[0]), yaw))
-                projections.append((math.dist(muzzle, point), aim_error, muzzle, point))
+                dx, dy = point[0] - base[0], point[1] - base[1]
+                aim_error = abs(angle_delta(math.atan2(dy, dx), yaw))
+                projections.append((math.dist(muzzle, point), aim_error, muzzle, point, math.hypot(dx, dy)))
             distances = tuple(sample[0] for sample in projections)
             errors = tuple(sample[1] for sample in projections)
+            if verify_motion and ent.get("kind") in ("mech", "npc"):
+                for dist, error, _, _, planar_range in projections:
+                    margin = (math.pi if planar_range <= uncertainty
+                              else math.asin(uncertainty / planar_range))
+                    if error <= cone + margin:
+                        near_after_accel.append((dist - uncertainty, ent["id"]))
             if min(errors) > cone or min(distances) > reach:
                 continue
-            clear = [self.nav.line_clear(muzzle, point) for _, _, muzzle, point in projections]
+            clear = [self.nav.line_clear(muzzle, point) for _, _, muzzle, point, _ in projections]
             if any(clear):
                 hits.append((min(distances), max(distances), max(errors), bearing, ent, all(clear)))
         if not hits:
@@ -531,7 +585,9 @@ class Loadout:
         near, far, error, bearing, threat, clear = nearest
         if (threat.get("kind") != "mech" or threat.get("id") == selected.get("id")
                 or far > reach - 2 or error > .8 * cone
-                or any(hit is not nearest and hit[0] <= far + 1 for hit in hits)):
+                or any(hit is not nearest and hit[0] <= far + 1 for hit in hits)
+                or any(possible <= far + 1 and ident != threat["id"]
+                       for possible, ident in near_after_accel)):
             return None
         facing = threat.get("aim")
         if (not threat.get("charging") and
@@ -1252,7 +1308,9 @@ class Loadout:
                 return None
         return (x + vx * stop, y + vy * stop, body[2])
 
-    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *, line_dodge=False, steady=False, movement=None):
+    def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *,
+               line_dodge=False, steady=False, movement=None, motion_command=None):
+        self.late_arc_command = None
         me = obs["self"]
         t = obs.get("t", 0)
         stats = me.get("stats", {})
@@ -1431,8 +1489,11 @@ class Loadout:
             if engage and not any(action.get("fire", ())):
                 backup = self.direct_lightning_on_threat(
                     obs, ent, aim, muzzle, offset, stats, reserve_boost=evade and not line_dodge,
+                    motion_command=motion_command,
                 )
                 if backup is not None:
+                    if slots[backup].get("cooldown", 0) > self.step + 1e-8:
+                        self.late_arc_command = (backup, self.arc_command_pose(motion_command, aim), "fire" in action)
                     fire = action.setdefault("fire", [False, False])
                     fire[backup] = True
         aim = self.hold_occluded_laser(obs, action, ent, engage, aim, muzzle, steady)
@@ -1458,3 +1519,17 @@ class Loadout:
                     action["reload"] = True
         action["aim"] = aim
         return action
+
+    @staticmethod
+    def arc_command_pose(action, aim):
+        return tuple(action["move"]), action["boost"], action["jump"], tuple(aim)
+
+    def confirm_late_arc_command(self, action):
+        if self.late_arc_command is None:
+            return
+        slot, pose, had_fire = self.late_arc_command
+        if pose != self.arc_command_pose(action, action["aim"]):
+            if had_fire:
+                action["fire"][slot] = False
+            else:
+                action.pop("fire", None)
