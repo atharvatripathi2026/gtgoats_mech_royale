@@ -802,6 +802,42 @@ class Loadout:
             return None
         return yaw + math.copysign(abs(gap) - front + .08, gap)
 
+    def retain_aim_on_wounded_drone(self, obs, action):
+        """Keep a prepared rifle pointed toward the same drone during its dodge."""
+        me = obs["self"]
+        slots = [slot for slot in me.get("weapons", ()) if slot]
+        rounds = obs.get("projectiles", ())
+        enemies = obs.get("mechs", ())
+        contact = self.last_npc_gun_hit
+        if (contact is None or self.last_decision["intent"] != "scan"
+                or not me.get("grounded") or not me.get("in_zone") or action.get("jump")
+                or "take" in action or "pick" in action or action.get("reload")
+                or any(action.get("fire", ())) or len(slots) != 1 or slots[0]["kind"] != "gun"
+                or len(enemies) != 1 or not rounds or any(shot["kind"] != "npc" for shot in rounds)):
+            return None
+        gun, drone = slots[0], enemies[0]
+        spec = self.weapons.get("gun", {}) | gun.get("stats", {})
+        if (gun.get("reload") or gun.get("ammo", 0) < 3 or drone.get("kind") != "npc"
+                or drone["id"] != contact[1] or obs["t"] - contact[0] > spec.get("cooldown", .24) + 1e-6
+                or not 0 < drone.get("hp", 0) <= 2 * spec.get("damage", 45)):
+            return None
+        x, y, z = me["pos"]
+        dx, dy = drone["pos"][0] - x, drone["pos"][1] - y
+        yaw, pitch = me["aim"]
+        if (math.hypot(dx, dy) > self.config.get("npc", {}).get("aggro_range", 42)
+                or abs(angle_delta(math.atan2(dy, dx), yaw)) > .25
+                or not self.nav or not self.nav.loaded):
+            return None
+        # Preserve frontal armor against every visible round while the dodge continues.
+        for shot in rounds:
+            vx, vy = shot["vel"][:2]
+            if abs(angle_delta(math.atan2(-vy, -vx), yaw)) > .65:
+                return None
+        muzzle = x, y, z + me.get("stats", {}).get("muzzle_height", self.mech.get("muzzle_height", 7))
+        if self.sight_height(muzzle, drone, obs["t"]) is None:
+            return None
+        return [yaw, pitch]
+
     def hold_occluded_laser(self, obs, action, selected, engage, aim, muzzle, steady):
         previous, self.laser_contact = self.laser_contact, None
         own = obs["self"]
