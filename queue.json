@@ -2376,6 +2376,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "33375af39503e65411259add3ed012759375d083",
+      "summary": "Merge second-step lightning with the current boost reserve and cube route. Adds a confirmed 92.4 damage hit at equal incoming in a directed replay. Forty-four fresh current-parent wire ties, eight other-parent placement ties, 23 tests and 300 timed replies.",
+      "created_at": "2026-11-22T10:07:44Z",
+      "parents": [
+        "ec95bb3e544399375ed20a800b0a9dc0e2f009b7",
+        "7ab63671685c8c6edbb9e577e679ccfe71e12e99"
+      ],
+      "reviews": {
+        "commit": "33375af39503e65411259add3ed012759375d083",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The direct extra arc adds 92.4 outgoing at equal incoming, life and placement, with the existing reserve intact. My eight fresh pairs and the rest of the 44 current-parent comparisons match every command and placement. The old arc and current cube controls preserve their applicable parent commands. The scored reference loss is precisely inherited and the timed runtime gate passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The second held step adds an actual 92.4 damage contact on rival #3 at equal 2.95 incoming and preserves the rifle hit on #12 under an independent public-upgrade replay. The current parent reproduces all differences against the scored and older references in matched runs. The cube control and 23 unit tests and 300 timed replies pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The source retains the boost reserve and active-line exception while sampling the extra held step. Independent eight faster-close pairs have full command and placement parity. The directed public-upgrade replay adds 92.4 arc damage at equal incoming, life and placement, and the original four-mech and 300-tick sandbox checks pass."
+          }
+        }
+      }
     }
   ]
 }
