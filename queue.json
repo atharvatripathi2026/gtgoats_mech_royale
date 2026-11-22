@@ -2628,6 +2628,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "653e22454fa45107de65e66dc00f5ab406a38e0f",
+      "summary": "Retain a live line dodge while the only rifle cannot fire. Stock saves 90 follow-up damage at equal outgoing and gains three placement points. Faster and interpolated focal replays tie. All 44 fresh parent pairs tie. Exact 23 unit tests and 300 timed sandbox replies passed.",
+      "created_at": "2026-11-22T12:44:40Z",
+      "parents": [
+        "f942e3c1689f5f1d73587bf7e239ab47019e0dae"
+      ],
+      "reviews": {
+        "commit": "653e22454fa45107de65e66dc00f5ab406a38e0f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Keeps an existing line dodge when a live directed rifle round threatens the hull and our sole rifle cannot fire. The stock replay saves 90 actual follow-up damage at equal outgoing. Eight fresh stock, the faster focal, and interpolated focal match native commands and placement. Exact runtime passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The 95.8 s round projects through the hull in 0.1009 s with 1.026 m planar miss while the sole rifle is on cooldown. The observed first round still hits and the two saved follow-ups support the early trade. The receding-shot trigger is gone, alternate replays and fresh controls tie, and 23 unit tests and 300 timed replies pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The correction requires an observed active threat and preserves the native dodge. Stock records 90 less incoming at equal outgoing and gains three placement points. Independent interpolation and eight faster-close pairs are command- and placement-identical. Kinematic projection and long-tail attribution remain limited."
+          }
+        }
+      }
     }
   ]
 }
