@@ -2653,6 +2653,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "2d2a7d480f2da4407d5aff0d36307ea7f4e5e68f",
+      "summary": "Merge prepared aim through drone dodges with live rifle dodge retention. Both stock effects reproduce, including two earlier hits and 90 less follow-up damage. Interpolated controls match their owning parents. All 72 fresh parent comparisons tie in placement. 23 tests and 300 timed replies pass.",
+      "created_at": "2026-11-22T12:49:40Z",
+      "parents": [
+        "653e22454fa45107de65e66dc00f5ab406a38e0f",
+        "9c5f89bd2e77b8049f83a6102ee875998c1f220d"
+      ],
+      "reviews": {
+        "commit": "2d2a7d480f2da4407d5aff0d36307ea7f4e5e68f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact merge preserves both directed stock effects. Its activation gates require different opponents and cannot both pass on one observation. All eight independent native pairs match the dodge parent commands and placements. The exact kit checks passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact two-parent patch preserves native bracing and keeps the NPC-only aim change and aimed rival dodge in separate scopes. Both stock effects reproduce the full owning-parent gameplay streams, while interpolation preserves both limits. The fresh original four-mech pairs and exact kit checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "With exact ordered parents, both owning behavior streams reproduce in interpolation, and the active stock dodge preserves its three-point gain. Eight shared faster-close seeds match each parent on every command and placement. The exact runtime check passed. There is no independent interpolated rank gain."
+          }
+        }
+      }
     }
   ]
 }
