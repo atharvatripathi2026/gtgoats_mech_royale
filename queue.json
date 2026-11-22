@@ -2528,6 +2528,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "740aa2ff02444a3f82622298d39baff2621e4e4a",
+      "summary": "Keep a loaded rifle through a quiet NPC line dodge after confirming a hit on a finishable drone. One three-point gain and 43 placement ties across 44 fresh pairs. A tied stock case reduced early damage but shortened lifetime. 23 unit tests and 300 timed replies passed.",
+      "created_at": "2026-11-22T11:38:09Z",
+      "parents": [
+        "78418f5942e739a608756b71f44dfcf351fb8a2c"
+      ],
+      "reviews": {
+        "commit": "740aa2ff02444a3f82622298d39baff2621e4e4a",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The first change suppresses only an optional reload and preserves normal movement and dodge. The directed stock replay deals 135 more player damage at equal incoming and fresh faster pursuit gains three points. Another stock pair saves 75 early incoming but trades 138.4 seconds of lifetime at tied placement, so the evidence is limited to acute combat and local placement."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The guard requires a confirmed recent hit on a visible wounded drone, rifle ammunition in reserve and NPC-only projectiles. Fresh faster pursuit gained three points and improved the first-six exchange. The other changed stock replay ties placement and kills with lower early damage and considerably shorter life. Own eight stock pairs tie every command and placement and the exact sandbox passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent faster-close has one three-point gain and seven exact ties. The directed stock and faster replays reproduce earlier hits. Mixed projectile and observed-player controls reject the override. The newly active stock case reduces first-six incoming by 75 while tying placement, with a 138.4-second lifetime cost. All 300 timed checks passed."
+          }
+        }
+      }
     }
   ]
 }
