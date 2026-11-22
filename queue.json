@@ -2478,6 +2478,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "231f8bbfda413fa4b4f0f2ea85981ee41e94eda1",
+      "summary": "Check the late arc through rival cube growth in both movement orders. Avoids staged blocked and diverted shots, preserves clear delayed and large-pickup controls. 52 fresh pairs tie against the previous queued build or immediate parent, with 23 unit tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T11:05:24Z",
+      "parents": [
+        "33461a9b335d7ebe82f09a10fbf163fa4786abfc"
+      ],
+      "reviews": {
+        "commit": "231f8bbfda413fa4b4f0f2ea85981ee41e94eda1",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "In an independent staged mixed-order replay, the exact guard avoided the shot that previously hit the alternate rival after 15 real cube pickups. The no-pickup 60 hit, open grown-target hit and own-cube Servos 84 controls remain. All eight fresh traced pairs matched commands and placement, and 23 units and 300 timed replies passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "A separate real mixed-order replay selected the wrong rival after a staged 14-cube pile only when the shooter fell between the two other actors. The exact guard withholds that shot and saves three energy. The guard also gives up known valid shots in ambiguous or borderline cases. The completed full-command panels tied and all 300 timed checks passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact source covers all first and second movement phase combinations. A delayed first pickup retains the 62.4 hit in both actor orders, and a wider gap retains the 60 hit on the intended target even after 12 pickups. All eight independent faster-close pairs matched commands and placement. The conservative bound can withhold valid shots."
+          }
+        }
+      }
     }
   ]
 }
