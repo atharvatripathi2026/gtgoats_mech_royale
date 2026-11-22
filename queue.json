@@ -2830,6 +2830,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "672baa6821e361be09b55987882f998d00fcb668",
+      "summary": "Check return fire while already falling, with an exception for projected circle crossings. Restores the edge replay and preserves a 126 outgoing, 292.5 incoming damage swing and one simulated point. All 36 fresh placements tie. 23 unit tests and 300 timed replies pass.",
+      "created_at": "2026-11-22T15:38:59Z",
+      "parents": [
+        "8928cc50f041e119821370e94f36e0e18c26cedc"
+      ],
+      "reviews": {
+        "commit": "672baa6821e361be09b55987882f998d00fcb668",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "An independently compressed circle replay saves 150 first-six incoming and restores 57.6 outgoing at unchanged placement and storm damage. The forecast reserves body radius and bounds new changes to already-falling states with room in the circle; the coasting projection remains approximate."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The revised stock replay keeps the +126 outgoing and -292.5 incoming trade and one point, while restoring every action in the stock circle-edge adverse. Alternate replays and faster pairs hold. The ten-point replay is a downstream trajectory result with extra storm. The required exact runtime check passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Known stock edge regression is restored and the actual stock exchange gain survives. Both phased directed replays and all eight faster pairs are command level ties. The conservative circle endpoint uses inertial motion and does not establish the route will remain in the circle."
+          }
+        }
+      }
     }
   ]
 }
