@@ -1,0 +1,5 @@
+# First-cube replay across evaluators · 2026-11-22 03:00 UTC
+
+Hold broader first-cube routing. Survival, combat and validation support withholding broader admission. On the evaluator that combines scaled hulls and raw opponent firing sight (`41a97e992439174908e56e7a4c935c404571d655`), the queued first-cube candidate `eedfc3a` still collects the same cube at 146.2s versus 159.8s for `89afa91`. The prior scaled-only +3 placement points become −2 (12→10) and survival falls 67s. The immediate six-second exchange stays empty. Opponent #5 lands 202.5 damage against the earlier-pickup bot through 60s, compared with 45 on the parent. Scaled-only recorded 67.5 in each arm.
+
+Eight fresh simulated pairs (1072120–27) and the earlier adverse seed 1071438 match every command and placement. The screen found 2,946 selected observations before the first cube in 62 tapes. Both qualifying observations came from one seed and time. Keep the [queued policy](eedfc3a-approach-new-first-cube-from-rest.md) as a comparator and seek a second natural activation with matched early trades before expanding it.
