@@ -897,6 +897,80 @@ class Bot:
             travel += toward * dt
         return max(walk * ready, travel)
 
+    def quiet_zone_ground_rejoin(self, obs, plan, action):
+        """Probe a short grounded bend before leaving an incomplete zone route."""
+        me = obs["self"]
+        zone = obs["zone"]
+        here = me["pos"]
+        center, ring = zone["center"], zone["radius"]
+        target, next_ring = zone["next_center"], zone["next_radius"]
+        phase = tuple(target), next_ring
+        path = self.nav.path
+        completed = getattr(self, "completed_zone_route", None)
+        if self.nav.loaded and path and next_ring < ring and completed != phase:
+            if (math.dist(self.nav._xy(path[0]), target) < next_ring
+                    and all(math.dist(self.nav._xy(cell), center) < ring for cell in path)):
+                self.completed_zone_route = phase
+        pending = getattr(self, "zone_ground_rejoin", None)
+        stats = self.loadout.mech | me.get("stats", {})
+        body, height = stats.get("radius", 2.5), stats.get("height", 9.)
+        rise = stats.get("step_up", 1.2)
+        if (not self.nav.loaded or plan["mode"] != "zone" or plan["dodge"] or action.get("jump")
+                or any(action.get("fire", ())) or "take" in action or "pick" in action
+                or any(w and w.get("charge", 0.) for w in me.get("weapons", ()))
+                or obs.get("projectiles") or not me.get("in_zone")
+                or math.dist(here[:2], center) + body + 7 >= ring
+                or any(e.get("kind") == "mech" and math.dist(e["pos"][:2], here[:2]) < 80
+                       for e in obs.get("mechs", ()))):
+            self.zone_ground_rejoin = None
+            return
+        if pending is None:
+            distance = math.dist(here[:2], target)
+            if (not me.get("grounded") or action.get("boost") or zone.get("dps", 0) < 100
+                    or not 0 < distance - next_ring < 24 or zone["shrink_start"] - obs["t"] < 10
+                    or len(path) < 3 or math.hypot(*me["vel"][:2]) > 1.25
+                    or getattr(self, "completed_zone_route", None) == phase
+                    or getattr(self, "tried_zone_rejoin", None) == phase
+                    or math.dist(self.nav._xy(path[0]), target) < distance + 8):
+                return
+            self.tried_zone_rejoin = phase
+            course = self.nav.local_zone_rejoin(here, target, center, ring, body, height, rise)
+            if course is None:
+                return
+            pending = phase, obs["t"], me.get("cubes", 0), course
+            self.zone_ground_rejoin = pending
+        actual_phase, started, cargo, course = pending
+        if (actual_phase != phase or obs["t"] - started > 3.4 or me.get("cubes", 0) != cargo
+                or (not me.get("grounded") and (me["vel"][2] > 0 or here[2] > self.nav.ground(*here[:2]) + .3))):
+            self.zone_ground_rejoin = None
+            return
+        if math.dist(here[:2], course[0]) < .65:
+            course.pop(0)
+            if not course:
+                self.zone_ground_rejoin = None
+                return
+        goal = course[0]
+        distance = math.dist(here[:2], goal)
+        scale = max(distance, 2.)
+        move = ((goal[0] - here[0]) / scale, (goal[1] - here[1]) / scale)
+        vx, vy = me["vel"][:2]
+        accel = stats.get("ground_accel", 58.5) if me.get("grounded") else stats.get("air_accel", 12.)
+        step = self.loadout.step
+        speed = stats.get("walk_speed", 11.7)
+        x, y, z = here
+        for _ in range(self.loadout.config.get("match", {}).get("decide_every", 2)):
+            dx, dy = move[0] * speed - vx, move[1] * speed - vy
+            scale = min(1., accel * step / max(.001, math.hypot(dx, dy)))
+            vx, vy = vx + scale * dx, vy + scale * dy
+            end = x + step * vx, y + step * vy
+            if not self.nav.clear_step_lane((x, y, z), end, body, height, rise):
+                self.zone_ground_rejoin = None
+                return
+            x, y = end
+            z = self.nav.surface(x, y)
+        action["move"] = list(move)
+        action["boost"] = False
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -1005,6 +1079,7 @@ class Bot:
         self.scan_loot_cover_edge(obs, plan, action)
         self.brake_toward_sheltered_pursuer(obs, plan, action, settled_shelter)
         self.keep_escape_before_weapon_reversal(obs, plan, action)
+        self.quiet_zone_ground_rejoin(obs, plan, action)
         self.loadout.confirm_late_arc_command(action)
         if not plan["dodge"]:
             self.loadout.defer_prepared_laser_swap(obs, action, previous_swap)

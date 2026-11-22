@@ -3,6 +3,7 @@
 from array import array
 from collections import deque
 from heapq import heappop, heappush
+from itertools import product
 import json
 import math
 from pathlib import Path
@@ -163,6 +164,44 @@ class Navigator:
         for _, top in self.solids[self._index(x, y)]:
             floor = max(floor, top)
         return floor
+
+    def clear_step_lane(self, start, goal, radius, height, step_up):
+        """Confirm both raw hull clearance and traversable sampled support."""
+        if not self.raw_hull_corridor_clear(start, goal, radius, height):
+            return False
+        samples = max(1, math.ceil(math.dist(start[:2], goal) / .25))
+        feet = start[2]
+        for i in range(1, samples + 1):
+            x, y = (a + (b - a) * i / samples for a, b in zip(start, goal))
+            floor = self.surface(x, y)
+            if abs(floor - feet) > step_up:
+                return False
+            feet = floor
+        return True
+
+    def local_zone_rejoin(self, start, target, current, ring, radius, height, step_up):
+        """Probe a short bend around a verified ground obstruction."""
+        x, y = start[:2]
+        yaw = math.atan2(target[1] - y, target[0] - x)
+        candidate = None
+        best = math.dist(start[:2], target) - 2
+        for side, length, angle in product((-1, 1), (3., 6.), (90., 105.)):
+            facing = yaw + side * math.radians(angle)
+            first = x + math.cos(facing) * length, y + math.sin(facing) * length
+            if math.dist(first, current) + radius + 4 >= ring:
+                continue
+            if not self.clear_step_lane(start, first, radius, height, step_up):
+                continue
+            feet = self.surface(*first)
+            for travel, bend in product((9., 15.), (60., 75.)):
+                bearing = yaw + side * math.radians(bend)
+                last = first[0] + math.cos(bearing) * travel, first[1] + math.sin(bearing) * travel
+                distance = math.dist(last, target)
+                if distance >= best or math.dist(last, current) + radius + 4 >= ring:
+                    continue
+                if self.clear_step_lane((*first, feet), last, radius, height, step_up):
+                    candidate, best = [first, last], distance
+        return candidate
 
     def _landing_height(self, x, y, feet, radius, height):
         # The center of a closing circle can be beside a wall while the
