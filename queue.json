@@ -2427,6 +2427,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "990d627c886c517359df58e8febb6e30a46ec586",
+      "summary": "Combine late-arc checks for gear changes and projected cube growth. Preserves the known arcs, rejects staged stale gear and obstructed grown hulls. 44 fresh pairs tie across both parents, with 23 unit tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T10:41:53Z",
+      "parents": [
+        "19ac7b5d7343d8409f4bd63df515aacb8d039970",
+        "82048c9615eccf7dfc24ec812aaac6fc1be92d20"
+      ],
+      "reviews": {
+        "commit": "990d627c886c517359df58e8febb6e30a46ec586",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The merge preserves the late hit after one actual safe cube pickup and declines it after two pickups create a grown raw hull overlap under the campus bridge. The gear check cannot revive a shot declined by geometry. Eight independent traced stock pairs match both commands and placement, and the exact sandbox passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "All seven exact staged equipment cases reproduce the isolated gear guard. The upgrade and weapon pickup still apply while stale lightning is withheld. Harmless controls retain the known hit. The conservative Servos veto forgoes one valid 92.4 hit at unchanged placement and survival. The exact runtime and fresh evidence passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent faster directed replay matches every gear-parent command and retains the real 76.8 arc. All eight fresh faster-close command and placement pairs also match. The combined exact source retains both staged guard mechanisms, and the interrupted runs were preserved separately from completed comparisons."
+          }
+        }
+      }
     }
   ]
 }
