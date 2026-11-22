@@ -270,6 +270,13 @@ class Loadout:
         self.used_gun_hit = hit
         return target, h, True
 
+    @staticmethod
+    def should_engage_player(distance, health, pursuer, wounded, attacker, late):
+        return (late or attacker or distance < 45
+                or (health >= .82 and distance < (198 if pursuer else 166))
+                or (health >= .65 and pursuer and distance < 120)
+                or (wounded and distance < (145 if pursuer else 100)))
+
     def target(self, obs, origin, evade, target_id):
         me = obs["self"]
         x, y, _ = me["pos"]
@@ -302,10 +309,7 @@ class Loadout:
                 # Legs can retreat while the torso keeps firing. At high HP
                 # use a clear long shot before the pursuer closes the gap.
                 # When injured, preserve a repair window if contact is light.
-                fight = (late or attacker or dist < 45 or
-                         (health >= .82 and dist < (198 if pursuer else 166)) or
-                         (health >= .65 and pursuer and dist < 120) or
-                         (wounded and dist < (145 if pursuer else 100)))
+                fight = self.should_engage_player(dist, health, pursuer, wounded, attacker, late)
                 hull = max(1, self.mech.get("hp", 1400))
                 remaining = ent.get("hp", hull) / hull
                 since = t - self.last_hits.get(ent.get("id"), -100)
@@ -679,6 +683,51 @@ class Loadout:
         fire[index] = True
         self.laser_contact = ident, obs["t"], obs["t"] if lost is None else lost
         return aim_at_target
+
+    def closing_rifle_window(self, obs, target, rifle, movement):
+        """Check that this same pursuer will enter native engagement by rifle readiness."""
+        if target is None or target.get("kind") != "mech" or movement is None:
+            return False
+        me = obs["self"]
+        stride = self.config.get("match", {}).get("decide_every", 2)
+        hold = self.step * stride
+        if rifle.get("cooldown", 0) > hold + self.step + 1e-8:
+            return False
+        dx, dy = (b - a for a, b in zip(me["pos"][:2], target["pos"][:2]))
+        distance = math.hypot(dx, dy)
+        rival_x, rival_y, _ = target.get("vel", (0., 0., 0.))
+        own_x, own_y, _ = me.get("vel", (0., 0., 0.))
+        forward = math.atan2(dy, dx) + math.pi
+        facing = abs(angle_delta(forward, target.get("aim", (forward + math.pi, 0.))[0])) < .43
+        if not facing:
+            return False
+        relative = math.hypot(dx + hold * (rival_x - own_x), dy + hold * (rival_y - own_y))
+        # Check the planned move at both movement limits and with release
+        # before, during, or after the next pair of physics steps.
+        if stride != 2:
+            return False
+        stats = self.mech | me.get("stats", {})
+        charge = stats.get("charge_move_mult", .5)
+        acceleration = self.step * stats.get("ground_accel", 58.5)
+        norm = max(1., math.hypot(*movement))
+        projected = relative
+        for speed in (stats.get("walk_speed", 11.7), stats.get("boost_speed", 19.5)):
+            for limits in ((charge, charge), (charge, 1.), (1., 1.)):
+                vx, vy = own_x, own_y
+                future_x, future_y = dx + hold * rival_x, dy + hold * rival_y
+                for limit in limits:
+                    scale = speed * limit / norm
+                    change_x, change_y = movement[0] * scale - vx, movement[1] * scale - vy
+                    portion = min(1., acceleration / max(.001, math.hypot(change_x, change_y)))
+                    vx, vy = vx + portion * change_x, vy + portion * change_y
+                    future_x -= self.step * vx
+                    future_y -= self.step * vy
+                projected = max(projected, math.hypot(future_x, future_y))
+        health = me.get("hp", 1.) / max(1., me.get("max_hp", 1.))
+        wounded = target.get("hp", math.inf) < me.get("max_hp", 1400.) * .23
+        return (projected < distance and not self.should_engage_player(
+                    distance, health, True, wounded, False, False)
+                and self.should_engage_player(projected, health, True, wounded, False, False))
 
     def preserve_rifle_during_beam_release(self, obs, action, target, previous, aim, muzzle):
         """Keep a usable burst when the last engaged rival can take this beam."""
@@ -1279,6 +1328,7 @@ class Loadout:
                 action["reload"] = True
             elif not engage and ammo < mag * .80 and not protect:
                 beam_handoff = (ammo >= 2 and not evade and not climbing and me.get("grounded")
+                                and self.closing_rifle_window(obs, ent, gun_slot, movement)
                                 and self.preserve_rifle_during_beam_release(obs, action, ent, previous, aim, muzzle))
                 if not beam_handoff:
                     action["reload"] = True
