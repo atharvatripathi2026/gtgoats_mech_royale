@@ -563,6 +563,7 @@ class Bot:
                 or self.loadout.last_decision.get("intent") != "scan" or action.get("reload")
                 or action["jump"] or action["boost"] or any(action.get("fire", ()))
                 or obs.get("projectiles") or obs.get("beams") or obs.get("sounds")
+                or any(event.get("type") == "damaged" for event in obs.get("events", ()))
                 or any(entity.get("kind") == "mech" for entity in obs.get("mechs", ()))
                 or any(weapon and weapon.get("charge", 0) for weapon in weapons)):
             return
