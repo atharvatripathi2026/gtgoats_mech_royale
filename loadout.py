@@ -658,7 +658,7 @@ class Loadout:
                                     and abs(point[2] - cube["pos"][2]) <= 4. + margin)
                 phases.append(((*point[:2], point[2] + .5 * height), len(possible)))
             bodies.append(phases)
-        for phase, margin in enumerate((accel, 3 * accel)):
+        for phase in range(2):
             point, count = bodies[0][phase]
             for yaw, base, muzzle in firing:
                 grown = [(*point[:2], point[2] + n * growth) for n in range(1, count + 1)]
@@ -667,24 +667,21 @@ class Loadout:
                     return False
                 far = max(math.dist(muzzle, body) for body in (point, *grown))
                 for ent, phases in zip(entities[1:], bodies[1:]):
-                    other, other_count = phases[phase]
-                    if not (count or other_count):
-                        continue
-                    dx, dy = other[0] - base[0], other[1] - base[1]
-                    planar = math.hypot(dx, dy)
-                    moving = ent.get("kind") in ("mech", "npc")
-                    uncertainty = margin if moving else 0.
-                    angle = (math.pi if planar <= uncertainty else math.asin(uncertainty / planar))
-                    if abs(angle_delta(math.atan2(dy, dx), yaw)) > cone + angle:
-                        continue
-                    # The closest center over a possible vertical interval is a
-                    # lower bound even if only whole cubes can be collected.
-                    z = clamp(muzzle[2], other[2], other[2] + other_count * growth)
-                    # The nominal one-meter separation was already
-                    # required above. Here ensure growth cannot erase it
-                    # enough to make another conductor nearest.
-                    if math.dist(muzzle, (*other[:2], z)) - uncertainty <= far:
-                        return False
+                    # Rival order is independent on a firing step. An actor
+                    # ahead of us has moved twice, while one after us has moved once.
+                    for (other, other_count), margin in zip(phases, (accel, 3 * accel)):
+                        if not (count or other_count):
+                            continue
+                        dx, dy = other[0] - base[0], other[1] - base[1]
+                        planar = math.hypot(dx, dy)
+                        uncertainty = margin if ent.get("kind") in ("mech", "npc") else 0.
+                        angle = (math.pi if planar <= uncertainty else math.asin(uncertainty / planar))
+                        if abs(angle_delta(math.atan2(dy, dx), yaw)) > cone + angle:
+                            continue
+                        # Continuous height gives a lower bound for whole-cube growth.
+                        z = clamp(muzzle[2], other[2], other[2] + other_count * growth)
+                        if math.dist(muzzle, (*other[:2], z)) - uncertainty <= far:
+                            return False
         return True
 
     def rising_rifle_alternate(self, obs, target, slots, muzzle, native_pitch):
