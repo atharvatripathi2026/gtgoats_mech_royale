@@ -2351,6 +2351,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "ec95bb3e544399375ed20a800b0a9dc0e2f009b7",
+      "summary": "Sprint to one quiet cube only on checked ground and away from upgrade thresholds. Restores both adverse replay commands and retains an earlier pickup with a directed later four-point gain. 44 fresh parent ties, 23 unit tests, 300 timed sandbox replies.",
+      "created_at": "2026-11-22T09:57:05Z",
+      "parents": [
+        "2c9610518d914383076b47392bfd74459fd2cd65"
+      ],
+      "reviews": {
+        "commit": "ec95bb3e544399375ed20a800b0a9dc0e2f009b7",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Both adverse pack and upgrade cases restore all parent wire commands. The configured upcoming upgrade is a real state constraint. Faster-close 1075066 retains the isolated 0.1-second pickup and later four-point gain with equal six-second trades, and all eight independent stock pairs tie on commands and placement. It does not establish a general score gain."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The actual isolated pickup comes one observation sooner with equal early trades. Both adverse pack and equipment-order fixtures match the parent, and the alternate four-point gain remains. The revision knowingly forgoes the two-point result on 1075050 where an earlier upgrade coincided with a weapon swap. Original four-mech and sandbox checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The 2-to-3 upgrade and equipment ordering case 1075041 restores the exact parent commands. Faster-close 1075066 retains the earlier actual single cube and later four-point placement gain with equal early trades. Eight fresh faster-close matches reproduce all parent commands and placement. The replay establishes the earlier pickup while the cause of the later gain remains uncertain."
+          }
+        }
+      }
     }
   ]
 }
