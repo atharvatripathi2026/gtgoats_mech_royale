@@ -1,0 +1,9 @@
+# Reach a visible weapon at its accessible perimeter · queued
+
+Exact `89afa91c2514fa3951271e28b1d0be8141bd20f4` descends from `ab5877abf8a5765b0aa1767cd15459e873d04a4f`. In quiet grounded loot mode with an empty slot and a zero native movement command, it checks a short path to a point inside the selected visible weapon's pickup circle. It yields whenever the native gear selector already requested a pickup.
+
+Stock 1071185 changes movement only at 125.8s and collects mortar 8038 at 126.0s. The parent first fills that slot at 211.4s with a different mortar. The sampled route stays at least 4.99m from a raw building edge with a 2.5m hull. First-six damage ties at zero. Stock placement rises 4→9 and lifetime grows 16.95s. An independent active raw-sight opponent model reproduces the same pickup and gains three points, 6→9. The previously risky cube approach in 1071181 matches the parent command for command.
+
+The staged competing-weapon control preserves the native pickup at 3.966m. The revised candidate keeps native movement in that case. All 36 fresh parent pairs tie placement. Stock 1071640–55 and four-mech 1071660–63 match commands throughout. Independent raw 1071700–03 includes a real lightning pickup at 116.3s in one arm, compared with a different weapon at 218.0s in the other. Sampled body centers remain at least 3.10m from raw building edges for a 2.50m hull. Both place at seven points. The earlier weapon adds 33.9s of survival, with two fewer player kills and 583.2 more total incoming. The other three raw pairs match commands. Six simulated matches 1071680–85 tie placement against the commit-linked 3.71 reference.
+
+All three reviewers approved this exact version. It passes 23 unit tests and all 300 timed networkless observations. [Withdrawn first version](6526115-revise-protect-existing-weapon-pickup.md) · [Practice ledger](../queue.json)
