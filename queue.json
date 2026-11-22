@@ -2704,6 +2704,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "a82473cbe4926108660ccd677a51424084dda265",
+      "summary": "Reward proven mortar cadence and wait one observation if a swap changes the upgrade choice. Both staged pickup outcomes pick correctly. Earlier stock-model shells preserve a one-point replay gain. All 52 fresh earlier-baseline comparisons tie. 23 tests and 300 timed replies pass.",
+      "created_at": "2026-11-22T14:12:07Z",
+      "parents": [
+        "1535b851059ca89a91b2801fc6fbe1a5ae15dca4"
+      ],
+      "reviews": {
+        "commit": "a82473cbe4926108660ccd677a51424084dda265",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "One observation resolves the actual arm in both staged swaps. The failed take keeps the mortar and gets Autoloader, while the completed take equips laser and gets Jets. The failed stage preserves the useful mortar result. Eight independent stock games tie commands and placement and kit checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The successful swap still takes the laser and chooses Jets one observation later with identical trade, survival and placement, while a failed take preserves Autoloader value. Earlier directed contacts stay. Removing pick can allow the existing clear-mortar-shot guard on an untested overlap."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh realistic all-move-first pairs match commands and placement. The directed actual earlier hit persists. Staged success and failure both choose the intended upgrade using observed slots. An untested concurrent native guard or missed next reply can affect the timing."
+          }
+        }
+      }
     }
   ]
 }
