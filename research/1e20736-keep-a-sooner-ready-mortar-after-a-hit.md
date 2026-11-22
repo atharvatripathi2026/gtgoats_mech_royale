@@ -1,0 +1,7 @@
+# Keep a sooner-ready mortar after a confirmed hit
+
+Exact `1e20736f3db4b5e7f8ce7104c18b80a6e1d5df14` descends from `8928cc50f041e119821370e94f36e0e18c26cedc`. It delays an out-of-range lightning replacement by one observation while a sooner-ready mortar is already equipped and the loaded rifle can engage. It continues the delay only after an actual mortar hit on the selected rival, while the visible-rival range and readiness gates hold.
+
+In simulated 1079878 the first difference is the pickup request at 33.9 s. Both arms retain the same in-flight hit on rival 0. The retained mortar later deals 469.56 direct and splash damage to rival 12. Both stock and all-move-first show 469.56 extra outgoing and 45 less incoming through six seconds and placement rising from nine to 15. The two six-second rifle hit totals match by target and damage. Masking only the observed mortar hit preserves the actual projectile impact but causes the bot to take lightning on the next observation and restores the parent outcome. The earlier material pickup adverse 1078971 matches all commands.
+
+All 32 fresh direct-parent pairs tie on commands and placement, including the original 16 four-mech comparisons. Four extra pairs against verified `03a8f93` tie placement. Exact 23 unit tests and 300 official timed replies pass. All three reviewers approved the exact build at ledger position 115. A delayed pickup may move out of reach or be taken. The reach calculation uses visible rivals. [Practice ledger](../queue.json)
