@@ -1,0 +1,10 @@
+# Recheck movement after Leg Servos before a late arc
+
+Exact candidate `c060e8513a345a36d8fc64181f6e1c026e79f1ff` descends from `990d627c886c517359df58e8febb6e30a46ec586`. The optional shot must remain clear on the original movement and on paths with the speed change taking effect before either movement step. Existing cube growth and hull clearance checks run on each path. Weapon replacement, other forecast-changing gear and uncertain expiry still suppress the shot.
+
+- The simulated Servos pickup advanced the same 92.4-damage hit on rival #3 from physical time 174.80 to 174.75. Damage totals, survival at 176.8 s and placement score 11 tied. The model matched the observed planar movement shift of 4.68 cm. Its inherited support projection put the muzzle about 5.8 cm above the local arena pose. No clearance issue appeared in the staged controls.
+- A closer staged crate crossed from 30.001° to 29.890° on the upgraded path and took a forced arc in the control. The candidate withheld the optional arc. A separately staged expired offer applied choice zero, Lightning Range, despite the Servos selection and withheld the shot. Same-slot and harmless gear controls preserved parent behavior. An independent actual cube pickup control kept the safe 84-damage hit with both timings of the Servos effect.
+- All 52 fresh paired simulations against the exact parent matched commands and placement. These include 20 stock squad pairs from 1075650 and 1075740, eight faster-close from 1075690, 16 original four-mech from 1075720 and eight public-upgrade squad from 1075780. Three natural public-upgrade Servos picks never coincided with late readiness. Four traced squad pairs from 1075760 also matched the last official score-linked baseline, `03a8f93`.
+- The exact commit passed 23 unit tests and 300 of 300 timed networkless sandbox replies, p99 19.9 ms. Survival, combat and validation independently voted **approve for practice**. The publisher appended this exact candidate at ledger position 101.
+
+[Previous guard](990d627-check-held-gear-and-cube-growth.md) · [Queue ledger](../queue.json)
