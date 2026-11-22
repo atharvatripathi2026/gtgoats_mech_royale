@@ -2729,6 +2729,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "76ec85d5a0f171b1164a7545baa5f4b3cecdb59f",
+      "summary": "Turn recovering weapons toward a confirmed rear rifle without exposing to another aimed rival. Directed hits convert 67.5 rear to 45 front damage in stock and phase-order replays. All 44 fresh placements tie. 23 unit tests and 300 timed replies pass.",
+      "created_at": "2026-11-22T14:22:57Z",
+      "parents": [
+        "a82473cbe4926108660ccd677a51424084dda265"
+      ],
+      "reviews": {
+        "commit": "76ec85d5a0f171b1164a7545baa5f4b3cecdb59f",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Aim only preserves native movement and protects against the same recent visible rear shooter while weapons recover. The other armed rival check avoids exposing a new rear. Actual hit damage falls 22.5 and phase replay corroborates. No broader placement gain is demonstrated."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The guard abstains with an available laser or a staged second aimed gun becoming newly exposed. Natural controls preserve the first next rifle engagement while returning genuine frontal conversions. Eight independent fresh pairs tie every command and placement. Per-hit benefit is supported even where aggregate damage caps at death."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent all-move-first sandbox verifies the same rifle bullet converting from 67.5 rear to 45 front damage, including independent path direction proof. All eight faster-close seeds and the interpolated focal match the parent stream and placement. Current shooter position remains an estimate for other projectile bearings."
+          }
+        }
+      }
     }
   ]
 }
