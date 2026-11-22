@@ -57,6 +57,7 @@ class Bot:
         self.loot_scan_until = -math.inf
         self.loot_scan_point = None
         self.shelter_grounded_tick = None
+        self.loot_escape_walk = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -812,6 +813,62 @@ class Bot:
         return bool(bases) and all(self.nav.short_segment_hits_raw_solid(point, body)
                                    for step in bases for point, _ in step)
 
+    def keep_escape_before_weapon_reversal(self, obs, plan, action):
+        """Preserve one retreat command when an empty rifle cannot cover a reversal."""
+        previous, self.loot_escape_walk = self.loot_escape_walk, None
+        me = obs["self"]
+        arms = [w for w in me.get("weapons", ()) if w]
+        zone = self.loadout.config.get("zone", {})
+        phases = zone.get("phases", ())
+        stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+        if (plan["mode"] not in ("evade", "loot") or plan["dodge"] or plan["zone_urgency"] >= .15
+                or not phases or obs["t"] >= phases[0].get("hold_s", 0.)
+                or not me.get("grounded") or not me.get("in_zone") or not self.nav.loaded
+                or action["boost"] or action["jump"] or any(action.get("fire", ()))
+                or "take" in action or "pick" in action or obs.get("projectiles") or obs.get("beams")
+                or len(arms) != 1 or arms[0]["kind"] != "gun" or arms[0].get("ammo", 1) != 0
+                or arms[0].get("reload", 0.) <= self.loadout.step * stride):
+            return
+        x, y, z = me["pos"]
+        mx, my = action["move"]
+        specs = self.loadout.mech | (me.get("stats") or {})
+        walk = specs.get("walk_speed", 11.7)
+        reach = self.loadout.weapons.get("gun", {}).get("range", 230.)
+        origin = (x, y, z + specs.get("muzzle_height", 7.))
+        bearings = {}
+        for rival in obs.get("mechs", ()):
+            if rival.get("kind") != "mech" or "gun" not in rival.get("weapons", ()) or not rival.get("aim"):
+                continue
+            rx, ry, rz = rival["pos"]
+            separation = math.hypot(rx - x, ry - y)
+            if not 0. < separation < reach:
+                continue
+            ux, uy = (rx - x) / separation, (ry - y) / separation
+            vx, vy = rival["vel"][:2]
+            facing = abs(math.remainder(math.atan2(-uy, -ux) - rival["aim"][0], math.tau))
+            if vx * ux + vy * uy <= -.8 * walk and facing <= .25:
+                bearings[rival["id"]] = (ux, uy, (rx, ry, rz + .5 * self.loadout.dimensions(rival)[1]))
+        if plan["mode"] == "evade":
+            if bearings:
+                self.loot_escape_walk = obs["tick"], (mx, my), frozenset(bearings)
+            return
+        if previous is None or previous[0] != obs["tick"] - stride or not any(
+            item["id"] == plan["target_id"] for item in obs.get("pickups", ())
+        ):
+            return
+        old_x, old_y = previous[1]
+        if old_x * mx + old_y * my > -.75:
+            return
+        for ident in bearings.keys() & previous[2]:
+            ux, uy, body = bearings[ident]
+            if (mx * ux + my * uy <= .5 or old_x * ux + old_y * uy >= -.5
+                    or self.nav.short_segment_hits_raw_solid(origin, body)):
+                continue
+            trial = {"move": (old_x, old_y), "boost": False, "jump": False}
+            if self.loadout.late_arc_bases(obs, origin, trial, specs) is not None:
+                action["move"] = [old_x, old_y]
+            return
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -917,6 +974,7 @@ class Bot:
         self.reload_after_wall_round(obs, plan, action)
         self.scan_loot_cover_edge(obs, plan, action)
         self.brake_toward_sheltered_pursuer(obs, plan, action, settled_shelter)
+        self.keep_escape_before_weapon_reversal(obs, plan, action)
         self.loadout.confirm_late_arc_command(action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
