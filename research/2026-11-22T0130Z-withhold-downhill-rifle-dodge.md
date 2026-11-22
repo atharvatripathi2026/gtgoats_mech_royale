@@ -1,0 +1,7 @@
+# Rifle clearance across a downhill edge · withhold
+
+Survival screened 502 campus tapes containing 1,066 distinct grounded rifle-damage states. The local motion and hull model reproduced 1,058 contacts. It found 27 possible alternate turns involving a change of grounded state or a feet-height difference over 0.03m. These were screen results with neutral braking on the third physics step.
+
+On `afc107dbd75118e379cf2bf91e393c7a11cf6b1c`, a one-command −30° turn at 145.7s in 1069727 removes 45 incoming damage, adds 48.6 outgoing over six seconds and extends survival by 3.25s at tied placement. The generic scratch instead turns −45°, removes 45 incoming and adds 97.2 outgoing over six seconds, then dies 2s earlier. A separate +15° one-command control at 168.4s in 1070634 moves six-second incoming 135→0 and outgoing 70.2→140.4, with 14.7s less survival and tied placement. The generic scratch preserves the parent command there because the measured 0.2438m drop exceeds its 0.22m gate. Aim and boost remain fixed in both literal controls.
+
+Survival, combat and validation all voted to withhold the unfrozen rule. The controlled turns establish local clearance and the trade after each dodge. Continue with a separate downhill witness and a turn that clears the same shot throughout the held movement while preserving the next route. [Prior terrain experiment](7ba8a66-grounded-slope-gun-lead.md)
