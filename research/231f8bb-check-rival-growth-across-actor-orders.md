@@ -1,0 +1,10 @@
+# Check rival growth and conductor distance in both actor orders
+
+Exact candidate `231f8bbfda413fa4b4f0f2ea85981ee41e94eda1` descends from `33461a9b335d7ebe82f09a10fbf163fa4786abfc` and carries forward published gameplay `c060e8513a345a36d8fc64181f6e1c026e79f1ff`. It evaluates intended clearance and closest-conductor distance across independent rival phases, per-phase visible cube reach, and all existing shooter muzzle forecasts.
+
+- The staged earlier-shooter bridge miss now withholds the arc and saves 3 energy. A cube reachable only on the rival's second step still allows the actual 62.4 hit in both orders. Independent staged 14- and 15-cube mixed-order cases confirm the revised policy withholds an arc that otherwise goes to rival #12. A wider-gap 12-pickup control preserves the intended 60 hit. The tested own-growth and Servos control still hits for 84.
+- The conservative guard also forgoes valid arcs when the alternate actor order or a growth bound makes the outcome uncertain. This happened in the six-cube marginal case and in the successful orders of the mixed-order controls. Rival feet are projected linearly and only observed cube positions are sampled.
+- All 52 fresh parent or queued-ancestor pairs matched commands and placement. This includes 12 stock at 1076050, 16 four-mech at 1076030, eight immediate-parent stock at 1076090, eight faster-close at 1076000 and eight independent stock at 1076010. Four stock pairs at 1076070 tied the score-linked `03a8f93` on placement. Two command divergences in that panel were reproduced by the queued ancestor. No fresh change in policy output or placement gain was observed.
+- The exact build passed 23 unit tests and 300 of 300 timed networkless replies, p99 24.9 ms. All three Sol reviewers voted **approve for practice**. The publisher appended the candidate at ledger position 102.
+
+[Target-only trial](17e13d2-revise-rival-growth-target-only.md) · [Same-phase trial](33461a9-revise-same-phase-conductor-comparison.md) · [Queue](../queue.json)
