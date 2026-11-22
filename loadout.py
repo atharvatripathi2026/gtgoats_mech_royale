@@ -26,6 +26,7 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_rear_rifle = False
+        self.mortar_swap_wait = None
         self.last_swap = -100
         self.deferred_mortar_swaps = set()
         self.deferred_laser_swaps = set()
@@ -1302,6 +1303,75 @@ class Loadout:
         action.pop("drop")
         self.last_swap = previous_swap
         self.deferred_laser_swaps.add(item_id)
+
+    def defer_mortar_swap_for_observed_hit(self, obs, action, previous_swap):
+        """Keep a sooner-ready mortar if its in-flight damage is confirmed."""
+        waiting, self.mortar_swap_wait = self.mortar_swap_wait, None
+        item_id, slot = action.get("take"), action.get("drop")
+        me = obs["self"]
+        if (item_id is None or slot is None or not me.get("grounded") or action["jump"]
+                or action["boost"] or "pick" in action or not self.safe_zone_time(obs)):
+            return
+        old = me["weapons"][slot]
+        rifle = next((w for w in me["weapons"] if w and w["kind"] == "gun"), None)
+        if not old or old["kind"] != "mortar" or not rifle or rifle.get("reload", 0.) or not rifle.get("ammo", 0):
+            return
+        if not any(e["id"] == item_id and e["kind"] == "lightning" for e in obs.get("pickups", ())):
+            return
+        rivals = [e for e in obs.get("mechs", ()) if e["kind"] == "mech"]
+        target_id = self.last_decision.get("target_id")
+        if (self.last_decision.get("intent") != "engage"
+                or not any(e["id"] == target_id for e in rivals)):
+            return
+        equip = max(self.config.get("loot", {}).get("equip_s", 1.),
+                    self.weapons.get("lightning", {}).get("cooldown", .25))
+        expected_tick = obs["tick"] + self.config.get("match", {}).get("decide_every", 2)
+        if waiting is None or waiting[0] != item_id:
+            cooldown = old.get("cooldown", 0.)
+            if not self.step < cooldown < equip or not any(action.get("fire", ())):
+                return
+            until = obs["t"] + cooldown
+            confirmed = False
+        else:
+            _, old_target, until, confirmed, next_tick = waiting
+            if target_id != old_target or obs["t"] >= until or obs["tick"] != next_tick:
+                return
+            if not confirmed:
+                confirmed = any(e["type"] == "hit" and e.get("weapon") == "mortar"
+                                and e.get("target") == target_id and e.get("amount", 0.) > 0
+                                for e in obs.get("events", ()))
+                if not confirmed:
+                    return
+        reach = self.weapons.get("lightning", {}).get("range", 45.)
+        for name in me.get("upgrades", ()):
+            for effect in self.upgrades.get(name, {}).get("effects", ()):
+                if effect.get("path") == "weapons.lightning.range":
+                    reach = reach * effect.get("mul", 1.) + effect.get("add", 0.)
+        own_speed = max(math.hypot(*me["vel"][:2]),
+                        me.get("stats", {}).get("boost_speed", self.mech.get("boost_speed", 19.5)))
+        rival_base_speed = self.mech.get("boost_speed", 19.5)
+        sprint_upgrades = [
+            (upgrade.get("max", 1), effect)
+            for upgrade in self.upgrades.values() for effect in upgrade.get("effects", ())
+            if effect.get("path") == "mech.boost_speed"
+        ]
+        thresholds = self.config.get("cubes", {}).get("upgrade_thresholds", ())
+        muzzle = me.get("stats", {}).get("radius", self.mech.get("radius", 2.5)) + .5
+        for rival in rivals:
+            max_speed = rival_base_speed
+            offers = sum(n <= rival.get("cubes", 0) for n in thresholds)
+            for count, effect in sprint_upgrades:
+                for _ in range(min(offers, count)):
+                    max_speed = max_speed * max(1., effect.get("mul", 1.)) + max(0., effect.get("add", 0.))
+            rival_speed = max(math.hypot(*rival["vel"][:2]), max_speed)
+            closure = equip * (own_speed + rival_speed)
+            if math.dist(me["pos"][:2], rival["pos"][:2]) <= reach + closure + muzzle:
+                return
+        action.pop("take")
+        action.pop("drop")
+        self.last_swap = previous_swap
+        self.mortar_swap_wait = item_id, target_id, until, confirmed, expected_tick
+        self.last_decision["await_mortar_contact"] = True
 
     def defer_firing_mortar_swap(self, obs, action, previous_swap):
         item_id, slot = action.get("take"), action.get("drop")

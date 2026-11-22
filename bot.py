@@ -1160,6 +1160,10 @@ class Bot:
         self.loadout.confirm_late_arc_command(action)
         if not plan["dodge"]:
             self.loadout.defer_prepared_laser_swap(obs, action, previous_swap)
+        if not plan["dodge"]:
+            self.loadout.defer_mortar_swap_for_observed_hit(obs, action, previous_swap)
+        else:
+            self.loadout.mortar_swap_wait = None
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
         if obstructed_rifle is not None:
