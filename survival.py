@@ -335,6 +335,8 @@ class Survival:
         zone = obs["zone"]
         speed = stats.get("walk_speed", 11.7)
         acceleration = stats.get("ground_accel", 58.5) * dt
+        air_acceleration = stats.get("air_accel", 12.) * dt
+        fall = stats.get("gravity", 22.) * dt
 
         start = tuple(shell["pos"])
         sx, sy, sz = shell["vel"]
@@ -353,24 +355,40 @@ class Survival:
 
         def hull_margin(move):
             x, y, z = pos
-            vx, vy = me["vel"][:2]
+            vx, vy, vertical_speed = me["vel"]
+            feet = z
+            previous_floor = self.nav.surface(x, y) if continuing else z
+            supported = True
             limit = max(1., math.hypot(*move))
             tx, ty = (value * speed / limit for value in move)
             minimum = math.inf
             for (px, py, pz), (dx, dy, dz) in segments:
                 ax, ay = tx - vx, ty - vy
-                ramp = min(1., acceleration / max(.001, math.hypot(ax, ay)))
+                step_acceleration = acceleration if supported else air_acceleration
+                ramp = min(1., step_acceleration / max(.001, math.hypot(ax, ay)))
                 vx, vy = vx + ramp * ax, vy + ramp * ay
                 x, y = x + dt * vx, y + dt * vy
                 floor = self.nav.surface(x, y)
                 end = (x, y)
-                if (abs(floor - z) > .08
+                if (abs(floor - previous_floor) > .08
+                        or (continuing and (floor > z + .08 or feet - floor > .08))
                         or distance(end, zone["center"]) + radius + 4 >= zone["radius"]
                         or not self.nav.raw_hull_corridor_clear(pos, end, radius, height)):
                     return None
+                low = high = floor
+                if continuing:
+                    # Check both the surface and retained feet as support changes.
+                    supported = feet <= floor + .03 and vertical_speed <= 0
+                    if not supported:
+                        vertical_speed -= fall
+                    next_feet = max(floor, feet + dt * vertical_speed)
+                    if next_feet <= floor + .001 and vertical_speed <= 0:
+                        supported, vertical_speed = True, 0.
+                    low, high = min(floor, feet, next_feet), max(floor, feet, next_feet)
+                    feet, previous_floor = next_feet, floor
                 along = clip(((x - px) * dx + (y - py) * dy) / max(.00001, dx * dx + dy * dy))
                 impact_z = pz + along * dz
-                if floor - projectile_radius <= impact_z <= floor + height + projectile_radius:
+                if low - projectile_radius <= impact_z <= high + height + projectile_radius:
                     horizontal = math.hypot(x - px - along * dx, y - py - along * dy)
                     minimum = min(minimum, horizontal - radius - projectile_radius)
             return minimum
