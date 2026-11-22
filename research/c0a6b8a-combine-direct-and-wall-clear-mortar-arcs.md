@@ -1,0 +1,9 @@
+# Combine the direct and wall-clear mortar arcs · queued
+
+Exact `c0a6b8a38737b990ec017c08563a7ee90167c587` merges gameplay parents `b814475e2c0f558bb949a31d4fcae42a6e781ef6` and `ebaa06f9f90492dbf177a0f7e2ec59264b6abf7e`. Under their shared sole-ready-mortar guard, it tries the lower direct-contact shot first. The higher wall-clear splash fallback uses the original aim.
+
+Native and independent wall-aware directed replays preserve both shots. In 1069148 the merge adds a 148.03 splash with zero six-second incoming versus the lower-only parent. In 1069610 it lands 208 direct plus splash and gains 270 six-second outgoing at equal zero incoming versus the higher-only parent. Both placements tie. The wall-aware 1069610 run takes 71 more total damage and survives 4.05s less after the early gain. Each directed match reproduces the parent that already implements its successful shot. Controls 1070205 and 1069301 retain their commands.
+
+All 64 fresh matches against the two parents tie on commands and placement (12 native squad and 16 standard four-mech per parent, plus four shared wall-aware seeds compared with each). Three of the four shielded seeds fire a mortar. Eight additional common-parent comparisons tie on commands and placement, and six comparisons against the commit-linked 3.71 reference tie placement. An independent screen finds zero dual eligibility across 195 ready grounded contexts, and a separate broader archive and 810 nearby legal perturbations also find zero. The direct-first policy has no live competition witness.
+
+All three reviewers approved the exact merge. It passes 23 unit tests and 300 timed networkless sandbox observations. [Higher-arc parent](b814475-wall-clear-mortar-splash.md) · [Lower-arc parent](ebaa06f-lower-mortar-arc-for-direct-contact.md) · [Practice ledger](../queue.json)
