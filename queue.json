@@ -2149,6 +2149,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "3094a31ccdc50859a6bac42011b2ba31a7995a00",
+      "summary": "Combine tapered cube pickup and the relative-motion rifle reload guard. Both directed behaviors hold under alternate evaluators. All 44 fresh parent pairs match commands and placement. Four reference placements tie. Passed 23 unit and 300 sandbox checks.",
+      "created_at": "2026-11-22T07:37:04Z",
+      "parents": [
+        "755e3f2331649b0b7fc6318721af927da6a48ba0",
+        "15aff403bd7773b312fdfd9bc7e3765714acd7bd"
+      ],
+      "reviews": {
+        "commit": "3094a31ccdc50859a6bac42011b2ba31a7995a00",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh native matches matched every command and placement against the relative-window parent. The independent growth and missed-observation replay matched the taper parent and collected the third cube at 26.5 seconds. The relative guard restored the early foil trade, with the known one-point late placement cost against the broader parent."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The exact merge reproduced every beam-parent command and placement under fractional rifle cadence. Same-command taper requires no target or beam charge and cannot change the movement used for the rifle handoff. The adverse foil retains the stricter parent's early damage gain and late placement tradeoff."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight independent faster-closing pairs matched commands and placement. The directed cube and beam replays matched their respective parents, including the broader foil tradeoff. The two source changes are mutually exclusive within each command. A natural match exercising both is still unobserved."
+          }
+        }
+      }
     }
   ]
 }
