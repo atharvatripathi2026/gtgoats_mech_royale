@@ -2453,6 +2453,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "c060e8513a345a36d8fc64181f6e1c026e79f1ff",
+      "summary": "Recheck the optional late arc at plausible post-Servos movement poses. Advances the same staged 92.4-damage hit by 50 ms while opposing crate and expiry stages stay withheld. 52 fresh parent pairs tie, with 23 tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T10:50:11Z",
+      "parents": [
+        "990d627c886c517359df58e8febb6e30a46ec586"
+      ],
+      "reviews": {
+        "commit": "c060e8513a345a36d8fc64181f6e1c026e79f1ff",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact source retains ground transit, raw hull clearance and all own growth samples across the old and both phased Servos paths. An independent real cube pickup control retained the 84 hit under either application order. The existing unsafe bridge was still rejected, the fresh panels tied, and the exact runtime passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The real staged Servos pickup advances the same 92.4 hit by 50 ms with equal total damage, survival and placement. Non-Servos controls preserve every command, and the competing crate and expiry controls correctly withhold. All eight fresh native pairs match every command and placement. Planar position matched the evaluator and the inherited predicted muzzle height was about 5.8 cm higher."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "An independent public-upgrade replay advanced the same 92.4 hit by one observation with equal final outcomes. The adverse angular stage where Servos can redirect the shot to a crate matched every parent command. All eight fresh faster-close pairs matched every command and placement."
+          }
+        }
+      }
     }
   ]
 }
