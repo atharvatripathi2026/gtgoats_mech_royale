@@ -1,0 +1,7 @@
+# Lower the mortar arc for a clear direct hit · queued
+
+Exact `ebaa06f9f90492dbf177a0f7e2ec59264b6abf7e` descends from `d6251aaff583fce5647062c16fb7a5b367710155`. It lowers the pitch of a ready sole mortar trigger when the current projected path misses even an enlarged target hull and a lower path reaches the same target within a narrower predicted hull before terrain. It preserves the native movement, aim yaw and trigger.
+
+In simulated 1069610 the change lowers pitch by 0.015 radians at 144.5s. The same target receives 208 direct and 143.04 splash against 81.04 native splash. First-six damage improves by 270 at equal zero incoming. Native placement, survival and final totals tie. An independent wall-aware replay finds the same direct contact and early gain. Its placement ties while total incoming rises 71, survival falls 4.05s and cubes increase four. The valuable existing direct hit in 1070205 and the older mortar control 1060035 retain all commands.
+
+All 42 fresh parent matches tie commands and placement (16 native squad, 16 standard four-mech, eight combat-owner and two wall-aware). Neither fresh wall-aware subject equipped a mortar. Six extra comparisons against the commit-linked 3.71 reference tie on placement and exactly reproduce the unmodified parent's command tapes. The exact build passes 23 unit tests and all 300 sandbox observations. All three reviewers approved the immutable commit. [Mortar parent review](d6251aa-merge-replan-dodge-with-mortar-wall-lead.md) · [Practice ledger](../queue.json)
