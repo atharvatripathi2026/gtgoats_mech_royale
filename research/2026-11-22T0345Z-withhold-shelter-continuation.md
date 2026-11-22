@@ -1,0 +1,5 @@
+# Continue to a quiet shelter across the zone anchor · 03:45 UTC
+
+Survival and combat voted **withhold**. Exact stock `9241025` sometimes alternates between shelter and zone because a shelter inside the forecast circle can still sit outward of the 72%-of-radius anchor. In 1072450 the current zone goal was under 2m away with clear ground, but the bot repeatedly walked 4.5–4.8m and finished near its prior anchor. Some shelter goals were still 12–25m away, so total distance alone cannot distinguish purposeful progress from oscillation.
+
+The narrower trial continues an already moving shelter route only under low pressure and with both circles and raw ground clear. In simulated 1072450 it cuts first-minute jumps 18→5 and airborne boost commands 76→29. First-six damage is unchanged, total zone damage is 104.2 lower, and total enemy damage rises 495. Placement falls 11→7. In 1072484 it gains one point, seven seconds and two cubes, with 1,094.8 more incoming and no early trade change. No general candidate was frozen. Separately test the zone-versus-shelter decision margin on a far blocked route and a near clear route before suppressing escape.
