@@ -281,6 +281,9 @@ class Bot:
             self.last_escape_grace = obs["t"]
         if self.quiet_outbound_hold(obs, plan, action):
             action["move"] = [0., 0.]
+        rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
+        if rifle_escape is not None:
+            action["move"] = list(rifle_escape)
         shell_steer = self.survival.airborne_mortar_step(obs, action, plan["dodge"])
         self.pending_ground_line_boost_tick = (
             obs["tick"] if grounded and plan["dodge"] == "line" and action["boost"] and not action["jump"]
@@ -298,6 +301,8 @@ class Bot:
             "jet_advised": jet, "combat": self.loadout.last_decision,
             "learning": self.adaptation.diagnostics(),
         }
+        if rifle_escape is not None:
+            self.last_decision["one_command_rifle_escape"] = True
         if shell_steer is not None:
             self.last_decision["airborne_shell"] = shell_id
         if escape_grace:

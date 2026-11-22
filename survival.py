@@ -191,6 +191,103 @@ class Survival:
                 best, dodge = priority, item
         return dodge
 
+    def avoid_rifle_contact_this_command(self, obs, plan, action, jet):
+        """Change a grounded dodge only for a rifle contact before the next observation."""
+        me = obs["self"]
+        projectiles = obs.get("projectiles") or ()
+        if (plan["dodge"] != "line" or plan["zone_urgency"] > .25 or jet or action["jump"]
+                or not me.get("grounded") or not me.get("in_zone", True)
+                or not self.nav or not self.nav.loaded
+                or not 1 <= len(projectiles) <= 4
+                or any(shot.get("kind") != "gun" for shot in projectiles)
+                or any(action.get("fire", ()))
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+            return None
+
+        mech = self.rules.get("mech", {}) | (me.get("stats") or {})
+        match = self.rules.get("match", {})
+        dt = 1 / match.get("tick_hz", 20)
+        steps = match.get("decide_every", 2)
+        if not 1 <= steps <= 4:
+            return None
+        boost = action["boost"]
+        if boost and me.get("energy", 0) <= (steps + 1) * dt * mech.get("boost_drain", 17):
+            return None
+        x, y, z = me["pos"]
+        gun_radius = self.rules.get("projectile", {}).get("gun_radius", .3)
+        radius, height = mech.get("radius", 2.5), mech.get("height", 9.)
+        acceleration = mech.get("ground_accel", 58.5) * dt
+        speed = mech.get("boost_speed", 19.5) if boost else mech.get("walk_speed", 11.7)
+        dims = self.nav._dimensions(radius)
+        center, ring = obs["zone"]["center"], obs["zone"]["radius"]
+        vx, vy = me["vel"][:2]
+        # A distant round cannot cross the hull within this held command.
+        rounds = [shot for shot in projectiles
+                  if distance((x, y), shot["pos"]) <= radius + 2
+                  + dt * steps * (math.hypot(*shot["vel"][:2]) + max(speed, math.hypot(vx, vy)))]
+        move = action["move"]
+        length = math.hypot(*move)
+        if not rounds or length < .70:
+            return None
+
+        def clearance(direction, verify_sweep):
+            px, py, pz = x, y, z
+            dx, dy = vx, vy
+            minimum = math.inf
+            for index in range(steps + int(verify_sweep)):
+                # After this command, model only the remaining momentum for
+                # one tick. Reserve the full next-step acceleration as error.
+                if index < steps:
+                    ax, ay = speed * direction[0] - dx, speed * direction[1] - dy
+                    scale = min(1., acceleration / max(.001, math.hypot(ax, ay)))
+                    dx, dy = dx + scale * ax, dy + scale * ay
+                qx, qy = px + dx * dt, py + dy * dt
+                qz = self.nav.ground(qx, qy)
+                if (abs(self.nav.surface(qx, qy) - qz) > .25 or not -.025 <= qz - pz <= .35
+                        or distance((qx, qy), center) >= ring - radius - 4
+                        or not self.nav._ground_segment(px, py, qx, py, *dims)
+                        or not self.nav._ground_segment(qx, py, qx, qy, *dims)):
+                    return None
+                near_rounds = projectiles if index == steps else rounds
+                for shot in near_rounds:
+                    fx, fy, fz = tuple(v * dt for v in shot["vel"])
+                    bx, by, bz = tuple(p + index * delta for p, delta in zip(shot["pos"], (fx, fy, fz)))
+                    approaches = [(bx - qx, by - qy, fx, fy)]
+                    if verify_sweep:
+                        approaches.append((bx - px, by - py, fx - (qx - px), fy - (qy - py)))
+                    for rx, ry, sx, sy in approaches:
+                        along = clip(-(rx * sx + ry * sy) / max(.0001, sx * sx + sy * sy))
+                        impact = bx + along * fx, by + along * fy, bz + along * fz
+                        if not qz - gun_radius <= impact[2] <= qz + height + gun_radius:
+                            continue
+                        margin = math.hypot(rx + along * sx, ry + along * sy) - radius - gun_radius
+                        if index == steps:
+                            margin -= acceleration * dt
+                        if margin < minimum and self.nav.line_clear(shot["pos"], impact):
+                            minimum = margin
+                px, py, pz = qx, qy, qz
+            return minimum
+
+        direction = move[0] / max(1., length), move[1] / max(1., length)
+        native = clearance(direction, False)
+        if native is None or native >= -.05:
+            return None
+        angle = math.atan2(direction[1], direction[0])
+        # Keep the intended route when avoidance would require a large turn.
+        # Try the smallest useful deflection at the original input magnitude.
+        magnitude = min(1., length)
+        for delta in (math.pi / 12, math.pi / 6, math.pi / 4):
+            choices = []
+            for side in (-1, 1):
+                heading = angle + side * delta
+                option = magnitude * math.cos(heading), magnitude * math.sin(heading)
+                margin = clearance(option, True)
+                if margin is not None and margin >= .16:
+                    choices.append((margin, option))
+            if choices:
+                return max(choices)[1]
+        return None
+
     def airborne_mortar_step(self, obs, action, dodge):
         """Choose one air-steer command when the current shell line hits the rising hull."""
         me = obs["self"]
