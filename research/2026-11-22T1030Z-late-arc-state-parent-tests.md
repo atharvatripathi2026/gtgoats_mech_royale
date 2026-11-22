@@ -1,0 +1,9 @@
+# Test changes in held-command gear and hull
+
+Both experiments descend from `da40f96d20e73bd74ce047b81d77c71442e83527`. The archive screen found seven real late-ready triggers that landed, two of which were idle alternate arcs. No recorded command also selected an upgrade or weapon, so the gear and growth controls below are staged.
+
+**Gear `19ac7b5d7343d8409f4bd63df515aacb8d039970`.** In staged public-upgrade 1064348, the range upgrade changes the cone from 30° to 36° before the second-step arc. The old command hits crate #1003 instead of #3. The guard preserves the upgrade and declines the arc. The same-slot laser take still equips the laser, and the guard drops the stale lightning trigger. Armor, plating, a pickup into the other slot and a crate that stays outside the cone preserve the actual hit. Servos moves the shot origin about 4.68cm. The guard also forgoes the 92.4 hit after Servos at equal final placement and survival. Three Sol reviewers approved the staged gear mechanism, and 23 units and 300 timed replies passed.
+
+**Cube growth `82048c9615eccf7dfc24ec812aaac6fc1be92d20`.** A visible one-cube pickup grows the actual hull and muzzle during a staged first step. The shot still hits #3, and the geometry check preserves it. On a campus bridge fixture, native collection of two cubes grows height from 11.25m to 12.15m, overlapping the actual raw prism. The revised geometry declines the arc. The local raster still permits the moved body, so the fixture confirms the geometry and native collection rather than the organizers' collision response. Another controlled ray with a low clearance declines only when the collected cube raises the muzzle. Survival and validation endorsed the geometric check on these staged cases.
+
+Both independent experiments contribute their exact source to one combined candidate. [Prior late-arc guard](da40f96-check-held-motion-before-late-arc.md)
