@@ -50,6 +50,7 @@ class Bot:
         self.first_loot_targets = set()
         self.first_cube_rest = False
         self.loot_descent = None
+        self.cube_taper = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -383,6 +384,118 @@ class Bot:
             return None
         return [vx / walk, vy / walk]
 
+    @staticmethod
+    def cube_taper_drive(pos, endpoint, walk):
+        dx, dy = endpoint[0] - pos[0], endpoint[1] - pos[1]
+        scale = min(.26 / max(.001, math.hypot(dx, dy)), 1 / (.18 * walk))
+        return dx * scale, dy * scale
+
+    def quiet_cube_taper(self, obs, plan, action, jet):
+        me = obs["self"]
+        now = obs["t"]
+        rules = self.survival.rules
+        cubes = rules.get("cubes", {})
+        cap = cubes.get("stat_cap", 10)
+        count = me.get("cubes", 0)
+        prior = self.cube_taper
+        self.cube_taper = None
+        if (plan["mode"] not in ("loot", "hold", "zone") or plan["dodge"] or plan["enemy_pressure"] > .05
+                or plan["zone_urgency"] > .1 or jet or not self.nav.loaded or action["jump"] or action["boost"]
+                or not me.get("grounded") or not me.get("in_zone") or not 0 < count <= cap
+                or me["hp"] > .65 * me["max_hp"] or "pick" in action or "take" in action
+                or any(action.get("fire", ())) or self.loadout.last_decision.get("target_id") is not None
+                or obs.get("projectiles") or obs.get("beams")
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+            return None
+        pos = me["pos"]
+        target = plan["target_id"]
+        pack = obs.get("cubes", ())
+        base = self.loadout.mech
+        stats = base | (me.get("stats") or {})
+        walk = stats.get("walk_speed", 11.7)
+        reach = cubes.get("pickup_radius", 3.5)
+        growth = cubes.get("size_per_cube", .05)
+        stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+        if stride != 2 or not math.isclose(self.loadout.step, .05, abs_tol=1e-8):
+            return None
+
+        endpoint = None
+        if prior and prior[3] is not None and now - prior[1] <= 1.1:
+            target_id, started, previous_count, endpoint = prior
+            if count == previous_count and target != target_id:
+                return None
+            if count > previous_count:
+                # Finish the already proved low-speed stop after auto-collection.
+                if math.dist(pos[:2], endpoint) > .16 or math.hypot(*me["vel"][:2]) > 1.5:
+                    return None
+                target_id = None
+            target = target_id
+        else:
+            item = next((item["pos"] for item in pack if item["id"] == target), None)
+            if (plan["mode"] != "loot" or count >= cap or item is None or any(action["move"])
+                    or math.hypot(*me["vel"][:2]) > .35 or abs(item[2] - pos[2]) > .75):
+                return None
+            distance = math.dist(pos[:2], item[:2])
+            if not reach + .2 <= distance <= reach + 1.35:
+                return None
+            if prior is None or prior[0] != target or prior[2] != count:
+                self.cube_taper = target, now, count, None
+                return None
+            if now - prior[1] < 1.8 - 1e-8:
+                self.cube_taper = prior
+                return None
+            pull = (reach - .05) / distance
+            endpoint = tuple(item[i] + pull * (pos[i] - item[i]) for i in range(2))
+            previous_count, started = count, now
+        if not self.cube_taper_path_clear(obs, endpoint, target, stats, base, count, cap, growth, reach):
+            return None
+        self.cube_taper = (target, started, previous_count, endpoint)
+        return self.cube_taper_drive(pos, endpoint, walk)
+
+    def cube_taper_path_clear(self, obs, endpoint, target, stats, base, count, cap, growth, reach):
+        pos = list(obs["self"]["pos"])
+        vx, vy = obs["self"]["vel"][:2]
+        walk = stats.get("walk_speed", 11.7)
+        dt = self.loadout.step
+        acceleration = dt * stats.get("ground_accel", 58.5)
+        visible = {item["id"]: item["pos"] for item in obs.get("cubes", ())}
+        landing_drop = min(.05, stats.get("gravity", 22.) * dt * dt)
+        definite = set()
+        possible = set()
+        zone = obs["zone"]
+        for step in range(22):
+            if step % 2 == 0:
+                mx, my = self.cube_taper_drive(pos, endpoint, walk)
+            dx, dy = walk * mx - vx, walk * my - vy
+            rate = min(1., acceleration / max(.001, math.hypot(dx, dy)))
+            vx, vy = vx + rate * dx, vy + rate * dy
+            xy = pos[0] + dt * vx, pos[1] + dt * vy
+            floor = self.nav.surface(*xy)
+            if (floor - pos[2] > .05 or pos[2] - floor > landing_drop
+                    or abs(floor - self.nav.ground(*xy)) > .08):
+                return False
+            feet = max(floor, pos[2]) if pos[2] <= floor + .03 else floor
+            for ident, item in visible.items():
+                radial = math.dist(xy, item[:2])
+                if abs(feet - item[2]) <= 4.08 and radial <= reach + .08:
+                    possible.add(ident)
+                if abs(feet - item[2]) <= 3.97 and radial <= reach - .015:
+                    definite.add(ident)
+            if count + len(possible) > cap:
+                return False
+            scale = 1 + (count + len(possible)) * growth
+            radius = max(stats.get("radius", 0), base.get("radius", 2.5) * scale)
+            height = max(stats.get("height", 0), base.get("height", 9.) * scale)
+            if (any(math.dist(xy, zone[center]) + radius + 6 >= zone[ring]
+                    for center, ring in (("center", "radius"), ("next_center", "next_radius")))
+                    or not self.nav.raw_hull_corridor_clear(pos, xy, radius, height)):
+                return False
+            pos = [*xy, feet]
+            if (math.hypot(vx, vy) <= .12 and math.dist(xy, endpoint) <= .03
+                    and (target is None or target in definite)):
+                return True
+        return False
+
     def quiet_loot_landing_hull(self, obs, plan):
         me = obs["self"]
         target = plan["target_id"]
@@ -479,6 +592,9 @@ class Bot:
         cube_move = self.quiet_follow_collected_cube(obs, plan, action, jet)
         if cube_move is not None:
             action["move"] = cube_move
+        cube_taper = self.quiet_cube_taper(obs, plan, action, jet)
+        if cube_taper is not None:
+            action["move"] = list(cube_taper)
         rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
         if rifle_escape is not None:
             action["move"] = list(rifle_escape)
