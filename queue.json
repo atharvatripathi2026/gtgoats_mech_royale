@@ -2779,6 +2779,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "8928cc50f041e119821370e94f36e0e18c26cedc",
+      "summary": "Combine the checked walking rejoin with tactical descent for return fire. Stock and phase-order replays gain 285 early damage at equal incoming and two placement points. All 44 fresh direct-parent placements tie. 23 units, 300 timed replies and a 5.7 ms active reply pass.",
+      "created_at": "2026-11-22T15:21:34Z",
+      "parents": [
+        "0873ad98e417111d1d0a0cd13826dc942d6fa78b",
+        "5934e3adc0f3154988b81b9850247e2818760ab7"
+      ],
+      "reviews": {
+        "commit": "8928cc50f041e119821370e94f36e0e18c26cedc",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "A real boost-only change in stock and all-move-first replays adds actual same-rival lightning contacts and advances the kill. First-six outgoing rises 285 at equal 112.5 incoming, and placement rises two. All eight owner placements tie, with one active mildly adverse lifetime at equal full damage and cubes. There is no same-command interference with the grounded rejoin, gear or charge. The active timing check and exact kit pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Actual earlier same-rival lightning and rifle contacts replicate under alternate actor ordering. The fresh active lifetime trade is small and placements hold. The guard retains existing gear, triggers and charge, and the final pose validator still runs later. The inherited descending branch does not forecast arm readiness separately. Exact active and official timing pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent all-move-first produces real earlier same-rival lightning hits with equal incoming and two simulated placement points. All eight faster exact pairs match commands and placements. The terrain and rival forecasts remain approximate and the directed gain does not establish a general placement increase."
+          }
+        }
+      }
     }
   ]
 }
