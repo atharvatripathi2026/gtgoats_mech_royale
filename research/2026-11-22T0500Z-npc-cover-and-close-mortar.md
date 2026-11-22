@@ -1,0 +1,7 @@
+# Quiet NPC exposure and close mortar contacts
+
+Survival screened 433 archived campus tapes and found 24 deduplicated grounded, quiet navigation commands that received NPC damage without an active dodge. All sources were tracked and no relevant round was visible within 22 m before impact. The strongest case, seed 1072293, took ten 25-damage hits from NPC #102 in the opening 12 seconds. Sampled direct 3–16 m routes offered no grounded, raw/raster-clear endpoint that moved away from the source, stayed in the current and next circles, and blocked the source at three hull heights. Withhold a short cover override. A future test could measure whether a curved route leaves NPC range sooner.
+
+Combat screened 2,327 archived campus tape arms and found 12 unique close target windows with a ready mortar, unavailable rifle and no shot. In two directed simulated tests with exact controller `5f0ace9121f41f8ff702c7e94f5494649c4671da`, a one-command aim-and-trigger intervention hit under 18 m. Seed 1070132 killed the same target 0.4 s sooner and avoided 60 incoming in six seconds, then lost three placement points. Seed 1070035 landed 321.014 damage early with no self-hit. A later native shot made the early contact largely redundant, and the intervention lost five placement points. Withhold the short-range mortar rule. Retest only when earlier contact changes a threat that remains active over the next several commands.
+
+These archive diagnostics yielded no frozen candidate or fresh pairing.
