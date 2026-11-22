@@ -1,0 +1,5 @@
+# First-stack Rotary feed · 2026-11-22 03:15 UTC
+
+Withhold the first-stack Rotary downgrade. Survival, combat and validation each voted withhold. The stock simulator rounds both .240s and upgraded .2088s to five 50ms ticks, while the public protocol specifies the configured rate for held fire. A prior fractional-timing evaluator measures .240s for the base rifle. [Cadence study](2026-11-21-rifle-cadence-sensitivity.md)
+
+Two directed simulated public-offer replays on `3d8eb7c` changed only the accepted upgrade from Rotary to Gyros. Seeds 1012421 and 1019814 retained first-six-second damage and tied placement. Survival fell 6.45s and 1.65s, and the latter took 720 more damage. A screen of archived public-offer matches found five distinct first-stack Rotary choices. A separate gun-damage screen found no observed one-to-three-shot kill breakpoint in the immediate contacts. Revisit only when an achievable rate or damage change moves a real shot across a reload or cover-break deadline in both cadence models.
