@@ -2200,6 +2200,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "e63b3731499c0a2a1e0029a4a7b01f339d6a7159",
+      "summary": "Combine the above-floor rifle wall guard and tapered cube pickup. Both directed gains survive. All 44 fresh parent pairs tie. A separate one-point reference loss repeats the rifle parent. Passed 23 unit tests and 300 sandbox checks.",
+      "created_at": "2026-11-22T08:23:28Z",
+      "parents": [
+        "fab492678d47bf45e2369da53609dbe6be8716c0",
+        "3094a31ccdc50859a6bac42011b2ba31a7995a00"
+      ],
+      "reviews": {
+        "commit": "e63b3731499c0a2a1e0029a4a7b01f339d6a7159",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight independent stock pairs and the growth and missed-observation cube replay match complete commands and placement. Directed cube and rifle gains survive on disjoint same-command predicates. The older verified reference loss repeats the rifle parent's exact commands and remains an inherited drawback."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The merge retains the additional cube and the confirmed 100.8 rifle damage under fractional cadence, preserves the two immediate-reload controls, and ties all 44 fresh parent comparisons. The one-point attribution loss against the taper parent spares physically blocked rounds and repeats the rifle parent exactly."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh raw pairs match every command and placement against the rifle parent, and localized raw collision plus fractional cadence preserves the rifle sequence. The linked-reference loss is inherited. A new combined benefit in a single match remains unobserved."
+          }
+        }
+      }
     }
   ]
 }
