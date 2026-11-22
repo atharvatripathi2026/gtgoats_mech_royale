@@ -1,0 +1,5 @@
+# Withhold rifle top-off delay after a confirmed drone kill
+
+Combat tested an unfrozen direct variant of `2e2436e4d1ddda95aac8a86c8a18027e276da03c` that keeps a partial magazine if a visible aimed rifle rival is closing directly after a confirmed drone kill. Six directed simulated placement pairs tie. In generated pursuit 1076941, holding nine rounds briefly delays the first real hit and shortens survival by 0.7 s. Pursuit 1076943 ties the trade. In crossfire 1076943, the first real hit arrives 1.1 s earlier, but running out three rounds sooner cuts outgoing damage by 145.8 in the first six seconds at equal incoming damage. The other three pairs match all commands.
+
+Combat voted to withhold the diagnostic. This occurred before a gameplay SHA was frozen or put to the three-review gate. An archive screen found zero examples of a nearby aimed closing rival plausibly finishable with the remaining magazine across 723 seed, scenario, and map combinations. Revisit only when a trace shows an exposed opponent within the available lethal damage and a shot that can land before reload would finish.
