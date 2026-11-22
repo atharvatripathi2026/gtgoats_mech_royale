@@ -625,7 +625,38 @@ class Loadout:
                 ("gun" not in threat.get("weapons", ()) or not facing
                  or abs(angle_delta(bearing + math.pi, facing[0])) > .43)):
             return None
-        return index if clear else None
+        if not clear:
+            return None
+        if verify_motion and not self.late_arc_rival_growth_clear(obs, threat, samples, reach):
+            return None
+        return index
+
+    def late_arc_rival_growth_clear(self, obs, threat, samples, reach):
+        """Check the grown conductor on either actor phase of the late shot."""
+        cubes = obs.get("cubes", ())
+        if not cubes:
+            return True
+        rules = self.config.get("cubes", {})
+        pickup = rules.get("pickup_radius", 3.5)
+        accel = self.step ** 2 * self.mech.get("ground_accel", 58.5)
+        pos = threat["pos"]
+        vel = threat.get("vel", (0., 0., 0.))
+        _, height = self.dimensions(threat)
+        cube_height = self.mech.get("height", 9.) * rules.get("size_per_cube", .05)
+        muzzles = [muzzle for step, _, _, muzzle in samples if step == 2]
+        possible = set()
+        # On the firing step the rival may have moved either once or twice.
+        for step, margin in ((1, accel), (2, 3 * accel)):
+            feet = tuple(x + step * self.step * v for x, v in zip(pos, vel))
+            possible.update(cube["id"] for cube in cubes
+                            if math.dist(feet[:2], cube["pos"][:2]) <= pickup + margin
+                            and abs(feet[2] - cube["pos"][2]) <= 4. + margin)
+            for count in range(1, len(possible) + 1):
+                grown = (*feet[:2], feet[2] + .5 * (height + count * cube_height))
+                if any(math.dist(muzzle, grown) > reach or not self.nav.line_clear(muzzle, grown)
+                       for muzzle in muzzles):
+                    return False
+        return True
 
     def rising_rifle_alternate(self, obs, target, slots, muzzle, native_pitch):
         me = obs["self"]
