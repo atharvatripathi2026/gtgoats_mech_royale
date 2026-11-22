@@ -880,21 +880,24 @@ class Survival:
         return fallback
 
     def _keep_evade_from_rifle(self, obs, fallback, radius):
-        """Preserve an outward ground escape when the closing rival just fired."""
+        """Preserve the native ground dodge against a closing rifle round."""
         me = obs["self"]
         here = me["pos"]
         stats = me.get("stats", {})
+        held = self.rules.get("match", {}).get("decide_every", 2) / 20
+        slots = [w for w in me.get("weapons", ()) if w]
         rivals = [foe for foe in obs["mechs"] if foe.get("kind") == "mech"]
         if (not self.nav or len(fallback) != 2 or len(rivals) != 1
-                or math.hypot(*me["vel"][:2]) > .5 * stats.get("walk_speed", 11.7)
-                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+                or len(slots) != 1 or slots[0]["kind"] != "gun"
+                or max(slots[0].get("cooldown", 0.), slots[0].get("reload", 0.)) <= held):
             return False
         rival = rivals[0]
         other = rival["pos"]
         dx, dy = other[0] - here[0], other[1] - here[1]
         vx, vy = rival.get("vel", (0, 0))[:2]
         if ("gun" not in rival.get("weapons", ()) or math.hypot(dx, dy) > 45
-                or dx * vx + dy * vy >= 0):
+                or dx * vx + dy * vy >= 0
+                or abs(math.remainder(rival["aim"][0] - math.atan2(-dy, -dx), math.tau)) > .15):
             return False
         fx, fy = fallback[0] - here[0], fallback[1] - here[1]
         travel = math.hypot(fx, fy)
@@ -905,6 +908,14 @@ class Survival:
                 continue
             x, y, z = shot["pos"]
             sx, sy, sz = shot["vel"]
+            ux, uy, uz = me["vel"]
+            ax, ay = sx - ux, sy - uy
+            px, py = x - here[0], y - here[1]
+            eta = -(px * ax + py * ay) / max(1., ax * ax + ay * ay)
+            height = stats.get("height", 9.)
+            if (not 0 < eta <= held * 2 or math.hypot(px + eta * ax, py + eta * ay) > radius
+                    or not 0 < z - here[2] + eta * (sz - uz) < height):
+                continue
             speed2 = sx * sx + sy * sy
             back = ((x - other[0]) * sx + (y - other[1]) * sy) / max(1., speed2)
             if (0 < back <= self.rules.get("weapons", {}).get("gun", {}).get("cooldown", .3)
@@ -1068,7 +1079,7 @@ class Survival:
         if (urgency < .35 and mode not in ("loot", "capture") and me.get("grounded", True)
                 and not (dodge and dodge[0] == "blast")):
             flank = self._finish_goal(obs, foes, circle, radius, hp, goal)
-            if flank != goal and not (mode == "evade" and dodge is None
+            if flank != goal and not (mode == "evade" and dodge and dodge[0] == "line"
                                       and self._keep_evade_from_rifle(obs, goal, radius)):
                 reason = "flank_wounded_opponent"
                 goal = flank
