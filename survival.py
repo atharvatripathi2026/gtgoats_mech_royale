@@ -232,6 +232,7 @@ class Survival:
 
         def clearance(direction, verify_sweep):
             px, py, pz = x, y, z
+            ground = self.nav.ground(px, py)
             dx, dy = vx, vy
             minimum = math.inf
             for index in range(steps + int(verify_sweep)):
@@ -242,12 +243,17 @@ class Survival:
                     scale = min(1., acceleration / max(.001, math.hypot(ax, ay)))
                     dx, dy = dx + scale * ax, dy + scale * ay
                 qx, qy = px + dx * dt, py + dy * dt
-                qz = self.nav.ground(qx, qy)
-                if (abs(self.nav.surface(qx, qy) - qz) > .25 or not -.025 <= qz - pz <= .35
+                terrain = self.nav.ground(qx, qy)
+                floor = self.nav.surface(qx, qy)
+                if (abs(floor - terrain) > .25 or not -.025 <= terrain - ground <= .35
+                        or pz > floor + .03
                         or distance((qx, qy), center) >= ring - radius - 4
                         or not self.nav._ground_segment(px, py, qx, py, *dims)
                         or not self.nav._ground_segment(qx, py, qx, qy, *dims)):
                     return None
+                # Feet can keep their height while the floor falls. A larger
+                # gap leaves the grounded motion model before the next step.
+                qz = max(pz, floor)
                 near_rounds = projectiles if index == steps else rounds
                 for shot in near_rounds:
                     fx, fy, fz = tuple(v * dt for v in shot["vel"])
@@ -266,6 +272,7 @@ class Survival:
                         if margin < minimum and self.nav.line_clear(shot["pos"], impact):
                             minimum = margin
                 px, py, pz = qx, qy, qz
+                ground = terrain
             return minimum
 
         direction = move[0] / max(1., length), move[1] / max(1., length)
