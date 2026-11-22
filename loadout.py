@@ -627,35 +627,64 @@ class Loadout:
             return None
         if not clear:
             return None
-        if verify_motion and not self.late_arc_rival_growth_clear(obs, threat, samples, reach):
+        if verify_motion and not self.late_arc_rival_growth_clear(obs, threat, samples, reach, cone):
             return None
         return index
 
-    def late_arc_rival_growth_clear(self, obs, threat, samples, reach):
-        """Check the grown conductor on either actor phase of the late shot."""
+    def late_arc_rival_growth_clear(self, obs, threat, samples, reach, cone):
+        """Check grown conductor visibility and separation on either actor phase."""
         cubes = obs.get("cubes", ())
         if not cubes:
             return True
         rules = self.config.get("cubes", {})
         pickup = rules.get("pickup_radius", 3.5)
         accel = self.step ** 2 * self.mech.get("ground_accel", 58.5)
-        pos = threat["pos"]
-        vel = threat.get("vel", (0., 0., 0.))
-        _, height = self.dimensions(threat)
-        cube_height = self.mech.get("height", 9.) * rules.get("size_per_cube", .05)
-        muzzles = [muzzle for step, _, _, muzzle in samples if step == 2]
-        possible = set()
-        # On the firing step the rival may have moved either once or twice.
-        for step, margin in ((1, accel), (2, 3 * accel)):
-            feet = tuple(x + step * self.step * v for x, v in zip(pos, vel))
-            possible.update(cube["id"] for cube in cubes
-                            if math.dist(feet[:2], cube["pos"][:2]) <= pickup + margin
-                            and abs(feet[2] - cube["pos"][2]) <= 4. + margin)
-            for count in range(1, len(possible) + 1):
-                grown = (*feet[:2], feet[2] + .5 * (height + count * cube_height))
-                if any(math.dist(muzzle, grown) > reach or not self.nav.line_clear(muzzle, grown)
-                       for muzzle in muzzles):
+        growth = .5 * self.mech.get("height", 9.) * rules.get("size_per_cube", .05)
+        firing = [(yaw, base, muzzle) for step, yaw, base, muzzle in samples if step == 2]
+        entities = (threat, *(ent for ent in (*obs.get("mechs", ()), *obs.get("crates", ()))
+                              if ent["id"] != threat["id"]))
+        bodies = []
+        for ent in entities:
+            feet = ent["pos"]
+            vel = ent.get("vel", (0., 0., 0.))
+            _, height = self.dimensions(ent)
+            possible = set()
+            phases = []
+            for step, margin in ((1, accel), (2, 3 * accel)):
+                point = tuple(x + step * self.step * v for x, v in zip(feet, vel))
+                if ent.get("kind") == "mech":
+                    possible.update(cube["id"] for cube in cubes
+                                    if math.dist(point[:2], cube["pos"][:2]) <= pickup + margin
+                                    and abs(point[2] - cube["pos"][2]) <= 4. + margin)
+                phases.append(((*point[:2], point[2] + .5 * height), len(possible)))
+            bodies.append(phases)
+        for phase, margin in enumerate((accel, 3 * accel)):
+            point, count = bodies[0][phase]
+            for yaw, base, muzzle in firing:
+                grown = [(*point[:2], point[2] + n * growth) for n in range(1, count + 1)]
+                if any(math.dist(muzzle, body) > reach or not self.nav.line_clear(muzzle, body)
+                       for body in grown):
                     return False
+                far = max(math.dist(muzzle, body) for body in (point, *grown))
+                for ent, phases in zip(entities[1:], bodies[1:]):
+                    other, other_count = phases[phase]
+                    if not (count or other_count):
+                        continue
+                    dx, dy = other[0] - base[0], other[1] - base[1]
+                    planar = math.hypot(dx, dy)
+                    moving = ent.get("kind") in ("mech", "npc")
+                    uncertainty = margin if moving else 0.
+                    angle = (math.pi if planar <= uncertainty else math.asin(uncertainty / planar))
+                    if abs(angle_delta(math.atan2(dy, dx), yaw)) > cone + angle:
+                        continue
+                    # The closest center over a possible vertical interval is a
+                    # lower bound even if only whole cubes can be collected.
+                    z = clamp(muzzle[2], other[2], other[2] + other_count * growth)
+                    # The nominal one-meter separation was already
+                    # required above. Here ensure growth cannot erase it
+                    # enough to make another conductor nearest.
+                    if math.dist(muzzle, (*other[:2], z)) - uncertainty <= far:
+                        return False
         return True
 
     def rising_rifle_alternate(self, obs, target, slots, muzzle, native_pitch):
