@@ -1,0 +1,3 @@
+# Screen armor while lightning is out of reach
+
+An uncommitted scratch extended the confirmed rear-rifle guard while the rifle was reloading and all observed targets were beyond a buffered lightning range. The 170-match simulated archive screen found zero eligible command changes. Eight fresh campus pairs at 1079110–17 tied on every command and placement, and 23 unit tests passed. The coordinator withheld the scratch before a formal vote. Test further only after a naturally occurring volley combines a confirmed rear hit, an unavailable rifle and an otherwise ready short-range arm. [Existing armor review](76ec85d-protect-reloading-torso-against-confirmed-rifle.md)
