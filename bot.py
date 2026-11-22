@@ -897,6 +897,80 @@ class Bot:
             travel += toward * dt
         return max(walk * ready, travel)
 
+    def jet_obscures_return_fire(self, obs, plan, action, jet):
+        """Drop tactical thrust once a low rival falls below reachable pitch."""
+        me = obs["self"]
+        if (not action["boost"] or me.get("grounded", True) or jet or plan["dodge"]
+                or plan["mode"] not in ("evade", "zone") or len(plan["goal"]) != 2
+                or obs.get("t", 0) < 170 or obs.get("zone", {}).get("next_radius", 560) > 110
+                or obs.get("alive", 16) <= 2
+                or not me.get("in_zone", True) or not self.nav.loaded
+                or "take" in action or "pick" in action or any(action.get("fire", ()))):
+            return False
+        stats = me.get("stats", {})
+        if action["aim"][1] >= stats.get("min_pitch", -.7) - .06:
+            return False
+        if any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ())):
+            return False
+        target = self.loadout.last_decision.get("target_id")
+        opponent = next((e for e in obs.get("mechs", ()) if e.get("kind") == "mech"
+                         and e.get("id") == target), None)
+        if opponent is None:
+            return False
+        x, y, z = me["pos"]
+        distance = math.dist((x, y), opponent["pos"][:2])
+        if not 12 <= distance <= 115:
+            return False
+
+        # Brake only when the nearby surface stays well below the feet,
+        # so lowering altitude is compatible with the existing horizontal plan.
+        vx, vy = me.get("vel", (0, 0, 0))[:2]
+        ux, uy = action["move"]
+        walk = stats.get("walk_speed", 11.7)
+        points = ((x, y), (x + .3 * vx, y + .3 * vy), (x + .45 * walk * ux, y + .45 * walk * uy))
+        if not all(z - self.nav.surface(*point) >= 5 for point in points):
+            return False
+        held = {w["kind"]: w for w in me.get("weapons", ()) if w}
+        gun = held.get("gun")
+        if gun is None or me["vel"][2] <= 0:
+            return True
+        # Releasing the jet helps only if the selected mech can enter a firing
+        # angle before an extended descent leaves the bot exposed.
+        horizon = 1.25
+        sx = x + horizon * (vx + walk * ux) * .5
+        sy = y + horizon * (vy + walk * uy) * .5
+        own_z = max(self.nav.surface(sx, sy), z + horizon * me["vel"][2]
+                    - .5 * stats.get("gravity", 22) * horizon ** 2)
+        muzzle = (sx, sy, own_z + stats.get("muzzle_height", 7))
+        target = tuple(p + horizon * v for p, v in zip(opponent["pos"], opponent.get("vel", (0., 0., 0.))))
+        _, height = self.loadout.dimensions(opponent)
+        hull = (*target[:2], target[2] + .49 * height)
+        if not self.nav.line_clear(muzzle, hull):
+            return False
+        minimum, maximum = stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)
+        lightning = held.get("lightning")
+        if lightning and lightning.get("cooldown", 0) <= horizon:
+            arc = self.loadout.weapons.get("lightning", {}) | lightning.get("stats", {})
+            pitch = math.atan2(hull[2] - muzzle[2], math.dist(hull[:2], muzzle[:2]))
+            spread = math.radians(arc.get("cone_deg", 30)) * .8
+            current_muzzle = x, y, z + stats.get("muzzle_height", 7)
+            current_hull = (*opponent["pos"][:2], opponent["pos"][2] + .49 * height)
+            reach = arc.get("range", 45) - 1
+            if (math.dist(current_muzzle, current_hull) <= reach
+                    and math.dist(muzzle, hull) <= reach
+                    and minimum - spread <= pitch <= maximum + spread
+                    and me.get("energy", 0) >= arc.get("energy", 3)):
+                return True
+        weapon = self.loadout.weapons.get("gun", {}) | gun.get("stats", {})
+        reload_remaining = gun.get("reload", 0)
+        if gun.get("ammo", 1) == 0 and not reload_remaining:
+            reload_remaining = weapon.get("reload", 2.4)
+        if max(reload_remaining, gun.get("cooldown", 0)) > horizon:
+            return False
+        aim = self.loadout.solution("gun", muzzle, hull, opponent.get("vel", (0., 0., 0.)),
+                                    weapon, stats.get("radius", 2.5) + .5, maximum)
+        return bool(aim and minimum <= aim[1] <= maximum)
+
     def quiet_zone_ground_rejoin(self, obs, plan, action):
         """Probe a short grounded bend before leaving an incomplete zone route."""
         me = obs["self"]
@@ -1080,6 +1154,9 @@ class Bot:
         self.brake_toward_sheltered_pursuer(obs, plan, action, settled_shelter)
         self.keep_escape_before_weapon_reversal(obs, plan, action)
         self.quiet_zone_ground_rejoin(obs, plan, action)
+        if self.jet_obscures_return_fire(obs, plan, action, jet):
+            action["boost"] = False
+            reason = "descend_to_return_fire"
         self.loadout.confirm_late_arc_command(action)
         if not plan["dodge"]:
             self.loadout.defer_prepared_laser_swap(obs, action, previous_swap)
