@@ -1,0 +1,9 @@
+# Confirm a blocked rifle launch · revise
+
+On gameplay baseline `15aff403bd7773b312fdfd9bc7e3765714acd7bd`, exact `1143cd186f3114c3d7268aa2aa744520b842ef96` checked the open barrel and a nearby wall across sampled launch poses and spread. All three Sol roles revised that SHA because its forecast could lower supported feet. `5a12f707ccad0e8f2489f56f4fa91a1375e21d22` corrected the feet and kept the same hold-fire behavior on the directed cases.
+
+The corrected build gained 100.8 and 75.6 first-six outgoing at equal incoming in 1073492 and 1073381 under stock and localized fractional cadence. The live charge control 1073577 matched all commands. Under staged raw collision, 1073492 gained more outgoing while taking 71.66 additional incoming. Full raw replay 1073970 advanced a same-rival hit from 56.8 to 54.7 s. The known valid 54-damage hit in raw1069518 stayed intact. Both models sample geometry and spread with finite bounds.
+
+All 40 fresh parent comparisons tied on placement, including 16 four-mech and eight full-raw pairs. Four verified reference placements tied. In fresh stock 1074011 the exact guard skipped two actually blocked rounds and added 135.24 damage on the next command. That left 10 rounds rather than 9 during the quiet scan at 342.4. The native reload never started, and the rifle ran empty at 345.6. First-six outgoing fell 1424.97→1235.97 and incoming rose 933.6→1011.6. Staged raw collision reproduced the unfavorable six-second trade at tied placement.
+
+Survival approved corrected `5a12f70` based on the confirmed saved shot and tied win. Combat and validation revised after the misplaced reload and raw repeat. The exact corrected build passed 23 units and 300 networkless observations after freeing reproducible build space. Interrupted preliminary runs were excluded. [Subsequent threshold test](5f13d6d-rifle-reload-threshold-review.md)
