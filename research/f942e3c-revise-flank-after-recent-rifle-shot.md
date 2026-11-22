@@ -1,0 +1,7 @@
+# Revise the escape override after a rival fires
+
+Exact `f942e3c1689f5f1d73587bf7e239ab47019e0dae` from `2e2436e4d1ddda95aac8a86c8a18027e276da03c` keeps the native outward evade waypoint in place of an inward finishing flank after detecting a round near a closing wounded rival. In simulated stock seed 1077270 at 95.6 s, the first change is movement only. Damage from rival 9 over six seconds drops 270→225 at equal 324.95 outgoing, life rises 156.05→235.30 s, and placement improves from six to eight points.
+
+The only round at that observation was moving away. Constant-relative-motion projection put it more than 38 m from the hull throughout its future travel. The rival's torso was 0.86 radians off bearing. The faster-close and interpolated focal replays, 44 fresh pairs (20 stock, 16 original four-mech and eight faster-close), and finishable hold seed 1076462 all match the parent commands and placement. All 23 starter-kit tests and 300 timed replies pass.
+
+Survival, combat and validation gave final **revise** votes on this SHA. Survival distinguished the later damage from the early firing marker. Combat identified the receding trajectory. Validation found no alternate-model activation and asked for a forward crossing. The one-command replay moved to 95.8 s when rival 9 was aimed 0.072 radians off bearing and a new round crossed within a projected 1.03 m in 0.101 s. The staged replay saved 90 damage and gained three points at equal early outgoing damage. This motivates a separate exact test of the directed-crossing rule.
