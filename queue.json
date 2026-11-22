@@ -2276,6 +2276,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "d4ac3a4e807a274906dc51b1fc4b3580a2c9f388",
+      "summary": "Aim along a forecast cover edge on a quiet post-kill loot route. Same-rival shot lands 0.1s sooner and adds 84.59 early damage in stock, raw and faster replays. Forty-four fresh parent pairs match commands and placement. 23 tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T09:07:14Z",
+      "parents": [
+        "b764213e3c589dda158b05f09a3a8dd4ad8687d6"
+      ],
+      "reviews": {
+        "commit": "d4ac3a4e807a274906dc51b1fc4b3580a2c9f388",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Independent same-world-point rays confirm the opening at the first aim change. The stock, raw and faster replays land a rifle shot on the same rival one observation earlier, gaining 84.59 early damage at equal incoming. Eight independent full-command pairs tie. The first cube arrives 21.2 seconds later in stock, but it finishes with two extra cubes, takes 85 less total damage and still wins."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Raw and faster opponents reproduce the same visible rival and an actual rifle hit 0.1 seconds sooner, dealing 84.59 more in six seconds at equal incoming. The rear-scan foil matches native commands. The paired rays serve as a route cue. Stock reaches its first cube 21.2 seconds later but finishes with two more and 85 less incoming at the same winning placement."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent raw and faster comparisons preserve contact and the early route, land the rifle hit 0.1 seconds sooner and gain 84.59 damage at equal incoming. All eight fresh faster-close pairs tie full commands and placement. The later stock first cube is a meaningful cost. The earlier rifle hit and kill, with no fresh placement regression, support a practice slot."
+          }
+        }
+      }
     }
   ]
 }
