@@ -345,6 +345,28 @@ class Bot:
             return None
 
         reserve = carry + step * sum(max(0., speed - deceleration * i) for i in (1, 2, 3))
+        offer = obs.get("offer") or {}
+        choices = offer.get("choices", ())
+        picks = {action.get("pick")}
+        if choices and offer.get("expires", math.inf) <= obs["t"] + stride * step:
+            picks.add(0)
+        faster_walk = walk
+        for selected in picks:
+            if selected is None or not 0 <= selected < len(choices):
+                continue
+            effects = self.loadout.upgrades.get(choices[selected]["id"], {}).get("effects", ())
+            offered_walk = walk
+            for effect in effects:
+                if effect.get("path") == "mech.walk_speed":
+                    offered_walk = offered_walk * effect.get("mul", 1) + effect.get("add", 0)
+            faster_walk = max(faster_walk, offered_walk)
+        if faster_walk > walk:
+            # An upgrade can apply before the held movement command ends.
+            faster_speed = speed * faster_walk / walk
+            brake_steps = math.ceil(faster_speed / deceleration)
+            reserve = step * (faster_speed * stride + sum(
+                max(0., faster_speed - deceleration * i) for i in range(1, brake_steps)
+            ))
         end = endpoint(reserve)
         possible = sum(abs(item["pos"][2] - z) < 4.3
                        and math.dist(item["pos"][:2], end) <= reach + reserve for item in items)
