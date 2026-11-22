@@ -1,0 +1,9 @@
+# Combine the replanning dodge with terrain-aware mortar lead · queued
+
+Exact merge `d6251aaff583fce5647062c16fb7a5b367710155` uses both gameplay parents `2e09c9b95971143dd8c5fdcc1fe829715504283c` and `02e756efb79ff95d7be6d82e44e98f51fc1bdba6`. The modern dodge tree gains only the approved mortar wall forecast and legal-pitch fallback. Its gun and laser rules remain as tested in that tree.
+
+In simulated 1060035, the first different command at 130.2s waits on the same target's mortar shot while updating aim. The subsequent shell adds 377.68 actual damage to rival 12 within the first second. Six-second incoming ties at 45 and outgoing goes 739.39→951.88. Survival gains 18.65s and placement points go 4→6. The 1069728 rifle dodge and the older mortar and rifle legality controls retain every command.
+
+All 16 stock squad (1069890–1069905) and 16 standard four-mech (1069920–23) parent pairs tie on every command and placement. Four fast-rival pairs (1069980–83) tie placement. One exercises the revised mortar aim without a trigger or damage change. Six fresh comparisons to the commit-linked 3.71 reference tie placement. Against the older mortar parent, six fresh squad cases yield one lost point and five ties. Repeating the six with the unmerged modern parent reproduces every merged command and outcome, including that loss.
+
+All three reviewers approved the exact merge. The exact build passed 23 unit tests and all 300 networkless sandbox observations. A changed mortar trigger can affect rifle-dodge eligibility because aiming runs before movement override. The tested mortar gain occurs before this interaction, and the relevant mixed fast-rival replay remains harmless. [Modern dodge](2e09c9b-avoid-rifle-contact-through-replan.md) · [Mortar parent](02e756e-preserve-mortar-lead-at-ambiguous-wall.md) · [Practice ledger](../queue.json)
