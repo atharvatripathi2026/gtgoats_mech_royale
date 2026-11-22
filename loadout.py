@@ -1492,10 +1492,12 @@ class Loadout:
                     motion_command=motion_command,
                 )
                 if backup is not None:
-                    if slots[backup].get("cooldown", 0) > self.step + 1e-8:
-                        self.late_arc_command = (backup, self.arc_command_pose(motion_command, aim), "fire" in action)
-                    fire = action.setdefault("fire", [False, False])
-                    fire[backup] = True
+                    late = slots[backup].get("cooldown", 0) > self.step + 1e-8
+                    if not late or not self.late_arc_gear_changes(obs, action, backup):
+                        if late:
+                            self.late_arc_command = (backup, self.arc_command_pose(motion_command, aim), "fire" in action)
+                        fire = action.setdefault("fire", [False, False])
+                        fire[backup] = True
         aim = self.hold_occluded_laser(obs, action, ent, engage, aim, muzzle, steady)
         gun_slot = next((w for w in slots if w and w.get("kind") == "gun"), None)
         mag = (gun_slot.get("stats", {}).get("mag", self.weapons.get("gun", {}).get("mag", 12))
@@ -1523,6 +1525,25 @@ class Loadout:
     @staticmethod
     def arc_command_pose(action, aim):
         return tuple(action["move"]), action["boost"], action["jump"], tuple(aim)
+
+    def late_arc_gear_changes(self, obs, action, slot):
+        if "take" in action and action.get("drop") == slot:
+            return True
+        index = action.get("pick")
+        choices = (obs.get("offer") or {}).get("choices", ())
+        if type(index) is not int or not 0 <= index < len(choices):
+            return False
+        choice = choices[index]
+        effects = self.upgrades.get(choice.get("id"), choice).get("effects", ())
+        forecast_inputs = {
+            "mech.radius", "mech.height", "mech.muzzle_height", "mech.step_up",
+            "mech.walk_speed", "mech.boost_speed", "mech.ground_accel",
+            "mech.turn_rate", "mech.pitch_rate", "mech.min_pitch", "mech.max_pitch",
+            "mech.energy", "mech.energy_regen", "mech.energy_regen_delay",
+            "mech.boost_drain", "mech.jet_drain", "weapons.lightning.energy",
+            "weapons.lightning.range", "weapons.lightning.cone_deg", "weapons.lightning.cooldown",
+        }
+        return any(effect.get("path") in forecast_inputs for effect in effects)
 
     def confirm_late_arc_command(self, action):
         if self.late_arc_command is None:
