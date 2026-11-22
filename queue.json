@@ -2553,6 +2553,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "6782d549f030ff5c5262dceda3578357c5a23f42",
+      "summary": "Hold one confirmed retreat move only when the visible weapon is outside grounded walking reach before rifle reload. Preserves four staged pickup controls and a directed two-point gain at equal early trade. All 48 fresh paired placements tie, and 23 tests and 300 timed checks pass.",
+      "created_at": "2026-11-22T11:52:01Z",
+      "parents": [
+        "1d88230733e46d69cac163ce6e981a196bec296e"
+      ],
+      "reviews": {
+        "commit": "6782d549f030ff5c5262dceda3578357c5a23f42",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact revision verifies the previous retreat velocity and protects the pickup while the rifle is still reloading. It matches the queued controller in all four staged controls, including two original pickups, and retains the natural stock two-point gain at tied first-six damage. Eight fresh owner pairs match every command and placement, and the exact timed check passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Four independent staged controls restored all parent commands and the actual available weapon pickups. The distant positive replay equips the same lightning 5.2 seconds earlier and gains two placement points while taking the same 45 from the same weapon at the same time and dealing the same 583.2 over six seconds. The complete fresh and runtime checks passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The real-engine staged case preserves the lightning pickup when the stored retreat lacked actual motion. Both adverse near-weapon controls are restored and faster and NPC controls tie. Eight independent faster pairs match all commands and placement. The reach bound models ordinary grounded walking, and the exact runtime passed."
+          }
+        }
+      }
     }
   ]
 }
