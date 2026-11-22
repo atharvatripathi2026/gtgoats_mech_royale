@@ -680,6 +680,49 @@ class Loadout:
         self.laser_contact = ident, obs["t"], obs["t"] if lost is None else lost
         return aim_at_target
 
+    def preserve_rifle_during_beam_release(self, obs, action, target, previous, aim, muzzle):
+        """Keep a usable burst when the last engaged rival can take this beam."""
+        if (target is None or target.get("kind") != "mech" or not previous
+                or previous.get("target_id") != target.get("id") or previous.get("intent") != "engage"
+                or previous.get("aim_weapon") != "laser" or not self.nav or not self.nav.loaded
+                or "take" in action or "pick" in action):
+            return False
+        me = obs["self"]
+        fire = action.get("fire", (False, False))
+        laser = next((slot for i, slot in enumerate(me.get("weapons", ())[:2])
+                      if slot and slot.get("kind") == "laser" and not fire[i]), None)
+        if laser is None or laser.get("cooldown", 0) > self.step + 1e-8:
+            return False
+        weapon = self.weapons.get("laser", {}) | laser.get("stats", {})
+        if laser.get("charge", 0) < weapon.get("min_charge", .15):
+            return False
+
+        stats = self.mech | me.get("stats", {})
+        yaw, pitch = me["aim"]
+        turn = stats.get("turn_rate", 4.) * self.step
+        tilt = stats.get("pitch_rate", 3.) * self.step
+        yaw += clamp(angle_delta(aim[0], yaw), -turn, turn)
+        pitch += clamp(clamp(aim[1], stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3))
+                       - pitch, -tilt, tilt)
+        dx, dy, dz = math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch)
+        offset = stats.get("radius", 2.5) + .5
+        radius, height = self.dimensions(target)
+        x, y, z = target["pos"]
+        body = (x, y, z + .49 * height)
+        own_velocity = me.get("vel", (0., 0., 0.))
+        rival_velocity = target.get("vel", (0., 0., 0.))
+        for delay in (0., self.step):
+            origin = tuple(p + delay * v for p, v in zip(muzzle, own_velocity))
+            bore = tuple(p + offset * v for p, v in zip(origin, (dx, dy, dz)))
+            point = tuple(p + delay * v for p, v in zip(body, rival_velocity))
+            delta = tuple(t - p for t, p in zip(point, bore))
+            forward = sum(u * v for u, v in zip(delta, (dx, dy, dz)))
+            gap = math.sqrt(max(0., sum(v * v for v in delta) - forward * forward))
+            if (not 0 < forward < weapon.get("range", 280.) or gap > .8 * radius
+                    or not self.nav.line_clear(origin, bore) or not self.nav.line_clear(bore, point)):
+                return False
+        return True
+
     def first_step_rifle_after_this_command(self, slots):
         stride = self.config.get("match", {}).get("decide_every", 2)
         horizon = (stride + 1) * self.step
@@ -1085,6 +1128,7 @@ class Loadout:
         slots = me.get("weapons", [])
         aim = self.quiet_aim(obs, travel_yaw)
         shots = {}
+        previous = getattr(self, "last_decision", None)
         self.last_decision = {
             "target_id": ent.get("id") if ent else None,
             "intent": "engage" if engage else "track" if ent else "scan",
@@ -1231,7 +1275,12 @@ class Loadout:
                     and previous_mag * .80 <= ammo < mag * .80):
                 self.dodge_reload_floor = previous_mag * .80
             protect = self.dodge_reload_floor is not None and ammo >= self.dodge_reload_floor
-            if ammo == 0 or (not engage and ammo < mag * .80 and not protect):
+            if ammo == 0:
                 action["reload"] = True
+            elif not engage and ammo < mag * .80 and not protect:
+                beam_handoff = (ammo >= 2 and not evade and not climbing and me.get("grounded")
+                                and self.preserve_rifle_during_beam_release(obs, action, ent, previous, aim, muzzle))
+                if not beam_handoff:
+                    action["reload"] = True
         action["aim"] = aim
         return action
