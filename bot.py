@@ -1006,6 +1006,8 @@ class Bot:
         self.brake_toward_sheltered_pursuer(obs, plan, action, settled_shelter)
         self.keep_escape_before_weapon_reversal(obs, plan, action)
         self.loadout.confirm_late_arc_command(action)
+        if not plan["dodge"]:
+            self.loadout.defer_prepared_laser_swap(obs, action, previous_swap)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
         if obstructed_rifle is not None:

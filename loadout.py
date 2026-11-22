@@ -27,6 +27,7 @@ class Loadout:
         self.last_bearing = 0
         self.last_swap = -100
         self.deferred_mortar_swaps = set()
+        self.deferred_laser_swaps = set()
         self.mortar_group = None
         self.last_gun_capacity = None
         self.dodge_reload_floor = None
@@ -1158,6 +1159,85 @@ class Loadout:
                     and all(blast_reaches(point, end, sample, radius - .35) for sample in (center, stopped))):
                 return aim[0], pitch
         return None
+
+    def defer_prepared_laser_swap(self, obs, action, previous_swap):
+        """Keep a native laser charge when a new arc cannot serve this engagement."""
+        item_id, index = action.get("take"), action.get("drop")
+        fire = action.get("fire", ())
+        me = obs["self"]
+        if (item_id is None or item_id in self.deferred_laser_swaps or index is None
+                or len(fire) <= index or sum(fire) != 1 or not fire[index]
+                or not me.get("grounded") or action.get("jump") or "pick" in action
+                or obs.get("projectiles") or obs.get("beams")
+                or not self.nav or not self.nav.loaded or not self.safe_zone_time(obs)):
+            return
+        laser = me["weapons"][index]
+        if (not laser or laser["kind"] != "laser" or laser.get("charge", 0) > 0
+                or laser.get("cooldown", 0) > self.step + 1e-8):
+            return
+        item = next((e for e in obs.get("pickups", ())
+                     if e["id"] == item_id and e["kind"] == "lightning"), None)
+        if item is None:
+            return
+        rivals = [e for e in obs.get("mechs", ()) if e.get("kind") == "mech"]
+        if len(rivals) != 1:
+            return
+        target = rivals[0]
+        if target["id"] != self.last_decision.get("target_id") or self.last_decision.get("intent") != "engage":
+            return
+        stats = self.mech | me.get("stats", {})
+        pos = me["pos"]
+        dx, dy = (p - q for p, q in zip(target["pos"][:2], pos[:2]))
+        vx, vy = (p - q for p, q in zip(target["vel"][:2], me["vel"][:2]))
+        mx, my = action["move"]
+        if dx * mx + dy * my > 0:
+            return
+        beam = self.weapons.get("laser", {}) | laser.get("stats", {})
+        loot = self.config.get("loot", {})
+        horizon = max(loot.get("equip_s", 1.), beam.get("charge", .75))
+        # Avoid giving a visible rival the pickup during the charge window.
+        rival_speed = max(self.mech.get("boost_speed", 19.5), math.hypot(*target["vel"][:2]))
+        if math.dist(target["pos"][:2], item["pos"][:2]) <= loot.get("pickup_radius", 4.) + horizon * rival_speed:
+            return
+        arc_reach = self.weapons.get("lightning", {}).get("range", 45.)
+        own_reach = arc_reach
+        for name in me.get("upgrades", ()):
+            for effect in self.upgrades.get(name, {}).get("effects", ()):
+                if effect.get("path") == "weapons.lightning.range":
+                    own_reach = own_reach * effect.get("mul", 1.) + effect.get("add", 0.)
+        # Enemy equipment upgrades are hidden. Its visible cube total bounds
+        # how many range upgrades it could have chosen.
+        enemy_reach = 0.
+        if "lightning" in target.get("weapons", ()):
+            enemy_reach = arc_reach
+            offers = sum(n <= target.get("cubes", 0)
+                         for n in self.config.get("cubes", {}).get("upgrade_thresholds", ()))
+            for upgrade in self.upgrades.values():
+                for effect in upgrade.get("effects", ()):
+                    if effect.get("path") == "weapons.lightning.range":
+                        for _ in range(min(offers, upgrade.get("max", 1))):
+                            enemy_reach = enemy_reach * max(1., effect.get("mul", 1.)) + max(0., effect.get("add", 0.))
+        offset = stats.get("radius", 2.5) + .5
+        margin = offset + 2 * self.step * stats.get("boost_speed", 19.5)
+        relative_speed2 = vx * vx + vy * vy
+        nearest = clamp(-(dx * vx + dy * vy) / max(1e-8, relative_speed2), 0., horizon)
+        if math.hypot(dx + nearest * vx, dy + nearest * vy) <= max(own_reach, enemy_reach) + margin:
+            return
+        _, height = self.dimensions(target)
+        body = (*target["pos"][:2], target["pos"][2] + .5 * height)
+        base = (*pos[:2], pos[2] + stats.get("muzzle_height", 7.))
+        span = math.dist(base, body)
+        if not offset < span <= beam.get("range", 280):
+            return
+        bore = tuple(p + offset * (q - p) / span for p, q in zip(base, body))
+        if (not self.nav.line_clear(base, bore) or not self.nav.line_clear(bore, body)
+                or self.nav.short_segment_hits_raw_solid(base, bore)
+                or self.nav.short_segment_hits_raw_solid(bore, body)):
+            return
+        action.pop("take")
+        action.pop("drop")
+        self.last_swap = previous_swap
+        self.deferred_laser_swaps.add(item_id)
 
     def defer_firing_mortar_swap(self, obs, action, previous_swap):
         item_id, slot = action.get("take"), action.get("drop")
