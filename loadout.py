@@ -928,6 +928,11 @@ class Loadout:
             if (not self.nav.line_clear(base, bore) or self.nav.line_clear(bore, first_end)
                     or first_end[2] > z + height + .5 * radius):
                 return None
+        # The final sample projects the held movement. A wall before the
+        # muzzle also stops the shell, so confirm the full launch segment.
+        if (self.nav.short_segment_hits_raw_solid(base, base)
+                or not self.nav.short_segment_hits_raw_solid(base, first_end)):
+            return None
         return index
 
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
