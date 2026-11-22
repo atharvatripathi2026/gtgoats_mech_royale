@@ -56,6 +56,7 @@ class Bot:
         self.postkill_refill_confirmation = None
         self.loot_scan_until = -math.inf
         self.loot_scan_point = None
+        self.shelter_grounded_tick = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -763,11 +764,15 @@ class Bot:
             witness = tuple(me["pos"]), (vx, vy), me["aim"][0], (fx, fy)
             self.loot_scan_point = tick + stride, now + .35, plan["target_id"], edge, witness
 
-    def brake_toward_sheltered_pursuer(self, obs, plan, action):
+    def brake_toward_sheltered_pursuer(self, obs, plan, action, settled):
         """Keep the lateral shelter route without closing toward a rifle pursuer."""
         me = obs["self"]
-        if (plan["mode"] != "shelter" or plan["dodge"] or plan["zone_urgency"] >= .15
-                or not me.get("grounded") or not self.nav.loaded or action["boost"] or action["jump"]
+        zone_rules = self.loadout.config.get("zone", {})
+        phases = zone_rules.get("phases", ())
+        if (not phases or obs["t"] >= phases[0].get("hold_s", 0.) or not me.get("in_zone")
+                or obs["zone"]["radius"] != zone_rules.get("start_radius")
+                or plan["mode"] != "shelter" or plan["dodge"] or plan["zone_urgency"] >= .15
+                or not settled or not me.get("grounded") or not self.nav.loaded or action["boost"] or action["jump"]
                 or any(action.get("fire", ())) or "take" in action or "pick" in action
                 or obs.get("projectiles") or obs.get("beams")
                 or any(w and w.get("charge", 0.) > 0. for w in me.get("weapons", ()))):
@@ -811,6 +816,9 @@ class Bot:
         if self.trace:
             start = time.perf_counter()
         me = obs["self"]
+        stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+        settled_shelter = self.shelter_grounded_tick == obs["tick"] - stride
+        self.shelter_grounded_tick = obs["tick"] if me.get("grounded") else None
         pos = me["pos"]
         stats = me.get("stats", {})
         base = self.survival.decide(obs)
@@ -908,7 +916,7 @@ class Bot:
             action["fire"][unsafe_tube] = False
         self.reload_after_wall_round(obs, plan, action)
         self.scan_loot_cover_edge(obs, plan, action)
-        self.brake_toward_sheltered_pursuer(obs, plan, action)
+        self.brake_toward_sheltered_pursuer(obs, plan, action, settled_shelter)
         self.loadout.confirm_late_arc_command(action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
