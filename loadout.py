@@ -1041,6 +1041,11 @@ class Loadout:
             return None
         gun = slots[index]
         weapon = self.weapons.get("gun", {}) | gun.get("stats", {})
+        # A shot at this boundary enables a top-off at the next quiet
+        # observation. Retaining that round can push the reload into combat.
+        reload_floor = .80 * weapon.get("mag", 12)
+        if gun["ammo"] - 1 < reload_floor <= gun["ammo"]:
+            return None
         stats = self.mech | me.get("stats", {})
         offset = stats.get("radius", 2.5) + .5
         reach = offset + dt * weapon.get("speed", 252.)
