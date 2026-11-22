@@ -2023,6 +2023,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "3bf5589803723b38e740affd5e9123e083a860d4",
+      "summary": "Model retained feet and shallow downward support changes during the second mortar sidestep command. Two staged shell delays no longer land the mortar hit; stock and 40 fresh parent pairs match commands. Passed 23 tests and 300 timed sandbox observations.",
+      "created_at": "2026-11-22T05:50:34Z",
+      "parents": [
+        "34187727e17db7fd56b05501608898a0ecaeb411"
+      ],
+      "reviews": {
+        "commit": "3bf5589803723b38e740affd5e9123e083a860d4",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Independent integration confirms grounded feet during the commanded portion of the shallow descent and 0.566 m of minimum shell clearance. The old rejection happens after shell passage. Both staged late arrivals lose their actual damage while stock and the one-tick control preserve original commands. The exact checks and fresh panels support a limited practice test. Nearby interception can still cause splash."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The change only affects continuation. It preserves the original trigger in stock and one-tick control and removes 381.36 and 374.64 six-second incoming in the two later cases, at tied placement and 97.2 less outgoing in each. The original timing and fresh raw and four-mech controls tie and all 300 observations passed. Staged near interceptors show inherited splash exposure."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent three-tick control confirms two movement-only commands avoid actual contact, and the two-tick control corroborates it. The one-tick and stock controls preserve commands, and eight fresh raw pairs tie. The wider vertical test checks projected feet and the raw route. The confirmed benefit is staged timing sensitivity of one recorded engagement, with no additional natural activation."
+          }
+        }
+      }
     }
   ]
 }
