@@ -1,0 +1,5 @@
+# Second two-cube carry witness · 2026-11-22 03:15 UTC
+
+Keep the [existing two-cube condition](3d8eb7c-follow-collected-cube.md). Comparing `3d8eb7c` with `eedfc3a`, eight fresh scaled-hull and raw-sight pairs (1072280–87) and eight fresh public-offer pairs (1072290–97) match every command and placement. The public-offer model also ends directed stock seed 1071844 at 50.25s, before its 153.0s carry. Survival found only that known activation in 490 archived tapes with 29 distinct quiet post-pickup stops. Requiring just one extra cube added no cases. Validation independently found the same sole activation across 55 tapes and 267 reported pickups.
+
+Delaying the threshold-six offer by one second in the stock evaluator moves the plating selection from 153.1s to 154.1s in 1071844. Both extra cubes, early damage exchange and all final metrics persist. The local five-point placement gain does not depend on plating being available in that first second. A different upgrade pool can still change the opportunity. No wider pickup change sought practice approval. Seek a second natural activation before relaxing the pickup threshold.
