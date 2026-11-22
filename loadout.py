@@ -99,7 +99,7 @@ class Loadout:
                 action.update(take=item_id, drop=replace)
                 self.last_swap = obs.get("t", 0)
 
-    def upgrade(self, obs, choices):
+    def upgrade(self, obs, choices, *, replacing_mortar=False):
         me = obs["self"]
         stats = me.get("stats", {})
         late = obs.get("zone", {}).get("next_radius", 380) < 100
@@ -130,7 +130,8 @@ class Loadout:
         gun.update(held.get("gun", {}))
         sustain = "gun" in held and not late and health >= .7
         mortar_hits = [(time, dealt) for time, kind, dealt in self.mortar_window if kind == "mortar"]
-        sustain_mortar = ("mortar" in held and not late and health >= .7 and len(mortar_hits) >= 2
+        sustain_mortar = ("mortar" in held and not replacing_mortar and not late
+                          and health >= .7 and len(mortar_hits) >= 2
                           and mortar_hits[-1][0] - mortar_hits[0][0] >= 1.6
                           and sum(dealt for _, dealt in mortar_hits) >= max(
                               300., sum(dealt for _, kind, dealt in self.mortar_window if kind != "mortar")))
@@ -1596,10 +1597,12 @@ class Loadout:
         action = {}
         self.pickup(obs, action)
         choices = (obs.get("offer") or {}).get("choices", [])
-        if choices:
-            action["pick"] = self.upgrade(obs, choices)
-        energy = me.get("energy", 100)
         slots = me.get("weapons", [])
+        if choices:
+            drop = action.get("drop")
+            replacing_mortar = ("take" in action and drop is not None and slots[drop]["kind"] == "mortar")
+            action["pick"] = self.upgrade(obs, choices, replacing_mortar=replacing_mortar)
+        energy = me.get("energy", 100)
         aim = self.quiet_aim(obs, travel_yaw)
         shots = {}
         previous = getattr(self, "last_decision", None)
