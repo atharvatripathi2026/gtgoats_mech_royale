@@ -35,6 +35,7 @@ class Loadout:
         self.last_target = None
         self.laser_contact = None
         self.last_gun_hit = None
+        self.last_npc_gun_hit = None
         self.used_gun_hit = None
         self.sight = {}
 
@@ -1396,6 +1397,27 @@ class Loadout:
                 return None
         return (x + vx * stop, y + vy * stop, body[2])
 
+    def reserve_rifle_for_wounded_drone(self, obs, gun, muzzle):
+        """Avoid a partial top-off while a just-hit drone can be finished."""
+        contact = self.last_npc_gun_hit
+        if contact is None or any(w and w["kind"] != "gun" for w in obs["self"]["weapons"]):
+            return False
+        weapon = self.weapons["gun"] | gun.get("stats", {})
+        elapsed = obs["t"] - contact[0]
+        if not 0 <= elapsed <= 2 * weapon.get("cooldown", .24):
+            return False
+        enemies = obs.get("mechs", ())
+        if any(e.get("kind") == "mech" for e in enemies):
+            return False
+        projectiles = obs.get("projectiles", ())
+        if not projectiles or any(shot.get("kind") != "npc" for shot in projectiles):
+            return False
+        npc = next((e for e in enemies if e.get("id") == contact[1] and e.get("kind") == "npc"), None)
+        if npc is None or math.dist(npc["pos"], obs["self"]["pos"]) > self.config.get("npc", {}).get("aggro_range", 42):
+            return False
+        return (0 < npc["hp"] <= (gun["ammo"] - 1) * weapon.get("damage", 45)
+                and self.sight_height(muzzle, npc, obs["t"]) is not None)
+
     def decide(self, obs, travel_yaw, evade=False, target_id=None, climbing=False, *,
                line_dodge=False, steady=False, movement=None, motion_command=None):
         self.late_arc_command = None
@@ -1430,6 +1452,9 @@ class Loadout:
                 self.arm_damage[arm] += event.get("amount", 0.)
             if event.get("type") == "hit":
                 target = event.get("target")
+                if arm == "gun" and event.get("amount", 0) > 0 and any(
+                        e.get("id") == target and e.get("kind") == "npc" for e in obs.get("mechs", ())):
+                    self.last_npc_gun_hit = (t, target)
                 if isinstance(target, (int, float)) and 0 <= target < self.config.get("match", {}).get("mechs", 16):
                     self.last_hits[target] = t
             if event.get("type") == "damaged" and event.get("bearing") is not None:
@@ -1609,7 +1634,9 @@ class Loadout:
             protect = self.dodge_reload_floor is not None and ammo >= self.dodge_reload_floor
             if ammo == 0:
                 action["reload"] = True
-            elif not engage and ammo < mag * .80 and not protect:
+            elif (not engage and ammo < mag * .80 and not protect
+                  and not (line_dodge and not action.get("take") and "pick" not in action
+                           and self.reserve_rifle_for_wounded_drone(obs, gun_slot, muzzle))):
                 beam_handoff = (ammo >= 2 and not evade and not climbing and me.get("grounded")
                                 and self.closing_rifle_window(obs, ent, gun_slot, movement)
                                 and self.preserve_rifle_during_beam_release(obs, action, ent, previous, aim, muzzle))
