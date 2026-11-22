@@ -54,6 +54,7 @@ class Bot:
         self.wall_round_refill = None
         self.pending_wall_round = None
         self.postkill_refill_confirmation = None
+        self.loot_scan_until = -math.inf
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -577,6 +578,52 @@ class Bot:
             else:
                 action["reload"] = True
 
+    def scan_loot_cover_edge(self, obs, plan, action):
+        now = obs["t"]
+        events = obs.get("events", ())
+        match_size = self.loadout.config.get("match", {}).get("mechs", 16)
+        if any(event.get("type") == "kill" and type(event.get("target")) is int
+               and 0 <= event["target"] < match_size for event in events):
+            self.loot_scan_until = now + 1.
+        if (now > self.loot_scan_until or not self.nav.loaded or plan["mode"] != "loot"
+                or plan["dodge"] or plan["zone_urgency"] > .1
+                or self.loadout.last_decision.get("intent") != "scan"
+                or action["jump"] or action["boost"] or action.get("reload")
+                or any(action.get("fire", ())) or "take" in action or "pick" in action
+                or obs.get("projectiles") or obs.get("beams") or obs.get("sounds")
+                or any(event.get("type") == "damaged" for event in events)
+                or any(entity.get("kind") == "mech" for entity in obs.get("mechs", ()))):
+            return
+        me = obs["self"]
+        vx, vy, _ = me["vel"]
+        dx, dy = action["move"]
+        weapons = me.get("weapons", ())
+        if (not me.get("grounded") or not me.get("in_zone")
+                or not any(w and w.get("kind") == "gun" and w.get("ammo", 0) >= 2
+                           and not w.get("reload") for w in weapons)
+                or any(w and w.get("charge", 0) for w in weapons)
+                or math.hypot(dx, dy) < .8 or math.hypot(vx, vy) < 6):
+            return
+        heading = math.atan2(dy, dx)
+        if abs(math.remainder(heading - math.atan2(vy, vx), math.tau)) > .2:
+            return
+        sweep = math.remainder(action["aim"][0] - heading, math.tau)
+        if not .6 <= abs(sweep) <= 1.65:
+            return
+        side = math.copysign(1., sweep)
+        bearing = heading + side * math.pi / 6
+        shoulder = heading + side * math.radians(50)
+        x, y, z = me["pos"]
+        eye_height = me.get("stats", {}).get("eye_height", self.loadout.mech.get("eye_height", 8.))
+        eye = x, y, z + eye_height
+        fx, fy = x + vx * .35, y + vy * .35
+        ahead = fx, fy, self.nav.ground(fx, fy) + eye_height
+        edge = ahead[0] + 25 * math.cos(bearing), ahead[1] + 25 * math.sin(bearing), ahead[2]
+        covered = eye[0] + 25 * math.cos(shoulder), eye[1] + 25 * math.sin(shoulder), eye[2]
+        if (self.nav.short_segment_hits_raw_solid(eye, covered)
+                and not self.nav.short_segment_hits_raw_solid(ahead, edge)):
+            action["aim"] = [math.remainder(bearing, math.tau), action["aim"][1]]
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -674,6 +721,7 @@ class Bot:
         if unsafe_tube is not None:
             action["fire"][unsafe_tube] = False
         self.reload_after_wall_round(obs, plan, action)
+        self.scan_loot_cover_edge(obs, plan, action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
         if obstructed_rifle is not None:
