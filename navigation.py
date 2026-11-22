@@ -414,19 +414,19 @@ class Navigator:
         result.reverse()
         return result
 
-    def _stuck(self, x, y, tick):
+    def _stuck(self, x, y, tick, *, open_landing=False):
         if self.anchor is None or tick < self.anchor[2]:
             self.anchor = (x, y, tick)
         elif tick - self.anchor[2] >= 26:
             px, py, _ = self.anchor
             self.anchor = (x, y, tick)
-            if math.hypot(x-px, y-py) < 1.4:
+            if math.hypot(x-px, y-py) < 1.4 and not open_landing:
                 self.escape_end = tick+17
                 self.escape_sign *= -1
                 self.path.clear()
         return tick < self.escape_end
 
-    def steer(self, pos, goal, tick, *, radius=2.5):
+    def steer(self, pos, goal, tick, *, radius=2.5, landing_hull=None):
         x, y = pos[:2]
         gx, gy = goal[:2]
         dx, dy = gx-x, gy-y
@@ -435,7 +435,17 @@ class Navigator:
         if dist < 0.45 and (len(goal) < 3 or len(pos) < 3 or goal[2]-pos[2] < 2):
             self.anchor = None
             return 0.0, 0.0, False
-        stuck = self._stuck(x, y, tick)
+        open_landing = False
+        if landing_hull is not None and self.loaded and dist >= 6:
+            # A clear grounded exit after descent makes this progress sample
+            # unrepresentative. Resume sampling from the landing position.
+            z = pos[2]
+            end = x + 6 * direct_x, y + 6 * direct_y
+            landing_radius, landing_height = landing_hull
+            open_landing = (abs(self.surface(*end) - z) <= self.step_up
+                            and self._ground_segment(x, y, *end, *self._dimensions(landing_radius))
+                            and self.raw_hull_corridor_clear(pos, end, landing_radius, landing_height))
+        stuck = self._stuck(x, y, tick, open_landing=open_landing)
         if not self.loaded:
             return direct_x, direct_y, stuck
 

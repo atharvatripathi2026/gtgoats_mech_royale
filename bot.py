@@ -49,6 +49,7 @@ class Bot:
         self.outbound_hold_phase = None
         self.first_loot_targets = set()
         self.first_cube_rest = False
+        self.loot_descent = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -382,6 +383,29 @@ class Bot:
             return None
         return [vx / walk, vy / walk]
 
+    def quiet_loot_landing_hull(self, obs, plan):
+        me = obs["self"]
+        target = plan["target_id"]
+        tick = obs["tick"]
+        if (plan["mode"] != "loot" or target is None or plan["dodge"] or plan["enemy_pressure"] > .1
+                or plan["zone_urgency"] > .1 or not me.get("in_zone")
+                or obs.get("projectiles") or obs.get("beams")):
+            self.loot_descent = None
+            return None
+        if not me.get("grounded"):
+            self.loot_descent = (target, tick) if me["vel"][2] < -3 else None
+            return None
+        descent = self.loot_descent
+        stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+        if descent is None or descent[0] != target or not 0 < tick - descent[1] <= 2 * stride:
+            self.loot_descent = None
+            return None
+        base = self.loadout.mech
+        stats = me.get("stats", {})
+        scale = 1 + self.loadout.config.get("cubes", {}).get("size_per_cube", .05) * me.get("cubes", 0)
+        return (max(stats.get("radius", 0), base.get("radius", 2.5) * scale),
+                max(stats.get("height", 0), base.get("height", 9) * scale))
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -391,7 +415,9 @@ class Bot:
         base = self.survival.decide(obs)
         plan = self.adaptation.decide(obs, base)
         goal = plan["goal"]
-        ux, uy, jet = self.nav.steer(pos, goal, obs["tick"], radius=stats.get("radius", 2.5))
+        landing_hull = self.quiet_loot_landing_hull(obs, plan)
+        ux, uy, jet = self.nav.steer(pos, goal, obs["tick"], radius=stats.get("radius", 2.5),
+                                      landing_hull=landing_hull)
         move = [ux, uy]
         distance = math.dist(pos[:2], goal[:2])
         if distance < 4 and not jet:
