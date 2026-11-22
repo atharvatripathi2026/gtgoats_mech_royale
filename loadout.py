@@ -25,6 +25,7 @@ class Loadout:
         self.last_hits = {}
         self.last_attacker = None
         self.last_bearing = 0
+        self.last_rear_rifle = False
         self.last_swap = -100
         self.deferred_mortar_swaps = set()
         self.deferred_laser_swaps = set()
@@ -814,6 +815,58 @@ class Loadout:
             return None
         return yaw + math.copysign(abs(gap) - front + .08, gap)
 
+    def protect_reloading_torso(self, obs, aim, action):
+        """Face a confirmed rear shooter while the current weapons recover."""
+        me = obs["self"]
+        if (not self.last_rear_rifle or obs["t"] - self.last_damage > .45
+                or not me.get("grounded") or not me.get("in_zone")
+                or any(action.get("fire", ())) or "take" in action or "pick" in action
+                or not self.nav or not self.nav.loaded):
+            return
+        foes = [rival for rival in obs.get("mechs", ()) if rival.get("kind") == "mech"]
+        rival = next((foe for foe in foes if foe["id"] == self.last_attacker), None)
+        if not rival or "gun" not in rival.get("weapons", ()):
+            return
+        origin, here = rival["pos"], me["pos"]
+        toward = math.atan2(here[1] - origin[1], here[0] - origin[0])
+        if abs(angle_delta(rival["aim"][0], toward)) > .40:
+            return
+        stats = self.mech | me.get("stats", {})
+        muzzle = (*origin[:2], origin[2] + self.mech.get("muzzle_height", 7.))
+        body = (*here[:2], here[2] + .5 * stats.get("height", 9.))
+        if not self.nav.line_clear(muzzle, body) or self.nav.short_segment_hits_raw_solid(muzzle, body):
+            return
+        ready = math.inf
+        for weapon in me.get("weapons", ()):
+            if not weapon:
+                continue
+            if weapon.get("charge", 0.) > 0:
+                return
+            recovery = weapon.get("reload", 0.) if weapon["kind"] == "gun" else weapon.get("cooldown", 0.)
+            ready = min(ready, recovery)
+        if not .45 <= ready < math.inf:
+            return
+        bearing = math.atan2(origin[1] - here[1], origin[0] - here[0])
+        front = math.radians(stats.get("front_arc_deg", 180.)) / 2
+        edge = max(0., front - .18)
+        current_error = angle_delta(me["aim"][0], bearing)
+        if abs(angle_delta(aim[0], bearing)) <= front + .18 or abs(current_error) <= front:
+            return
+        correction = clamp(current_error, -edge, edge)
+        if abs(correction - current_error) <= stats.get("turn_rate", 4.) * ready:
+            protected = angle_delta(bearing + correction, 0.)
+            for other in foes:
+                if other is rival or not other.get("weapons"):
+                    continue
+                x, y, _ = other["pos"]
+                direction = math.atan2(y - here[1], x - here[0])
+                if (abs(angle_delta(aim[0], direction)) <= front
+                        and abs(angle_delta(protected, direction)) > front
+                        and abs(angle_delta(other["aim"][0], direction + math.pi)) <= .4):
+                    return
+            aim[0] = protected
+            self.last_decision["defensive_yaw"] = True
+
     def retain_aim_on_wounded_drone(self, obs, action):
         """Keep a prepared rifle pointed toward the same drone during its dodge."""
         me = obs["self"]
@@ -1592,6 +1645,7 @@ class Loadout:
             if event.get("type") == "damaged" and event.get("bearing") is not None:
                 self.last_damage, self.last_bearing = t, event["bearing"]
                 self.last_attacker = event.get("by")
+                self.last_rear_rifle = event.get("weapon") == "gun" and event.get("rear", False)
         pos = me["pos"]
         muzzle = pos[0], pos[1], pos[2] + stats.get("muzzle_height", self.mech.get("muzzle_height", 7))
         ent, h, engage = self.target(obs, muzzle, evade, target_id)
@@ -1789,6 +1843,8 @@ class Loadout:
                                 and self.preserve_rifle_during_beam_release(obs, action, ent, previous, aim, muzzle))
                 if not beam_handoff:
                     action["reload"] = True
+        if engage:
+            self.protect_reloading_torso(obs, aim, action)
         action["aim"] = aim
         return action
 
