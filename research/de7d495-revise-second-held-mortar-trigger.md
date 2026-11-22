@@ -1,0 +1,9 @@
+# Second-tick mortar self-splash guard · revise
+
+The tested `de7d495cc43121db1e7a27203628c165bec607fc` extends the grounded first-step guard from `afc107dbd75118e379cf2bf91e393c7a11cf6b1c` to a mortar that becomes ready on the second physics tick. This was meant to prevent the same close terrain strike after an additional step of movement and torso rotation.
+
+All 36 simulated parent pairs tied in commands and placement. These comprise 16 campus seeds 1070720–35, 16 four-mech pairs on 1070750–53 and four independent wall-face campus seeds 1070790–93. Three existing mortar controls retain their commands. Six simulated games against the commit-linked 3.71 reference tie placement. The exact build passes 23 unit tests and 300 timed networkless observations.
+
+Combat's 2,338-arm archive screen found three distinct self-damage replays, all with zero cooldown at the original trigger. In 60 archived tapes, validation recorded two physically second-tick triggers and no first-segment terrain block. In native 1070133 at 328.0s with only cooldown staged to .075s, the second-step shot deals 57.92 damage in the default arena and the exact candidate lets it fire. The wall-face reconstruction can shield the shifted second muzzle. The source also classifies `.050000000000001` as a second-tick launch while the arena's epsilon fires it on the first, and all projected bores use original feet height.
+
+Survival voted revise because the staged hit bypasses the guard and a changed floor height can invalidate the muzzle estimate. Combat voted revise because there is no natural second-tick self-hit and the readiness threshold is wrong. Validation voted revise based on the archive, independent ties and staged epsilon test. Leave this branch out of practice. A new test needs a natural second-tick near-wall impact, actual post-move height and consistent readiness classification. [Queued first-step guard](afc107d-avoid-immediate-mortar-self-blast.md)
