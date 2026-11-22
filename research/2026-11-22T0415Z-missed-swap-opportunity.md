@@ -1,0 +1,3 @@
+# A different pickup after a missed swap · 04:15 UTC
+
+Validation voted **withhold** on further swap-cooldown iteration. Replaying the withheld `c4774a5` pickup scorer on 518 archived trace files found three distinct natural failed replacements. None was followed by a different eligible pickup within ten seconds, even with the optional cluster-mortar guard disabled to admit more possibilities. Some files repeat the same match. The only distinct eligible follow-up was deliberately injected laser 8998 in the existing staged test. Look for a natural second pickup and its first actual weapon trade before another variant. [Exact swap review](c4774a5-withhold-confirmed-swap-cooldown.md)
