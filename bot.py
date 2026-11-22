@@ -579,6 +579,30 @@ class Bot:
             else:
                 action["reload"] = True
 
+    def confirm_loot_scan_gap(self, me, stride, edge, witness):
+        """Continue only when the observed hull and torso followed the held command."""
+        old_pos, old_velocity, old_yaw, opening = witness
+        seconds = 2 * stride * self.loadout.step
+        x, y, z = me["pos"]
+        expected = tuple(p + seconds * v for p, v in zip(old_pos[:2], old_velocity))
+        if (math.dist((x, y), expected) > .30
+                or math.dist(me["vel"][:2], old_velocity) > 1.25
+                or abs(self.nav.ground(x, y) - z) > .15):
+            return False
+        stats = me.get("stats", {})
+        yaw_speed = stats.get("turn_rate", self.loadout.mech.get("turn_rate", 4.))
+        desired = math.atan2(edge[1] - old_pos[1], edge[0] - old_pos[0])
+        turn = math.remainder(desired - old_yaw, math.tau)
+        limit = seconds * yaw_speed
+        expected_yaw = old_yaw + max(-limit, min(turn, limit))
+        if abs(math.remainder(me["aim"][0] - expected_yaw, math.tau)) > .08:
+            return False
+        eye_height = stats.get("eye_height", self.loadout.mech.get("eye_height", 8.))
+        return (not self.nav.short_segment_hits_raw_solid((x, y, z + eye_height), edge)
+                and self.nav.raw_hull_corridor_clear(
+                    (x, y, z), opening, stats.get("radius", self.nav.body_radius),
+                    stats.get("height", self.nav.body_height)))
+
     def scan_loot_cover_edge(self, obs, plan, action):
         now = obs["t"]
         prior_point = self.loot_scan_point
@@ -617,15 +641,22 @@ class Bot:
         tick = obs["tick"]
         stride = self.loadout.config.get("match", {}).get("decide_every", 2)
         if prior_point:
-            expected_tick, expires, item_id, edge = prior_point
-            if tick != expected_tick or now > expires or plan["target_id"] != item_id:
+            expected_tick, expires, item_id, edge, witness = prior_point
+            if now > expires or plan["target_id"] != item_id:
                 return
+            if tick != expected_tick:
+                if (tick != expected_tick + stride or witness is None
+                        or not self.confirm_loot_scan_gap(me, stride, edge, witness)):
+                    return
+                witness = None
             bearing = math.atan2(edge[1] - y, edge[0] - x)
             flank = abs(math.remainder(bearing - heading, math.tau))
             if not .28 <= flank <= .85:
                 return
             action["aim"] = [bearing, action["aim"][1]]
-            self.loot_scan_point = tick + stride, expires, item_id, edge
+            if witness is not None:
+                witness = tuple(me["pos"]), (vx, vy), me["aim"][0], witness[3]
+            self.loot_scan_point = tick + stride, expires, item_id, edge, witness
             return
         sweep = math.remainder(action["aim"][0] - heading, math.tau)
         if not .6 <= abs(sweep) <= 1.65:
@@ -646,7 +677,8 @@ class Bot:
                 and self.nav.raw_hull_corridor_clear((x, y, z), (fx, fy),
                     stats.get("radius", self.nav.body_radius), stats.get("height", self.nav.body_height))):
             action["aim"] = [math.atan2(edge[1] - y, edge[0] - x), action["aim"][1]]
-            self.loot_scan_point = tick + stride, now + .35, plan["target_id"], edge
+            witness = tuple(me["pos"]), (vx, vy), me["aim"][0], (fx, fy)
+            self.loot_scan_point = tick + stride, now + .35, plan["target_id"], edge, witness
 
     def act(self, obs):
         if self.trace:
