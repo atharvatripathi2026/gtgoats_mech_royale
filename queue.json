@@ -1873,6 +1873,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "eedfc3ae1db15fb61db8356a74eb4702e2984196",
+      "summary": "Approach a newly selected first cube from rest only when the raw corridor fits the expanded hull. Directed first-cube pickup 13.6s earlier, gaining six stock and three scaled placement points. All 36 fresh placements tie. Passed 23 units and 300 timed checks.",
+      "created_at": "2026-11-22T02:58:28Z",
+      "parents": [
+        "89afa91c2514fa3951271e28b1d0be8141bd20f4"
+      ],
+      "reviews": {
+        "commit": "eedfc3ae1db15fb61db8356a74eb4702e2984196",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The same physically clear first cube is collected sooner in stock and scaled replays, with six and three placement points of gain. The prior scaled adverse replay matches every command. Raw clearance fits the expanded hull, fresh placements tie, and the exact sandbox passes."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "First-selection history prevents the retry after braking. The directed stalled target collects a first cube 13.6 seconds sooner and gains six stock and three scaled points. All 36 fresh placements and six reference placements tie. The exact unit and timed checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Independent scaled four fresh pairs match commands and placement. Exact directed 1071438 restores the original wires and 1071901 retains the genuine first-cube pickup and three-point gain. History fixes the timing case the speed gate missed."
+          }
+        }
+      }
     }
   ]
 }
