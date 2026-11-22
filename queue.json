@@ -1923,6 +1923,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "9241025f3e95ff80d39ffeca72978f6be2ad6486",
+      "summary": "Check extra stopping distance when a live walk upgrade can apply during a two-cube carry. Rejects a staged early-upgrade wall overlap and preserves the known stock pickup. All 24 fresh parent pairs tied and all 300 timed sandbox checks passed.",
+      "created_at": "2026-11-22T03:21:57Z",
+      "parents": [
+        "3d8eb7cfb8238cf726a6d00b1e3c70cdb2315100"
+      ],
+      "reviews": {
+        "commit": "9241025f3e95ff80d39ffeca72978f6be2ad6486",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "At the staged threshold-six offer after two servo stacks, independent continuous terrain geometry finds +167.34mm clearance at the old stopping distance, a 7.24mm overlap if the third upgrade applies before movement, and +27.68mm clearance if it applies later. The exact commit vetoes the early-risk route, retains the no-offer carry, and passes the unit and timed checks. The early ordering remains a staged assumption."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "A selected or expiring Leg Servos offer is allowed to raise walk speed by 8 percent before the held movement finishes. Extending the corridor through later braking covers that interaction while preserving the known pickup under either timing. The terrain evidence is staged. The exact runtime and fresh regressions passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The public evaluator applies upgrades after movement, which can make the second step faster. An earlier official phase is unverified, so checking the full command at the faster pace safely bounds this aligned carry. Considering explicit and imminent default choices avoids relying on their order. The staged veto is meaningful mechanical coverage without an observed natural performance gain."
+          }
+        }
+      }
     }
   ]
 }
