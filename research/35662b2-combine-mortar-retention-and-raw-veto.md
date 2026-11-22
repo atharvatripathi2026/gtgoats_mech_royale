@@ -1,0 +1,9 @@
+# Combine mortar retention and the raw launch veto · queued
+
+Exact `35662b22040dc59e5aa4a9163505d97e5e62130b` has two gameplay parents, `5a920eaf7e6d485f5ee350e73775f0005d857e98` and `9194ae5616233d5752a567f1535c895abb7cf431`. When the pickup selector keeps the existing mortar, the launch veto can still check that weapon in the same decision. No merge-time policy changes were needed.
+
+In simulated 1070773 against the raw-veto parent, the first difference at 201.4s skips the laser swap. Placement moves 7→15 in the stock arena and 7→9 under independent raw geometry. Stock six-second incoming falls 25 with equal outgoing. Raw six-second incoming falls 25 and outgoing falls 49.87 before the later retained mortar hits. All five confirmed targets remained connected by raw blast paths at pickup. The prior productive swap and the established grounded, direct and loft controls match their respective parents.
+
+A staged same-decision test adds an in-range laser and a tracked group to the known grounded replay. The retention-only parent holds the mortar and vetoes all three launch poses. The raw-veto parent selects the laser. The merge keeps the mortar at all three poses, preserving the two real wall vetoes and allowing the raster-only shot. This stages the interaction and does not measure new match performance.
+
+All 56 fresh pairs match commands and placement. Stock campus uses 1071220–31 and 1071240–51. Stock four-mech uses 1071260–62 and 1071270–72 across four combinations each. Independent raw campus uses 1071200–03 and 1071208–11. Six simulated comparisons with the commit-linked 3.71 reference also match commands and placement. The exact build passes 23 unit tests and all 300 timed networkless observations. Survival, combat and validation approved this exact merge. [Retention parent](5a920ea-retain-mortar-for-a-confirmed-cluster.md) · [Raw-veto parent](9194ae5-confirm-full-raw-mortar-launch-ray.md) · [Practice ledger](../queue.json)
