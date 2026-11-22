@@ -450,10 +450,11 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def late_arc_bases(self, me, origin, command, stats):
+    def late_arc_bases(self, obs, origin, command, stats):
         """Forecast two supported ground steps using the outgoing movement."""
         if command is None or command["jump"]:
             return None
+        me = obs["self"]
         motion = self.mech | stats
         x, y, z = me["pos"]
         muzzle_height = origin[2] - z
@@ -468,7 +469,12 @@ class Loadout:
         vx, vy = me["vel"][:2]
         delta = motion.get("ground_accel", 58.5) * self.step
         radius, height = motion.get("radius", 2.5), motion.get("height", 9.)
-        dims = self.nav._dimensions(radius)
+        cubes = self.config.get("cubes", {})
+        reach = cubes.get("pickup_radius", 3.5)
+        growth = cubes.get("size_per_cube", .05)
+        growth_per_cube = growth / (1. + growth * me.get("cubes", 0))
+        possible_cubes = set()
+        grown = 1.
         bases = []
         for _ in range(2):
             dx, dy = tx - vx, ty - vy
@@ -477,13 +483,27 @@ class Loadout:
             vy += dy * factor
             end = x + vx * self.step, y + vy * self.step
             floor = self.nav.surface(*end) + floor_offset
+            dims = self.nav._dimensions(radius * grown)
             if (not z - .03 <= floor <= z + motion.get("step_up", 1.2)
                     or not self.nav._ground_segment(x, y, *end, *dims)
-                    or not self.nav.raw_hull_corridor_clear((x, y, z), end, radius, height)):
+                    or not self.nav.raw_hull_corridor_clear((x, y, z), end, radius * grown, height * grown)):
                 return None
             x, y = end
             z = max(z, floor)
-            bases.append((x, y, z + muzzle_height))
+            for cube in obs.get("cubes", ()):
+                point = cube["pos"]
+                if math.dist(end, point[:2]) <= reach + .15 and abs(z - point[2]) <= 4.15:
+                    possible_cubes.add(cube["id"])
+            count = len(possible_cubes)
+            if count > 2:
+                return None
+            grown = 1. + count * growth_per_cube
+            if possible_cubes and not self.nav.raw_hull_corridor_clear(
+                (x, y, z), end, radius * grown, height * grown,
+            ):
+                return None
+            sizes = (1. + n * growth_per_cube for n in range(count + 1))
+            bases.append(tuple(((x, y, z + muzzle_height * size), radius * size + .5) for size in sizes))
         return bases
 
     def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats, *,
@@ -523,7 +543,7 @@ class Loadout:
                 return None
         current = me.get("aim", aim)
         speed = me.get("vel", (0., 0., 0.))
-        motion_bases = self.late_arc_bases(me, origin, motion_command, stats) if verify_motion else None
+        motion_bases = self.late_arc_bases(obs, origin, motion_command, stats) if verify_motion else None
         if verify_motion and motion_bases is None:
             return None
         turn = self.step * stats.get("turn_rate", 4)
@@ -539,9 +559,11 @@ class Loadout:
             pitch = current[1] + clamp(aim[1] - current[1], -slew_steps * tilt, slew_steps * tilt)
             direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
             linear = tuple(x + step * self.step * v for x, v in zip(origin, speed))
-            bases = (linear, motion_bases[step - 1]) if step and motion_bases else (linear,)
-            for base in bases:
-                muzzle = tuple(x + offset * v for x, v in zip(base, direction))
+            bases = ((linear, offset),)
+            if step and motion_bases:
+                bases += motion_bases[step - 1]
+            for base, muzzle_offset in bases:
+                muzzle = tuple(x + muzzle_offset * v for x, v in zip(base, direction))
                 if not self.nav.line_clear(base, muzzle):
                     return None
                 samples.append((step, yaw, base, muzzle))
