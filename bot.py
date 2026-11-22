@@ -217,6 +217,44 @@ class Bot:
         self.outbound_hold_until = t + 1.2
         return True
 
+    def quiet_reachable_weapon(self, obs, plan, action, jet):
+        me = obs["self"]
+        if (not self.nav.loaded or plan["mode"] != "loot" or plan["dodge"]
+                or plan["zone_urgency"] > .25 or plan["enemy_pressure"] > .1
+                or not me.get("grounded") or not me.get("in_zone") or jet or action["jump"] or action["boost"]
+                or None not in me.get("weapons", ()) or "take" in action or any(action["move"])
+                or any(action.get("fire", ())) or obs.get("projectiles")
+                or obs.get("beams") or self.loadout.last_decision.get("target_id") is not None
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+            return None
+        item = next((item for item in obs.get("pickups", ()) if item["id"] == plan["target_id"]), None)
+        if item is None:
+            return None
+        reach = self.survival.rules.get("loot", {}).get("pickup_radius", 4.)
+        x, y, z = me["pos"]
+        px, py, pz = item["pos"]
+        distance = math.hypot(px - x, py - y)
+        if not reach + .20 <= distance <= reach + 2. or abs(z - pz) > 3.5:
+            return None
+        radius = me.get("stats", {}).get("radius", 2.5)
+        dims = self.nav._dimensions(radius)
+        if self.nav._ground_segment(x, y, px, py, *dims):
+            return None
+        heading = math.atan2(y - py, x - px)
+        zone = obs["zone"]
+        for degrees in (0, 20, -20, 40, -40):
+            angle = heading + math.radians(degrees)
+            qx, qy = px + (reach - .45) * math.cos(angle), py + (reach - .45) * math.sin(angle)
+            distance = math.hypot(qx - x, qy - y)
+            qz = self.nav.surface(qx, qy)
+            if (distance > 2.55 or abs(qz - z) > .65 or abs(qz - pz) > 3.5
+                    or math.dist((qx, qy), zone["center"]) + radius + 6 >= zone["radius"]
+                    or not self.nav._ground_segment(x, y, qx, qy, *dims)):
+                continue
+            scale = 1 / max(2., distance)
+            return [(qx - x) * scale, (qy - y) * scale]
+        return None
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -281,6 +319,9 @@ class Bot:
             self.last_escape_grace = obs["t"]
         if self.quiet_outbound_hold(obs, plan, action):
             action["move"] = [0., 0.]
+        pickup_move = self.quiet_reachable_weapon(obs, plan, action, jet)
+        if pickup_move is not None:
+            action["move"] = pickup_move
         rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
         if rifle_escape is not None:
             action["move"] = list(rifle_escape)
