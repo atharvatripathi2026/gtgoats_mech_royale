@@ -1646,6 +1646,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "b814475e2c0f558bb949a31d4fcae42a6e781ef6",
+      "summary": "Raise a blocked native mortar arc only with plausible wall-clear splash. Preserves one 148.03 hit in native and shield-aware replays, suppresses earlier blocked splash changes, and ties all 36 fresh parent placements. Passed 23 units and 300 timed sandbox observations.",
+      "created_at": "2026-11-22T00:51:11Z",
+      "parents": [
+        "d6251aaff583fce5647062c16fb7a5b367710155"
+      ],
+      "reviews": {
+        "commit": "b814475e2c0f558bb949a31d4fcae42a6e781ef6",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The clear 148.03 splash remains at zero early incoming, the blocked case restores the parent, and all 32 fresh standard comparisons retain every command. The linked one-point result also occurs on the unmerged parent."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The real clear 148.03 splash repeats in native and wall-aware simulation with equal incoming and placement. Both older blocked shell changes are absent. Sixteen squad pairs, sixteen four-mech pairs and the exact 300-observation check support practice."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact wall-aware directed replay retains the clear 148.03 splash with equal incoming and placement. Four fresh same-evaluator comparisons fully tie. The grounded braking estimate is limited and the positive replay shows a target reversal and return."
+          }
+        }
+      }
     }
   ]
 }
