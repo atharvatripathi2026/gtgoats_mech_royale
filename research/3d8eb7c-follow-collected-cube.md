@@ -1,0 +1,9 @@
+# Carry momentum after a confirmed cube pickup
+
+`3d8eb7cfb8238cf726a6d00b1e3c70cdb2315100` descends from `eedfc3ae1db15fb61db8356a74eb4702e2984196`. In quiet grounded loot mode, one command preserves current velocity when a pickup has just been reported and it puts two nearby visible cubes within reach. Both cubes would stay outside pickup range under the bot's usual braking command. The path check covers ground support, zone clearance and raw terrain for the hull after possible growth, including braking distance.
+
+In simulated stock campus seed 1071844 at 153.0s, the changed command collects two cubes (4→6), unlocks plating and adds 32.4 gun damage to the same opponent through six seconds at equal 45 incoming. Placement points rise 5→10, kills 4→9 and total incoming drops 337.75. The run ends 8.4s sooner. The nearest raw wall is at least 3.770m away during collection and 3.626m through braking for a 3.25m post-pickup radius. The older weapon pickup and first-cube controls at 1071185 and 1071901 preserve every command.
+
+All 44 fresh parent pairs match placement and commands. These are 24 stock campus pairs (1072100–07 and 1072140–55), 16 four-mech comparisons (1072170–73 across campus and generated pursuit and crossfire), and four combined scaled-hull and raw-sight campus pairs (1072210–13). The alternative hull models eliminate the bot before the directed pickups. Six fresh comparisons to officially scored `03a8f93` produce one placement gain and five ties. The first command change in the gain is inherited loadout behavior.
+
+Survival, combat and validation approved the exact commit. All 23 unit tests and all 300 timed sandbox ticks passed. The examined stock trigger had no simultaneous upgrade selection. A movement upgrade during the held command could alter the second step in a different offer pool. The pickup event verifies cargo and recent collection, while the local grouping is based on the cubes still visible.
