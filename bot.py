@@ -932,11 +932,25 @@ class Bot:
             return False
         held = {w["kind"]: w for w in me.get("weapons", ()) if w}
         gun = held.get("gun")
-        if gun is None or me["vel"][2] <= 0:
+        if gun is None:
             return True
         # Releasing the jet helps only if the selected mech can enter a firing
         # angle before an extended descent leaves the bot exposed.
         horizon = 1.25
+        if me["vel"][2] <= 0:
+            zone = obs["zone"]
+            center, ring = zone["center"], zone["radius"]
+            # Preserve the existing descent if continued horizontal motion
+            # could carry the chassis out of the circle during this forecast.
+            start = max(obs["t"], zone["shrink_start"])
+            elapsed = max(0., obs["t"] + horizon - start)
+            share = min(1., elapsed / max(.01, zone["shrink_end"] - start))
+            final = zone["next_center"]
+            future = tuple(c + share * (n - c) for c, n in zip(center, final))
+            future_ring = ring + share * (zone["next_radius"] - ring)
+            coast = x + horizon * vx, y + horizon * vy
+            if math.dist(coast, future) + stats.get("radius", 2.5) >= future_ring:
+                return True
         sx = x + horizon * (vx + walk * ux) * .5
         sy = y + horizon * (vy + walk * uy) * .5
         own_z = max(self.nav.surface(sx, sy), z + horizon * me["vel"][2]
