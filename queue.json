@@ -1848,6 +1848,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "89afa91c2514fa3951271e28b1d0be8141bd20f4",
+      "summary": "Reach a quiet weapon pickup when its center route stalls and a slot is empty. Preserve any requested pickup. Directed mortar recovery gains five stock and three raw-sight placement points. All 36 fresh placements tie. Passed 23 units and 300 networkless checks.",
+      "created_at": "2026-11-22T02:40:48Z",
+      "parents": [
+        "ab5877abf8a5765b0aa1767cd15459e873d04a4f"
+      ],
+      "reviews": {
+        "commit": "89afa91c2514fa3951271e28b1d0be8141bd20f4",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The staged competing weapon is still collected. The genuine mortar nudge retains the five-point gain, the cube control and 32 stock pairs match commands, and the six scored-reference placements tie. Exact runtime and independent raw checks passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The existing take proceeds after ordinary movement in the competing-pickup stage. Native 1071185 still acquires the mortar at 126.0 seconds and gains five points. Fresh stock and reference placements tie, and the exact build passed 23 units and 300 sandbox observations."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "An active raw-squad sight replay preserves the same actual mortar pickup with a three-point gain. One fresh pair equips lightning much earlier at tied placement with mixed later trades, while three match commands. The revised gate resolves the staged native pickup loss."
+          }
+        }
+      }
     }
   ]
 }
