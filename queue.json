@@ -2251,6 +2251,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "b764213e3c589dda158b05f09a3a8dd4ad8687d6",
+      "summary": "Confirm the quiet post-kill refill on the next observation, canceling when a rival or damage appears. Preserves the stock refill repair and recovers 180 early damage in a staged immediate recontact. 36 fresh ties, 23 unit tests and 300 sandbox checks.",
+      "created_at": "2026-11-22T08:53:22Z",
+      "parents": [
+        "7c245d22d90ec1a99d46f84efbfa434981744e99"
+      ],
+      "reviews": {
+        "commit": "b764213e3c589dda158b05f09a3a8dd4ad8687d6",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact build rejects damage on either observation and preserves the stock refill result. Eight independent native pairs and both natural recontact foils match commands and placement. The staged benefit is limited to a cue on the next observation."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Fractional cadence preserves the earlier refill repair. The staged next-observation rival restores 180 actual early outgoing at equal incoming and placement, while .2-second arrival loses 45 at tied placement. Fresh comparisons and the exact sandbox checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Four fresh raw pairs match commands and placement. The exact candidate preserves the next-observation stage gain and cancels on observed damage even when no projectile remains. Later recontact can still carry a short readiness cost."
+          }
+        }
+      }
     }
   ]
 }
