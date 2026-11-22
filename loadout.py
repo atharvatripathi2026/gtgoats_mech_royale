@@ -450,7 +450,7 @@ class Loadout:
                 return None
         return math.atan2(ay, ax), math.atan2(az, math.hypot(ax, ay))
 
-    def late_arc_bases(self, obs, origin, command, stats):
+    def late_arc_bases(self, obs, origin, command, stats, move_speeds=None):
         """Forecast two supported ground steps using the outgoing movement."""
         if command is None or command["jump"]:
             return None
@@ -464,8 +464,7 @@ class Loadout:
         speed = (motion.get("boost_speed", 19.5) if command["boost"]
                  else motion.get("walk_speed", 11.7))
         ux, uy = command["move"]
-        scale = speed / max(1., math.hypot(ux, uy))
-        tx, ty = ux * scale, uy * scale
+        move_norm = max(1., math.hypot(ux, uy))
         vx, vy = me["vel"][:2]
         delta = motion.get("ground_accel", 58.5) * self.step
         radius, height = motion.get("radius", 2.5), motion.get("height", 9.)
@@ -476,8 +475,9 @@ class Loadout:
         possible_cubes = set()
         grown = 1.
         bases = []
-        for _ in range(2):
-            dx, dy = tx - vx, ty - vy
+        for step_speed in (move_speeds if move_speeds is not None else (speed, speed)):
+            scale = step_speed / move_norm
+            dx, dy = ux * scale - vx, uy * scale - vy
             factor = min(1., delta / max(.001, math.hypot(dx, dy)))
             vx += dx * factor
             vy += dy * factor
@@ -507,7 +507,7 @@ class Loadout:
         return bases
 
     def direct_lightning_on_threat(self, obs, selected, aim, origin, offset, stats, *,
-                                   reserve_boost=False, motion_command=None):
+                                   reserve_boost=False, motion_command=None, new_move_speed=None):
         """Use an idle arc against a close aimed rival on the existing line."""
         if not self.nav or not self.nav.loaded:
             return None
@@ -546,6 +546,15 @@ class Loadout:
         motion_bases = self.late_arc_bases(obs, origin, motion_command, stats) if verify_motion else None
         if verify_motion and motion_bases is None:
             return None
+        if verify_motion and new_move_speed is not None:
+            field, default = ("boost_speed", 19.5) if motion_command["boost"] else ("walk_speed", 11.7)
+            move_speed = stats.get(field, self.mech.get(field, default))
+            # Check an offer applied both before movement and between the two steps.
+            for speeds in ((new_move_speed, new_move_speed), (move_speed, new_move_speed)):
+                upgraded = self.late_arc_bases(obs, origin, motion_command, stats, speeds)
+                if upgraded is None:
+                    return None
+                motion_bases = [tuple(dict.fromkeys(old + new)) for old, new in zip(motion_bases, upgraded)]
         turn = self.step * stats.get("turn_rate", 4)
         tilt = self.step * stats.get("pitch_rate", 3)
         sample_steps = (0, 1, 2) if second_step else (0, 1)
@@ -1515,7 +1524,15 @@ class Loadout:
                 )
                 if backup is not None:
                     late = slots[backup].get("cooldown", 0) > self.step + 1e-8
-                    if not late or not self.late_arc_gear_changes(obs, action, backup):
+                    gear = self.late_arc_gear_effects(obs, action, backup) if late else ()
+                    if gear and motion_command is not None:
+                        new_speed = self.late_arc_move_speed(stats, motion_command, gear)
+                        if new_speed is not None and self.direct_lightning_on_threat(
+                            obs, ent, aim, muzzle, offset, stats, reserve_boost=evade and not line_dodge,
+                            motion_command=motion_command, new_move_speed=new_speed,
+                        ) == backup:
+                            gear = ()
+                    if gear == ():
                         if late:
                             self.late_arc_command = (backup, self.arc_command_pose(motion_command, aim), "fire" in action)
                         fire = action.setdefault("fire", [False, False])
@@ -1548,15 +1565,14 @@ class Loadout:
     def arc_command_pose(action, aim):
         return tuple(action["move"]), action["boost"], action["jump"], tuple(aim)
 
-    def late_arc_gear_changes(self, obs, action, slot):
+    def late_arc_gear_effects(self, obs, action, slot):
         if "take" in action and action.get("drop") == slot:
-            return True
+            return None
         index = action.get("pick")
-        choices = (obs.get("offer") or {}).get("choices", ())
-        if type(index) is not int or not 0 <= index < len(choices):
-            return False
-        choice = choices[index]
-        effects = self.upgrades.get(choice.get("id"), choice).get("effects", ())
+        offer = obs.get("offer") or {}
+        choices = offer.get("choices", ())
+        if not choices:
+            return ()
         forecast_inputs = {
             "mech.radius", "mech.height", "mech.muzzle_height", "mech.step_up",
             "mech.walk_speed", "mech.boost_speed", "mech.ground_accel",
@@ -1565,7 +1581,25 @@ class Loadout:
             "mech.boost_drain", "mech.jet_drain", "weapons.lightning.energy",
             "weapons.lightning.range", "weapons.lightning.cone_deg", "weapons.lightning.cooldown",
         }
-        return any(effect.get("path") in forecast_inputs for effect in effects)
+        def relevant_effects(choice):
+            effects = self.upgrades.get(choice.get("id"), choice).get("effects", ())
+            return tuple(effect for effect in effects if effect.get("path") in forecast_inputs)
+
+        effects = relevant_effects(choices[index]) if type(index) is int and 0 <= index < len(choices) else ()
+        # The default may apply before the late shot if the offer expires.
+        if offer.get("expires", math.inf) <= obs["t"] + 2 * self.step:
+            return None if effects or relevant_effects(choices[0]) else ()
+        return effects
+
+    def late_arc_move_speed(self, stats, command, effects):
+        paths = [effect.get("path") for effect in effects]
+        if len(set(paths)) != len(paths) or set(paths) - {"mech.walk_speed", "mech.boost_speed"}:
+            return None
+        field, default = ("boost_speed", 19.5) if command["boost"] else ("walk_speed", 11.7)
+        effect = next((rule for rule in effects if rule["path"] == "mech." + field), {})
+        current = stats.get(field, self.mech.get(field, default))
+        speed = current * effect.get("mul", 1.) + effect.get("add", 0.)
+        return speed if math.isfinite(speed) and speed > 0 else None
 
     def confirm_late_arc_command(self, action):
         if self.late_arc_command is None:
