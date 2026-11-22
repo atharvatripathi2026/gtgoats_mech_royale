@@ -2805,6 +2805,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "1e20736f3db4b5e7f8ce7104c18b80a6e1d5df14",
+      "summary": "Delay an out-of-range arc replacement for a sooner-ready mortar after a confirmed hit. Stock and phased replays add 469.56 actual mortar damage, save 45 early incoming and gain six points. All 32 fresh placements tie. 23 units and 300 timed replies pass.",
+      "created_at": "2026-11-22T15:38:08Z",
+      "parents": [
+        "8928cc50f041e119821370e94f36e0e18c26cedc"
+      ],
+      "reviews": {
+        "commit": "1e20736f3db4b5e7f8ce7104c18b80a6e1d5df14",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Stock and phase retain a confirmed extra 469.56 mortar damage and take 45 less early incoming. The pickup remains within range in the observed first deferrals and visible opponents are far away. Hidden pickup competition and eventual pickup access are open tradeoffs."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Both actor orders reproduce actual added mortar damage and 45 less early incoming. Masking the observed hit restores the equipment outcome. The prior swap control and owner fresh matches tie on all commands. Exact networkless kit passes. Deferring can forgo the item, and the range forecast applies to visible rivals."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent phase replay confirms real extra retained-arm mortar damage and lower six-second incoming. The observation confirms the previous target, while the useful later shell can hit a different one. The closure bound uses visible opponents, and item access can be lost."
+          }
+        }
+      }
     }
   ]
 }
