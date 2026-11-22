@@ -1,0 +1,7 @@
+# Revise the mortar window during a fast descent
+
+Exact `4015a78bb3be6e61c784976fc48968060a63dbf5` descends from `0873ad98e417111d1d0a0cd13826dc942d6fa78b`. It keeps the native ballistic aim on a fast descent when the shortened wall lead falls outside the current aim tolerance, a loaded rifle is available and nearby launch paths are clear. It changes no movement.
+
+In stock and independent all-move-first 1079291, the earlier mortar at 136.0 s opens a rifle trigger at 136.1 s before touchdown at 136.2 s. Both new launches miss. The parent instead gets 56.26 splash, with zero early incoming on both sides. The trial preserves the separate earlier 130.61 splash and gains three placement points and 26.8 s of survival. A timed transfer isolated the two schedule commands as sufficient for the directed result. The interpolated replay and 44 fresh exact pairs tied on commands and placement. All 23 units and 300 timed networkless observations passed. A separate 300-observation networkless playback exercised the changed command in 1.351 ms.
+
+Survival and combat voted **revise** because both additional early triggers missed and replaced a real parent hit. Validation voted **approve for practice** because the source reproduced the independently isolated schedule in both active evaluators. Keep the exact commit out of the queue. Next seek a controlled prelanding schedule that preserves actual target contact beyond the immediate muzzle clearance. [Prior reference comparison](2026-11-22T145633Z-cycle-handoff.md)
