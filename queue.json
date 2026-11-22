@@ -1595,6 +1595,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "2e09c9b95971143dd8c5fdcc1fe829715504283c",
+      "summary": "Avoid imminent rifle contact with a small grounded turn that stays clear through the first replan tick. Native fresh: one placement gain, 15 ties. Earlier losses restored, four-mech and phased ties, 23 unit checks and 300 timed sandbox observations.",
+      "created_at": "2026-11-22T00:10:03Z",
+      "parents": [
+        "f995228262f06e394a5b32ea598c908abd22d990"
+      ],
+      "reviews": {
+        "commit": "2e09c9b95971143dd8c5fdcc1fe829715504283c",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The extra physics tick removes the previous delayed-hit loss and preserves the confirmed 45-damage avoid. Fresh 1069728 avoids 48.6 early damage and gains one kill and one place, with 364.5 more total incoming over an extra 18.85 seconds."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Both former adverse controls fully restore parent commands. The new active native replay avoids 48.6 and adds 87.5 damage through six seconds, and the existing 1069587 round is avoided at equal output. Total incoming is higher in the longer fresh match."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact native panel has one placement gain and 15 ties, and all four independent phased comparisons fully match the parent. The fresh gain contains a real 48.6 early avoidance. The positive control remains and the previous regression restores the parent commands."
+          }
+        }
+      }
     }
   ]
 }
