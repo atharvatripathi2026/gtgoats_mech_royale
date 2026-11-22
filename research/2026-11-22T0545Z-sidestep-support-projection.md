@@ -1,0 +1,5 @@
+# Foot support in the delayed shell replay
+
+The queued `34187727e17db7fd56b05501608898a0ecaeb411` rejects its second command at 151.5 s after looking seven physics steps ahead. In the two-tick-delayed replay on seed 1071431, the seventh sampled surface is 0.08092 m below the starting feet. The independent stepped arena reconstruction finds the first two commanded steps retain grounded feet at 5.99470 m above surfaces 5.98290 and 5.98102 m. The modeled hull clears the shell by at least 0.566 m. The feet reach the lower surface on step seven without a raw overlap.
+
+After step five the shell's along-path distance of 3.519 m already exceeds the 2.5 m cylinder radius and grows with a 71.19 m/s horizontal shell speed. The seventh terrain sample is well beyond the body-contact interval. This projection depends on the repeated selected heading and local physics. Intercepted splash remains possible while the shell passes nearby. A future test could stop the direct-contact projection at measured passage while separately evaluating splash. [Initial delayed replay](3418772-grounded-mortar-sidestep.md)
