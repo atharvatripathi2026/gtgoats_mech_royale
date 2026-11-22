@@ -2503,6 +2503,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "78418f5942e739a608756b71f44dfcf351fb8a2c",
+      "summary": "Brake inward shelter travel only on settled ground before the first contraction. Preserves a directed simulated gain, restores parent commands on two adverse controls, and ties 48 fresh pairs. All 23 tests and 300 timed replies passed.",
+      "created_at": "2026-11-22T11:28:12Z",
+      "parents": [
+        "07c9f8191e1d931055fa13d49e4f4e8c714685b7"
+      ],
+      "reviews": {
+        "commit": "78418f5942e739a608756b71f44dfcf351fb8a2c",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The opening-only and settled-ground scope retains the seven-point stock replay gain and restores every parent command in the faster and late losing replays. The positive case takes 90 less damage and gives up 323.1 damage in six seconds. Eight fresh owner pairs tie every command and placement and the exact runtime passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The revision keeps the fire, charge, pickup, upgrade, dodge and projectile gates. The completed fresh panels show no candidate-specific placement loss and the exact 23 and 300 checks pass. Stock saves 90 incoming at a 323.1 outgoing cost, and the known faster and later adverse replays return to parent behavior."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact revision did not rearm after landing and restored every parent command in the independent faster replay. Eight separate faster-close pairs match every command and placement. The consecutive grounded observations establish sampled ground contact, and the stock gain remains a directed result."
+          }
+        }
+      }
     }
   ]
 }
