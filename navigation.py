@@ -76,6 +76,7 @@ class Navigator:
                                    for j in range(self.h) for i in range(self.w)))
         self.solids = [()] * n
         self.projectile_prisms = []
+        self.hull_prisms = []
         for prism in world.get("prisms", []):
             self._rasterize(prism)
         # Every cell keeps all vertical intervals, including gaps below bridges.
@@ -101,9 +102,14 @@ class Navigator:
 
     def _rasterize(self, prism):
         edges = []
+        outline = []
         for flat in (prism["ring"], *prism.get("holes", [])):
             points = list(zip(flat[::2], flat[1::2]))
             for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]):
+                dx, dy = x2 - x1, y2 - y1
+                length2 = dx * dx + dy * dy
+                if length2:
+                    outline.append((x1, y1, dx, dy, length2))
                 if y2 != y1:
                     edges.append((min(y1, y2), max(y1, y2), x1, y1, (x2-x1)/(y2-y1)))
         if not edges:
@@ -112,6 +118,7 @@ class Navigator:
         xs = prism["ring"][::2]
         bottom, top = float(prism["base"]), float(prism["top"])
         self.projectile_prisms.append((min(xs), max(xs), ymin, ymax, bottom, top, edges))
+        self.hull_prisms.append((min(xs), max(xs), ymin, ymax, bottom, top, outline))
         first = max(0, math.ceil((ymin - self.oy) / CELL))
         last = min(self.h, math.ceil((ymax - self.oy) / CELL))
         span = ((bottom, top),)
@@ -247,6 +254,35 @@ class Navigator:
             if entry <= exit:
                 low, high = sorted((z + entry * dz, z + exit * dz))
                 if low <= tz + height and high >= tz:
+                    return False
+        return True
+
+    def raw_hull_corridor_clear(self, start, end, radius, height):
+        """Check a short grounded route against raw prism outlines and holes."""
+        x, y, z = start
+        ex, ey = end
+        steps = max(1, math.ceil(math.dist((x, y), end) / .20))
+        points = [(x + (ex - x) * i / steps, y + (ey - y) * i / steps) for i in range(steps + 1)]
+        floor = [self.ground(*point) for point in points]
+        low, high = min(z, *floor) - .1, max(z, *floor) + height + .1
+        # Reserve half the sample spacing plus a small steering allowance.
+        clearance = radius + .15
+        limit = clearance * clearance
+        for left, right, bottom, top, base, roof, edges in self.hull_prisms:
+            if (right + clearance < min(x, ex) or left - clearance > max(x, ex)
+                    or top + clearance < min(y, ey) or bottom - clearance > max(y, ey)
+                    or roof < low or base > high):
+                continue
+            for px, py in points:
+                inside = False
+                for ax, ay, dx, dy, length2 in edges:
+                    rx, ry = px - ax, py - ay
+                    along = max(0., min(1., (rx * dx + ry * dy) / length2))
+                    if (rx - along * dx) ** 2 + (ry - along * dy) ** 2 < limit:
+                        return False
+                    if (ay > py) != (ay + dy > py) and rx < dx * ry / dy:
+                        inside = not inside
+                if inside:
                     return False
         return True
 

@@ -47,6 +47,8 @@ class Bot:
         self.last_escape_grace = -math.inf
         self.outbound_hold_until = -math.inf
         self.outbound_hold_phase = None
+        self.first_loot_targets = set()
+        self.first_cube_rest = False
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -217,40 +219,77 @@ class Bot:
         self.outbound_hold_until = t + 1.2
         return True
 
-    def quiet_reachable_weapon(self, obs, plan, action, jet):
+    def quiet_reachable_pickup(self, obs, plan, action, jet):
         me = obs["self"]
+        target_id = plan["target_id"]
+        first_cube = me.get("cubes", 0) == 0
+        was_resting = self.first_cube_rest
+        self.first_cube_rest = (first_cube and me.get("grounded") and not any(action["move"])
+                                and math.hypot(*me["vel"][:2]) <= 1.)
+        new_target = False
+        if first_cube and plan["mode"] == "loot" and target_id is not None:
+            new_target = target_id not in self.first_loot_targets
+            self.first_loot_targets.add(target_id)
         if (not self.nav.loaded or plan["mode"] != "loot" or plan["dodge"]
                 or plan["zone_urgency"] > .25 or plan["enemy_pressure"] > .1
                 or not me.get("grounded") or not me.get("in_zone") or jet or action["jump"] or action["boost"]
-                or None not in me.get("weapons", ()) or "take" in action or any(action["move"])
+                or "take" in action or any(action["move"])
                 or any(action.get("fire", ())) or obs.get("projectiles")
                 or obs.get("beams") or self.loadout.last_decision.get("target_id") is not None
                 or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
             return None
-        item = next((item for item in obs.get("pickups", ()) if item["id"] == plan["target_id"]), None)
+        pickups = obs.get("pickups", ()) if None in me.get("weapons", ()) else ()
+        item = next((item for item in pickups if item["id"] == target_id), None)
+        cube = item is None
+        rules = self.survival.rules
+        if cube:
+            if not (new_target and was_resting and self.first_cube_rest):
+                return None
+            item = next((item for item in obs.get("cubes", ()) if item["id"] == target_id), None)
         if item is None:
             return None
-        reach = self.survival.rules.get("loot", {}).get("pickup_radius", 4.)
+        reach = rules.get("cubes" if cube else "loot", {}).get("pickup_radius", 3.5 if cube else 4.)
         x, y, z = me["pos"]
         px, py, pz = item["pos"]
         distance = math.hypot(px - x, py - y)
         if not reach + .20 <= distance <= reach + 2. or abs(z - pz) > 3.5:
             return None
-        radius = me.get("stats", {}).get("radius", 2.5)
+        stats = me.get("stats", {})
+        radius = stats.get("radius", 2.5)
+        if cube:
+            growth = rules.get("cubes", {}).get("size_per_cube", .05)
+            mech = rules.get("mech", {})
+            base_radius, base_height = mech.get("radius", 2.5), mech.get("height", 9.)
+            radius = max(radius, base_radius)
         dims = self.nav._dimensions(radius)
         if self.nav._ground_segment(x, y, px, py, *dims):
             return None
         heading = math.atan2(y - py, x - px)
         zone = obs["zone"]
-        for degrees in (0, 20, -20, 40, -40):
+        turns = (0, 20, -20, 40, -40, 60, -60) if cube else (0, 20, -20, 40, -40)
+        for degrees in turns:
             angle = heading + math.radians(degrees)
-            qx, qy = px + (reach - .45) * math.cos(angle), py + (reach - .45) * math.sin(angle)
+            inside_reach = reach - (.32 if cube else .45)
+            qx, qy = px + inside_reach * math.cos(angle), py + inside_reach * math.sin(angle)
             distance = math.hypot(qx - x, qy - y)
             qz = self.nav.surface(qx, qy)
             if (distance > 2.55 or abs(qz - z) > .65 or abs(qz - pz) > 3.5
                     or math.dist((qx, qy), zone["center"]) + radius + 6 >= zone["radius"]
                     or not self.nav._ground_segment(x, y, qx, qy, *dims)):
                 continue
+            if cube:
+                vx, vy = me["vel"][:2]
+                ux, uy = (qx - x) / distance, (qy - y) / distance
+                if abs(vx * uy - vy * ux) > .45 or vx * ux + vy * uy < -.25:
+                    continue
+                # Reserve room for nearby cubes collected before the bot can
+                # leave the corridor with its larger hull.
+                extras = sum(math.dist((qx, qy), other["pos"][:2]) <= reach + distance
+                             and abs(qz - other["pos"][2]) <= 4.65 for other in obs.get("cubes", ()))
+                scale = 1 + growth * extras
+                if not self.nav.raw_hull_corridor_clear((x, y, z), (qx, qy), max(radius, base_radius * scale),
+                                                        max(stats.get("height", 9.), base_height * scale)):
+                    continue
             scale = 1 / max(2., distance)
             return [(qx - x) * scale, (qy - y) * scale]
         return None
@@ -319,7 +358,7 @@ class Bot:
             self.last_escape_grace = obs["t"]
         if self.quiet_outbound_hold(obs, plan, action):
             action["move"] = [0., 0.]
-        pickup_move = self.quiet_reachable_weapon(obs, plan, action, jet)
+        pickup_move = self.quiet_reachable_pickup(obs, plan, action, jet)
         if pickup_move is not None:
             action["move"] = pickup_move
         rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
