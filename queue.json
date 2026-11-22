@@ -1948,6 +1948,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "c02206723394bcfb71d7405c25c2cac25474f0e5",
+      "summary": "Resume progress sampling after a quiet loot landing when the next six meters clear the grown hull. Skips the directed repeat hop and saves energy at equal early damage, with four later placement points. All 24 fresh parent pairs tied and all 300 timed ticks passed.",
+      "created_at": "2026-11-22T03:51:26Z",
+      "parents": [
+        "9241025f3e95ff80d39ffeca72978f6be2ad6486"
+      ],
+      "reviews": {
+        "commit": "c02206723394bcfb71d7405c25c2cac25474f0e5",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "In 1072431, a physically supported six-meter route after descent removes the repeat hop, raises minimum energy by 7.2, and keeps aim, rifle trigger and first-six damage. The next route is locally verified and the later four-point placement gain remains downstream. All-ground control, fresh ties and 300 timely checker replies support practice."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The two actual 52.2 rifle hits and zero incoming through six seconds are preserved when the grounded route replaces the relaunch. Later placement gains four points and life 45.2 seconds, with 1127.3 more whole-match incoming and no earlier pickup. The geometry correction is credible and the fresh and runtime checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The recent same-target descent and raw plus raster hull clearance justify discarding only the stale progress sample. The known relaunch disappears and first-six damage remains equal. All-ground oscillation and four independent scaled-hull/raw-sight pairs give full command and placement ties. The directed placement gain is not evidence of faster pickup."
+          }
+        }
+      }
     }
   ]
 }
