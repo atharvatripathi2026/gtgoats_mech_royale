@@ -714,6 +714,62 @@ class Loadout:
                 return False
         return True
 
+    def lower_mortar_for_hull_contact(self, obs, target, aim, weapon):
+        me = obs["self"]
+        if (not self.nav or not self.nav.loaded or target.get("kind") != "mech"
+                or not me.get("grounded") or math.hypot(*me["vel"][:2]) > 12):
+            return None
+        velocity = target.get("vel", (0., 0., 0.))
+        if abs(velocity[2]) > 1 or math.hypot(*velocity[:2]) > 8:
+            return None
+        stats = me.get("stats", {})
+        step = self.step
+        origin = tuple(p + v * step + (stats.get("height", 9) + .5 if j == 2 else 0.)
+                       for j, (p, v) in enumerate(zip(me["pos"], me["vel"])))
+        distance = math.dist(origin[:2], target["pos"][:2])
+        if not 30 <= distance <= 125:
+            return None
+        radius, height = self.dimensions(target)
+        offset = stats.get("radius", 2.5) + .5
+        speed, gravity = weapon["speed"], weapon["gravity"]
+        actual_yaw, actual_pitch = me["aim"]
+        turn, tilt = stats.get("turn_rate", 4) * step, stats.get("pitch_rate", 3) * step
+        yaw = actual_yaw + clamp(angle_delta(aim[0], actual_yaw), -turn, turn)
+        native_pitch = actual_pitch + clamp(aim[1] - actual_pitch, -tilt, tilt)
+        horizon = min(weapon.get("ttl", 7), distance / max(1., speed * math.cos(native_pitch)) + .65)
+
+        def contact(pitch, lateral, bottom, top):
+            direction = math.cos(yaw)*math.cos(pitch), math.sin(yaw)*math.cos(pitch), math.sin(pitch)
+            first = tuple(p + offset*d for p, d in zip(origin, direction))
+            if not self.nav.line_clear(origin, first):
+                return False
+            motion = tuple(speed * d for d in direction)
+            for tick in range(1, math.ceil(horizon / step) + 1):
+                last = tuple(p + step * v for p, v in zip(first, motion))
+                tx, ty, tz = (p + (tick + 1) * step * v for p, v in zip(target["pos"], velocity))
+                dx, dy = last[0] - first[0], last[1] - first[1]
+                fraction = clamp(((tx - first[0])*dx + (ty - first[1])*dy) / max(.001, dx*dx + dy*dy), 0, 1)
+                point = tuple(p + fraction*(q-p) for p, q in zip(first, last))
+                if (math.dist(point[:2], (tx, ty)) <= lateral * radius
+                        and bottom * height <= point[2] - tz <= top * height
+                        and self.nav.line_clear(first, point)):
+                    return True
+                if not self.nav.line_clear(first, last):
+                    return False
+                first = last
+                motion = (*motion[:2], motion[2] - step * gravity)
+            return False
+
+        if contact(native_pitch, 1.20, -.10, 1.10):
+            return None
+        lowest = max(stats.get("min_pitch", -.7), actual_pitch - tilt)
+        highest = min(stats.get("max_pitch", 1.3), actual_pitch + tilt)
+        for adjustment in (.015, .030, .045, .060):
+            pitch = aim[1] - adjustment
+            if lowest <= pitch <= highest and contact(pitch, .72, .15, .85):
+                return aim[0], pitch
+        return None
+
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
         """Forecast a shorter lead for a ground target running into a broad wall."""
         if not self.nav or not self.nav.loaded or target.get("kind") != "mech":
@@ -908,6 +964,13 @@ class Loadout:
                                 obs, ent, (yaw_next, pitch_next), remaining,
                                 primary[4].get("range", 280), movement)):
                         fire[primary_slot] = False
+                if (primary[3] == "mortar" and sum(fire) == 1 and fire[primary_slot]
+                        and primary[5].get("cooldown", 0) <= self.step and not climbing
+                        and "take" not in action and "pick" not in action
+                        and not any(w and w.get("charge", 0) for w in slots)):
+                    lower = self.lower_mortar_for_hull_contact(obs, ent, aim, primary[4])
+                    if lower is not None:
+                        aim = lower
                 action["fire"] = fire
             if engage and not shots:
                 alternate = self.rising_rifle_alternate(obs, ent, slots, muzzle, aim[1])
