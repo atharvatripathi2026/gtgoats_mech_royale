@@ -1,0 +1,9 @@
+# Raise an obstructed mortar shot over nearby terrain · revise
+
+Exact `c3db4116c1db073ae4572ed70d98b05f51946276` on `d6251aaff583fce5647062c16fb7a5b367710155` increases the pitch of a native sole mortar trigger if its original projected arc ends early and the higher path lands near the same slow target. It preserves movement, target and trigger.
+
+In simulated 1069148 it adds 148.03 and 137.99 splash damage to rival 2 in the first six seconds with zero incoming. In 1069301 it adds 147.07 early splash to rival 7. The native controls tie their placements and the faster-rival replays reproduce both local damage effects. Literal impact-to-body rays at three sampled heights clear for the first 1069148 hit, while terrain blocks the second 1069148 blast and the 1069301 blast. The local simulator's splash loop ignores this wall shielding, which the official kit specifies. The observed target in 1069148 also repeatedly changes movement direction before impact.
+
+All 44 fresh parent placements and commands tie across 16 native squad, 16 standard four-mech, eight owner and four fast-rival pairs. No mech equipped mortar in the independent fast-rival fresh panel. The transferred older mortar benefit stays intact, and six further pairs tie on placement against the commit-linked 3.71 reference. The exact build passes 23 unit tests and all 300 networkless observations.
+
+All three reviewers voted **revise** after the wall audit. A conservative scratch that requires both the predicted near-impact point and actual integration endpoint to have clear propagation to the constant-velocity target restores both directed parent paths, suppressing even the one clear hit. Revisit with a measured target-velocity envelope and blast-ray clearance, or with a genuine direct hit. [Mortar merge](d6251aa-merge-replan-dodge-with-mortar-wall-lead.md) · [Official kit](https://www.joinbuilders.org/buildathon/tracks/builders/files/mechfight-kit.tar.gz)
