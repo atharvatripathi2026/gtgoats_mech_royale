@@ -1671,6 +1671,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "ebaa06f9f90492dbf177a0f7e2ec59264b6abf7e",
+      "summary": "Lower selected mortar pitches only when the native arc misses the enlarged hull and the lower arc clears terrain to contact. Directed 208 direct damage and +270 early across two models. All 42 fresh parent placements tied. Passed 23 units and 300 sandbox observations.",
+      "created_at": "2026-11-22T00:52:16Z",
+      "parents": [
+        "d6251aaff583fce5647062c16fb7a5b367710155"
+      ],
+      "reviews": {
+        "commit": "ebaa06f9f90492dbf177a0f7e2ec59264b6abf7e",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact same-target mortar shot makes a measured direct hit and adds 270 through six seconds without early incoming damage. Two controls and all 32 fresh standard pairs preserve every command. The exact runtime and linked-parent checks passed."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "A direct hit independent of modeled wall splash adds 270 early damage at zero incoming in both evaluators and preserves the valuable existing direct shot in 1070205. All 42 fresh direct pairs tie. The alternate directed replay has a late life and incoming tradeoff."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The independent wall-aware replay confirms an actual 208 direct hit plus splash at equal early incoming. The native 16 and independently shielded fresh replays tie on commands. This is a confirmed contact without a measured placement gain."
+          }
+        }
+      }
     }
   ]
 }
