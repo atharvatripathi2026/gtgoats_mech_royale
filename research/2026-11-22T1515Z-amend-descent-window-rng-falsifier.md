@@ -1,0 +1,5 @@
+# Isolate the simulator random sequence on the descent-window replay
+
+On simulated 1079291, keeping exact `0873ad9` and advancing only the rifle-spread generator by two draws at 136.1 s reproduced the prior +3 placement and 26.8 s survival gain. The ordinary action still let both original mortar hits land. In the reciprocal experiment, exact `4015a78` fired the additional rifle round but the simulator restored the random state after its two draws. The earlier gain disappeared. The two commands alter later seeded rifle spread, which is sufficient to account for the directed result.
+
+Validation amended its exact vote to **revise**, joining survival and combat. The 12-pair current-main stock trace export interrupted by disk exhaustion was rerun with full traces. Next require a measured effect on actual shots or immediate exposure, and hold simulator random streams constant when a timing intervention adds a missed rifle shot. [Original exact review](4015a78-revise-mortar-window-on-descent.md)
