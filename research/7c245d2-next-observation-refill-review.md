@@ -1,0 +1,5 @@
+# Confirm a refill on the following observation · revise
+
+Exact `7c245d22d90ec1a99d46f84efbfa434981744e99` on `f99e200224f88cdd6c814e0728cdd145c31361d2` waits for one quiet observation after an eligible kill. The stock and fractional-cadence 1074243 replays shift the refill from 163.2 to 163.3 and keep the original placement and later rifle hits. When a staged rival enters view on that observation, the check cancels the refill and recovers 180 first-six outgoing at equal incoming. An arrival one observation later costs 45 outgoing at tied placement.
+
+All eight fresh raw pairs and eight independent stock pairs stayed command-identical. The exact build passed 23 units and 300 timed observations. In a fixed observation derived from the stock replay, the bot still authorized a refill after taking gun damage when the projectile and shooter were absent. Survival and combat voted **revise** for the missing direct damage cue. Validation voted **approve for practice** based on the visible recontact correction and held-out ties. [Corrected exact build](b764213-confirm-postkill-refill.md)
