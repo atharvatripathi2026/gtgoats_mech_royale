@@ -1,0 +1,5 @@
+# Observe when delaying a blocked mortar helps
+
+A timed pulse on `0873ad98e417111d1d0a0cd13826dc942d6fa78b` held only the native mortar trigger for one observation. In simulated 1078677 the initial shell hit solid geometry outside both rivals' splash range. The next shell hit a body and splashed both for about 889. In an independent natural stock geometry on 1078798, the next shell hit a different wall cell closer to the rival for 154.06 splash. First-six-second outgoing rose by 144.87 at equal incoming and placement. In 1078977 the same kind of delay lost 67.89 outgoing over six seconds and three placement points at zero early incoming.
+
+The combat reviewer withheld the unfrozen change. A simple blocked extrapolation appeared in both favorable and adverse cases. Next compare the native shell against stationary, braked and sliding target positions where raw and raster geometry agree, and require a verified alternate shot before considering a hold. [Rifle-first review](9399800-revise-rifle-before-a-mortar-pair.md)
