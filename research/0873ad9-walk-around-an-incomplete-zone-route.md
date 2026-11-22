@@ -1,0 +1,9 @@
+# Walk around an incomplete zone route
+
+Exact `0873ad98e417111d1d0a0cd13826dc942d6fa78b` descends from `76ec85d5a0f171b1164a7545baa5f4b3cecdb59f`. When a cached route ends away from the next circle, the policy can try a short two-segment walking detour. It checks raw hull clearance, step height, current circle margin and the projected steps of the held command. It remembers a complete native route for the phase and yields to firing, charge, gear, dodge, projectiles or a close rival.
+
+In simulated 1078213, the native route had 11 cached cells and came no closer than 14.33 m outside the next circle. The walking detour reduced first-six-second storm damage from 140 to zero in stock and all-move-first, and from 155 to zero under interpolated terrain. Placement points rose 11 to 15 in stock and all-move-first, and 8 to 15 under interpolation. The mech made one shallow descent, then rejoined native navigation. The adverse roof seed 1078813 already had a cached 42-cell route reaching 26.60 m inside the next circle. Every command and placement tied there in stock and all-move-first.
+
+All 48 fresh parent pairs tied on commands and placement. These include 16 original four-mech, 24 stock campus across three panels and eight faster campus. Four separate pairs against verified `03a8f93` averaged +2.00, matching the direct parent on each seed. The gain on this reference panel was already present in the parent.
+
+All three GPT-6.2 Sol roles approved this exact build. All 23 unit tests and 300 official networkless observations passed. A separate one-CPU Docker playback of 300 contiguous focal observations exercised the changed command and received it in 22.862 ms. One concurrently loaded interpolated simulation measured 76.362 ms at activation without enforcing the wire deadline. Future tests should measure active timing on a different obstruction and watch for repeated shallow support changes. [Practice ledger](../queue.json)
