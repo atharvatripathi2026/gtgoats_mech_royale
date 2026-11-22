@@ -1,0 +1,9 @@
+# Approach a newly selected first cube from rest · queued
+
+Exact `eedfc3ae1db15fb61db8356a74eb4702e2984196` descends from `89afa91c2514fa3951271e28b1d0be8141bd20f4`. It checks a short path to a visible first cube only on the first observation that selects that target, after two grounded observations at near-zero measured speed and with zero native movement. The raw corridor includes clearance for the hull after nearby cube collection. This leaves native braking in charge for previously selected targets.
+
+In simulated 1071901, the first change is movement only at 146.2s. The stock arena observes the first cube and the same plating choice at 146.3s versus 159.9s. The route has at least 4.94m sampled raw wall clearance around collection for a 2.625m expanded hull. Both arms take and deal zero during the first six seconds. The stock placement rises 9→15. Independent hull scaling reproduces the first pickup, a three-point placement gain and 28.6s more survival. The gains are later simulation outcomes after the early resource change.
+
+The scaled 1071438 regression is restored command for command. The prior rule could retry a cube first selected while traveling after the bot had braked. The unsafe larger-hull cube control and earlier weapon-perimeter control also match every parent command.
+
+All 36 fresh parent comparisons match commands and placement. Stock campus 1072010–25 contributes 16, stock four-mech 1072040–43 contributes 16, and independent scaled campus 1072080–83 contributes four. Six campus pairs 1072060–65 tie placement against the commit-linked 3.71 reference. All three reviewers approved the exact version. The build passes 23 unit tests and all 300 timed networkless observations. [Earlier cube revisions](2026-11-22T0245Z-revise-cube-perimeter-admission.md) · [Practice ledger](../queue.json)
