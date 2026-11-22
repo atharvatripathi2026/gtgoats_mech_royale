@@ -763,6 +763,50 @@ class Bot:
             witness = tuple(me["pos"]), (vx, vy), me["aim"][0], (fx, fy)
             self.loot_scan_point = tick + stride, now + .35, plan["target_id"], edge, witness
 
+    def brake_toward_sheltered_pursuer(self, obs, plan, action):
+        """Keep the lateral shelter route without closing toward a rifle pursuer."""
+        me = obs["self"]
+        if (plan["mode"] != "shelter" or plan["dodge"] or plan["zone_urgency"] >= .15
+                or not me.get("grounded") or not self.nav.loaded or action["boost"] or action["jump"]
+                or any(action.get("fire", ())) or "take" in action or "pick" in action
+                or obs.get("projectiles") or obs.get("beams")
+                or any(w and w.get("charge", 0.) > 0. for w in me.get("weapons", ()))):
+            return
+        x, y, z = me["pos"]
+        mx, my = action["move"]
+        specs = self.loadout.mech | (me.get("stats") or {})
+        walk = specs.get("walk_speed", 11.7)
+        radius, height = specs.get("radius", 2.5), specs.get("height", 9.)
+        muzzle = specs.get("muzzle_height", 7.)
+        for rival in sorted(obs.get("mechs", ()), key=lambda ent: math.dist((x, y), ent["pos"][:2])):
+            if rival.get("kind") != "mech" or "gun" not in rival.get("weapons", ()):
+                continue
+            rx, ry, rz = rival["pos"]
+            separation = math.hypot(rx - x, ry - y)
+            if not 2 * radius < separation < 3 * walk or abs(z - rz) > height:
+                continue
+            ux, uy = (rx - x) / separation, (ry - y) / separation
+            rvx, rvy = rival.get("vel", (0., 0., 0.))[:2]
+            inward = mx * ux + my * uy
+            if inward <= .30 or rvx * ux + rvy * uy > -.65 * walk:
+                continue
+            body = (rx, ry, rz + .5 * self.loadout.dimensions(rival)[1])
+            if not self.nav.short_segment_hits_raw_solid((x, y, z + muzzle), body):
+                continue
+            lateral = (mx - inward * ux, my - inward * uy)
+            if self.covered_shelter_step(obs, lateral, body, specs):
+                action["move"] = list(lateral)
+            return
+
+    def covered_shelter_step(self, obs, move, body, specs):
+        me = obs["self"]
+        trial = {"move": move, "boost": False, "jump": False}
+        muzzle = specs.get("muzzle_height", 7.)
+        origin = (*me["pos"][:2], me["pos"][2] + muzzle)
+        bases = self.loadout.late_arc_bases(obs, origin, trial, specs)
+        return bool(bases) and all(self.nav.short_segment_hits_raw_solid(point, body)
+                                   for step in bases for point, _ in step)
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -864,6 +908,7 @@ class Bot:
             action["fire"][unsafe_tube] = False
         self.reload_after_wall_round(obs, plan, action)
         self.scan_loot_cover_edge(obs, plan, action)
+        self.brake_toward_sheltered_pursuer(obs, plan, action)
         self.loadout.confirm_late_arc_command(action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
         self.pending_wall_round = None
