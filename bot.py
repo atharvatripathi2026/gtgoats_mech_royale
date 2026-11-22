@@ -863,10 +863,12 @@ class Bot:
         if along < math.hypot(old_x, old_y) * max(.6 * walk, .9 * math.hypot(vx, vy)):
             return
         pickup = self.loadout.config.get("loot", {}).get("pickup_radius", 4.)
-        # A later command can sprint before the rifle finishes reloading.
-        speed = max(walk, specs.get("boost_speed", 19.5), math.hypot(vx, vy))
         ready = arms[0]["reload"] + self.loadout.step
-        if math.dist((x, y), item["pos"][:2]) <= pickup + speed * ready:
+        dx, dy = (point - here for point, here in zip(item["pos"][:2], (x, y)))
+        distance = math.hypot(dx, dy)
+        if (distance <= pickup or distance - pickup <= self.weapon_reversal_pickup_travel(
+            (dx / distance, dy / distance), (vx, vy), specs, ready,
+        )):
             return
         for ident in bearings.keys() & previous[2]:
             ux, uy, body = bearings[ident]
@@ -877,6 +879,23 @@ class Bot:
             if self.loadout.late_arc_bases(obs, origin, trial, specs) is not None:
                 action["move"] = [old_x, old_y]
             return
+
+    def weapon_reversal_pickup_travel(self, direction, velocity, specs, ready):
+        """Bound travel toward a weapon through the remaining rifle reload."""
+        step = self.loadout.step
+        speed = math.hypot(*velocity)
+        walk = max(specs.get("walk_speed", 11.7), speed)
+        boost = max(specs.get("boost_speed", 19.5), walk)
+        accel = max(specs.get("ground_accel", 58.5), specs.get("air_accel", 12.))
+        # Axis collisions can zero velocity. Keeping only the positive
+        # contributions prevents a blocked opposing component raising the bound.
+        toward = sum(max(0., d * v) for d, v in zip(direction, velocity))
+        travel = 0.
+        for i in range(math.ceil(ready / step)):
+            dt = max(0., min(step, ready - i * step))
+            toward = min(walk if i < 2 else boost, toward + accel * dt)
+            travel += toward * dt
+        return max(walk * ready, travel)
 
     def act(self, obs):
         if self.trace:
