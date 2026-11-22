@@ -1,0 +1,7 @@
+# Reconfirm cover aim after one missed observation
+
+Exact `2c9610518d914383076b47392bfd74459fd2cd65` on `2c0602c53305aa2653ee9874b3830192d6d891a9`. Permit one missed observation inside the original 0.35s scan window. At the next observation the loot target and flank must still agree, and the position, velocity and torso must fit the motion expected from the last command. The original world point must now be visible and the remaining hull path must clear solids. This checks observable physical consistency.
+
+In simulated 1074392, deliberately holding the previous command on missing observation 128.6s restores aim at 128.7s and the first landed rifle hit at 129.3s instead of 129.4s. Stock and independent raw firing add 84.58 outgoing in six seconds at equal 45 incoming and gain 6.65s of life at tied first place. Neutral or rotated legs, stale aim and two skipped observations reproduce all parent wire commands. The uninterrupted stock replay also reproduces every command. The gap was staged.
+
+All 44 fresh matches tie on commands and placement. Panels include 12 stock campus starting 1074830, eight independent stock at 1074800, eight faster-close at 1074820, and 16 original four-mech at 1074850. Four 3.71-reference matches beginning 1074860 lose one total point, inherited entirely from the parent that matches every action. All 23 unit tests and 300 timed networkless replies passed. Survival, combat and validation approved the exact candidate. [Parent review](2c0602c-confirm-one-cover-point.md) · [Votes and ledger entry 96](../queue.json)
