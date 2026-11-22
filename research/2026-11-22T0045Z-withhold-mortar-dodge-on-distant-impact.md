@@ -1,0 +1,5 @@
+# Ignore a mortar shell that hits terrain far away · withheld
+
+The survival scratch on `d6251aa` suppresses a grounded blast dodge only if the shell projects an early terrain impact outside the splash radius, the hull, the full movement reach and an extra five-metre reserve. In simulated 1069518, the observed shell disappears by 54.4s with no damage. At the 54.0s decision, skipping the dodge switches from a westbound boost to an eastbound route. Six-second incoming ties at 90 and outgoing rises 576→1188. Survival falls 386.25s→266.90s and placement points fall 14→11.
+
+A separate intervention preserves the westbound movement and cancels only that command's boost. Six-second incoming falls 90→45, yet survival falls to 88.15s and placement to four points. Neither intervention is frozen as a candidate. The survival reviewer voted **withhold**. The fresh search supplied no distinct active case to justify a full candidate panel. Revisit when an observed harmless shell interrupts a valuable route whose continuation can be verified directly. [Related dodge review](2e09c9b-avoid-rifle-contact-through-replan.md)
