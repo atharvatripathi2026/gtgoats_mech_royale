@@ -852,6 +852,63 @@ class Loadout:
                 return aim[0], pitch
         return None
 
+    def mortar_self_blast_on_first_step(self, obs, action):
+        """Detect a nearly immediate collision inside our own splash radius."""
+        fire = action.get("fire", ())
+        me = obs["self"]
+        slots = me.get("weapons", ())
+        if (sum(fire) != 1 or not me.get("grounded") or action.get("jump")
+                or "take" in action or "pick" in action or not self.nav or not self.nav.loaded
+                or any(slot and slot.get("charge", 0) > 0 for slot in slots)):
+            return None
+        index = fire.index(True)
+        mortar = slots[index]
+        if not mortar or mortar.get("kind") != "mortar" or mortar.get("cooldown", 0) > self.step:
+            return None
+        stats = self.mech | me.get("stats", {})
+        weapon = self.weapons.get("mortar", {}) | mortar.get("stats", {})
+        radius = weapon.get("splash_radius", 7.)
+        hull = stats.get("radius", 2.5)
+        height = stats.get("height", 9.)
+        if any(math.dist(me["pos"], rival["pos"]) < 2 * radius + hull + self.dimensions(rival)[0]
+               for rival in obs.get("mechs", ()) if rival.get("kind") == "mech"):
+            return None
+        dt = self.step
+        offset = hull + .5
+        reach = min(offset + dt * weapon.get("speed", 72), radius - .15)
+        if reach <= offset + .25:
+            return None
+
+        yaw, pitch = me["aim"]
+        aim_yaw, aim_pitch = action["aim"]
+        turn = stats.get("turn_rate", 4) * dt
+        tilt = stats.get("pitch_rate", 3) * dt
+        yaw += clamp(angle_delta(aim_yaw, yaw), -turn, turn)
+        pitch += clamp(clamp(aim_pitch, stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3)) - pitch,
+                       -tilt, tilt)
+        direction = (math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch))
+        x, y, z = me["pos"]
+        vx, vy = me.get("vel", (0., 0., 0.))[:2]
+        mx, my = action["move"]
+        length = math.hypot(mx, my)
+        boost = action.get("boost") and length > .01 and me.get("energy", 0) > dt * max(
+            stats.get("jet_drain", 15), stats.get("boost_drain", 17))
+        speed = stats.get("boost_speed", 19.5) if boost else stats.get("walk_speed", 11.7)
+        dx, dy = mx * speed / max(1., length) - vx, my * speed / max(1., length) - vy
+        ramp = min(1., stats.get("ground_accel", 58.5) * dt / max(.001, math.hypot(dx, dy)))
+
+        for ux, uy in ((0., 0.), (vx, vy), (vx + ramp * dx, vy + ramp * dy)):
+            foot = x + dt * ux, y + dt * uy
+            if abs(self.nav.ground(*foot) - z) > .15:
+                return None
+            base = *foot, z + height + .5
+            bore = tuple(p + offset * v for p, v in zip(base, direction))
+            first_end = tuple(p + reach * v for p, v in zip(base, direction))
+            if (not self.nav.line_clear(base, bore) or self.nav.line_clear(bore, first_end)
+                    or first_end[2] > z + height + .5 * radius):
+                return None
+        return index
+
     def mortar_wall_stop(self, target, origin, body, aim, weapon, offset):
         """Forecast a shorter lead for a ground target running into a broad wall."""
         if not self.nav or not self.nav.loaded or target.get("kind") != "mech":

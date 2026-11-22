@@ -293,6 +293,9 @@ class Bot:
         if shell_steer is not None:
             action["move"], shell_id = shell_steer
             reason = "airborne_mortar_clearance"
+        unsafe_tube = self.loadout.mortar_self_blast_on_first_step(obs, action)
+        if unsafe_tube is not None:
+            action["fire"][unsafe_tube] = False
         self.last_decision = {
             "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
