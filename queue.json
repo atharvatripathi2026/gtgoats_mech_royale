@@ -1973,6 +1973,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "5f0ace9121f41f8ff702c7e94f5494649c4671da",
+      "summary": "Fire a ready mortar before swapping that slot to laser, at most once per item with a clear launch. Stock and raw directed replays keep the same laser and land 562.04 mortar damage, gaining seven placement points. All 32 fresh parent pairs tied and all 300 timed checks passed.",
+      "created_at": "2026-11-22T04:22:31Z",
+      "parents": [
+        "c02206723394bcfb71d7405c25c2cac25474f0e5"
+      ],
+      "reviews": {
+        "commit": "5f0ace9121f41f8ff702c7e94f5494649c4671da",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The directed replay changes only take and drop at 121.1. The same laser remains reachable and equips one command later. The retained mortar hits the intended rival for 562.04 and adds 610.64 first-six outgoing at equal zero incoming. First-bore geometry and one deferral per item narrow the change. The exact policy does not guarantee pickup range or priority after a delay."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Stock and independent raw mortar replays both restore a genuine first-step shell while equipping the same laser 0.1 seconds later. It hits the same rival, with 610.64 more first-six outgoing, equal zero incoming and seven later placement points in both models. Thirty-two fresh parent pairs tie, and 23 units and all 300 timed observations pass. A contested laser can still be lost."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The exact raw mortar replay preserves the one-command deferral and independently confirms the 610.64 early damage difference at equal incoming. Four fresh combined campus pairs tie every command and placement. The launch guard does not ensure the later pickup remains available, and the directed replay has fewer kills and lower whole-match output despite higher placement."
+          }
+        }
+      }
     }
   ]
 }
