@@ -75,6 +75,7 @@ class Navigator:
         self.floors = array("f", (self._terrain(self.ox + i * CELL, self.oy + j * CELL)
                                    for j in range(self.h) for i in range(self.w)))
         self.solids = [()] * n
+        self.projectile_prisms = []
         for prism in world.get("prisms", []):
             self._rasterize(prism)
         # Every cell keeps all vertical intervals, including gaps below bridges.
@@ -107,9 +108,13 @@ class Navigator:
                     edges.append((min(y1, y2), max(y1, y2), x1, y1, (x2-x1)/(y2-y1)))
         if not edges:
             return
-        first = max(0, math.ceil((min(e[0] for e in edges) - self.oy) / CELL))
-        last = min(self.h, math.ceil((max(e[1] for e in edges) - self.oy) / CELL))
-        span = ((float(prism["base"]), float(prism["top"])),)
+        ymin, ymax = min(e[0] for e in edges), max(e[1] for e in edges)
+        xs = prism["ring"][::2]
+        bottom, top = float(prism["base"]), float(prism["top"])
+        self.projectile_prisms.append((min(xs), max(xs), ymin, ymax, bottom, top, edges))
+        first = max(0, math.ceil((ymin - self.oy) / CELL))
+        last = min(self.h, math.ceil((ymax - self.oy) / CELL))
+        span = ((bottom, top),)
         for j in range(first, last):
             y = self.oy + j * CELL
             xs = sorted(x + (y - y1) * k for ymin, ymax, x, y1, k in edges if ymin <= y < ymax)
@@ -200,6 +205,26 @@ class Navigator:
                     return False
             gx, gy, z = gx+sx, gy+sy, z+dz
         return True
+
+    def short_segment_hits_raw_solid(self, start, end):
+        """Confirm a short projectile segment against the original map geometry."""
+        (xmin, xmax), (ymin, ymax), (zmin, zmax) = (sorted(pair) for pair in zip(start, end))
+        prisms = [p for p in self.projectile_prisms
+                  if p[0] <= xmax and xmin <= p[1] and p[2] <= ymax and ymin <= p[3]
+                  and p[4] <= zmax and zmin <= p[5]]
+        steps = max(1, math.ceil(math.dist(start, end) / .10))
+        dx, dy, dz = (b - a for a, b in zip(start, end))
+        for step in range(steps + 1):
+            fraction = step / steps
+            x, y, z = start[0] + dx * fraction, start[1] + dy * fraction, start[2] + dz * fraction
+            if z <= self.ground(x, y):
+                return True
+            for left, right, bottom, top, low, high, edges in prisms:
+                if not (left <= x <= right and bottom <= y <= top and low <= z <= high):
+                    continue
+                if sum(x < x1 + (y - y1) * slope for lo, hi, x1, y1, slope in edges if lo <= y < hi) % 2:
+                    return True
+        return False
 
     def trunk_sight_clear(self, start, end):
         """Check tree trunks for proximity sensing. Projectiles ignore them."""
