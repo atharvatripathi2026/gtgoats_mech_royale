@@ -294,6 +294,72 @@ class Bot:
             return [(qx - x) * scale, (qy - y) * scale]
         return None
 
+    def quiet_follow_collected_cube(self, obs, plan, action, jet):
+        me = obs["self"]
+        rules = self.survival.rules
+        cubes = rules.get("cubes", {})
+        count = me.get("cubes", 0)
+        if (not self.nav.loaded or plan["mode"] != "loot" or plan["dodge"]
+                or plan["zone_urgency"] > .25 or plan["enemy_pressure"] > .1
+                or not 0 < count < cubes.get("stat_cap", 10)
+                or not me.get("grounded") or not me.get("in_zone") or jet or action["jump"] or action["boost"]
+                or any(action["move"]) or any(action.get("fire", ())) or "take" in action
+                or obs.get("projectiles") or obs.get("beams") or self.loadout.last_decision.get("intent") == "engage"
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))
+                or not any(event.get("type") == "pickup" and event.get("cubes") == count
+                           for event in obs.get("events", ()))):
+            return None
+        items = obs.get("cubes", ())
+        target = next((item for item in items if item["id"] == plan["target_id"]), None)
+        if target is None:
+            return None
+        group = [item for item in items if math.dist(item["pos"], target["pos"]) <= 2.]
+        if len(group) < 2:
+            return None
+
+        stats = rules.get("mech", {}) | me.get("stats", {})
+        walk = stats.get("walk_speed", 11.7)
+        vx, vy, _ = me["vel"]
+        speed = math.hypot(vx, vy)
+        if not .35 * walk <= speed <= .65 * walk:
+            return None
+        step = self.loadout.step
+        stride = rules.get("match", {}).get("decide_every", 2)
+        if not 1 <= stride <= 3:
+            return None
+        deceleration = max(1., stats.get("ground_accel", 58.5)) * step
+        x, y, z = me["pos"]
+        unit = vx / speed, vy / speed
+        carry = step * speed * stride
+        braking = step * sum(max(0., speed - deceleration * i) for i in range(1, stride + 1))
+        reach = cubes.get("pickup_radius", 3.5)
+
+        def endpoint(distance):
+            return x + unit[0] * distance, y + unit[1] * distance
+
+        extended, native = endpoint(carry), endpoint(braking)
+        extra = {item["id"] for item in group if abs(item["pos"][2] - z) <= 3.5
+                 and math.dist(item["pos"][:2], extended) <= reach - .01
+                 and math.dist(item["pos"][:2], native) > reach}
+        if target["id"] not in extra or len(extra) < 2:
+            return None
+
+        reserve = carry + step * sum(max(0., speed - deceleration * i) for i in (1, 2, 3))
+        end = endpoint(reserve)
+        possible = sum(abs(item["pos"][2] - z) < 4.3
+                       and math.dist(item["pos"][:2], end) <= reach + reserve for item in items)
+        base = rules.get("mech", {})
+        scale = 1 + cubes.get("size_per_cube", .05) * (count + possible)
+        radius = max(stats.get("radius", 2.5), base.get("radius", 2.5) * scale)
+        height = max(stats.get("height", 9.), base.get("height", 9.) * scale)
+        zone = obs["zone"]
+        if (math.dist(end, zone["center"]) + radius + 6 >= zone["radius"]
+                or any(abs(self.nav.surface(*endpoint(reserve * i / 4)) - z) > .025 for i in range(1, 5))
+                or not self.nav._ground_segment(x, y, *end, *self.nav._dimensions(radius))
+                or not self.nav.raw_hull_corridor_clear((x, y, z), end, radius, height)):
+            return None
+        return [vx / walk, vy / walk]
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -361,6 +427,9 @@ class Bot:
         pickup_move = self.quiet_reachable_pickup(obs, plan, action, jet)
         if pickup_move is not None:
             action["move"] = pickup_move
+        cube_move = self.quiet_follow_collected_cube(obs, plan, action, jet)
+        if cube_move is not None:
+            action["move"] = cube_move
         rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
         if rifle_escape is not None:
             action["move"] = list(rifle_escape)
