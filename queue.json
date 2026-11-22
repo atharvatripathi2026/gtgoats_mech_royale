@@ -2855,6 +2855,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "8e484bfa0651fae534ad3ef40fb15df1ebb0af67",
+      "summary": "Combine confirmed-hit mortar retention with circle-aware falling return fire. Directed replays preserve the 469.56 mortar hit and the favorable falling exchange. All 80 fresh paired placements tie against both parents or the shared ancestor. 23 tests and 300 timed replies pass.",
+      "created_at": "2026-11-22T15:49:36Z",
+      "parents": [
+        "1e20736f3db4b5e7f8ce7104c18b80a6e1d5df14",
+        "672baa6821e361be09b55987882f998d00fcb668"
+      ],
+      "reviews": {
+        "commit": "8e484bfa0651fae534ad3ef40fb15df1ebb0af67",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Eight fresh whole command tapes match the mortar parent. Both compressed-circle replays match the falling parent, preserving the measured favorable trade. Current outward drift explains the known edge control, and the source activation gates are separate. Exact unit and timed checks pass."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The merge preserves the actual additional 469.56 mortar damage and favorable falling trade. Fresh eight match all commands. Missed and masked confirmation and the observed approaching rival restore the swap when appropriate. A staged physical sidestep cancels the later shell in both the merge and the mortar parent. Exact kit passes."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Alternate actor order verifies the retained mortar hit and exact match to the owning parent. Stock verifies favorable falling damage and owning-parent command parity. Sixteen faster paired comparisons on eight shared fresh seeds match both parents. A staged rival sidestep removes shell damage with no downstream disagreement. The tests did not exercise both changes in one match."
+          }
+        }
+      }
     }
   ]
 }
