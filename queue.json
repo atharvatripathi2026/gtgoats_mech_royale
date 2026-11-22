@@ -1898,6 +1898,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "3d8eb7cfb8238cf726a6d00b1e3c70cdb2315100",
+      "summary": "Carry current momentum for one quiet command after a confirmed cube pickup when two nearby cubes enter range and the grown hull clears terrain. Stock replay collects both and gains five placement points. All 44 fresh parent pairs tie; 300 timed sandbox replies pass.",
+      "created_at": "2026-11-22T03:10:05Z",
+      "parents": [
+        "eedfc3ae1db15fb61db8356a74eb4702e2984196"
+      ],
+      "reviews": {
+        "commit": "3d8eb7cfb8238cf726a6d00b1e3c70cdb2315100",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The exact stock run collects two otherwise missed cubes on a raw corridor that clears the enlarged hull, with 32.4 more outgoing through six seconds at equal 45 incoming and a five-point placement gain. The older weapon pickup and eight owner fresh stock pairs retain every command. Alternate models end before the focal opportunity."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "One bounded movement command collects both reachable cubes and unlocks plating. The directed run gains five placement points and 32.4 early outgoing at equal 45 incoming, with shorter life but 337.75 less total incoming. Twelve fresh wires match. A same-command movement upgrade could slightly change travel in alternate offer pools, though none affected the focal replay."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The directed stock run changes only movement, collects both cubes and adds 32.4 gun damage to the same opponent at equal 45 incoming. Raw continuous clearance supports the enlarged hull. Four independent combined scaled-hull and raw-sight fresh pairs match commands and placement. The alternate models terminate before the activation, so the five-point placement gain is stock-only."
+          }
+        }
+      }
     }
   ]
 }
