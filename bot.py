@@ -395,6 +395,89 @@ class Bot:
         scale = min(.26 / max(.001, math.hypot(dx, dy)), 1 / (.18 * walk))
         return dx * scale, dy * scale
 
+    def boost_cube_arrival(self, obs, plan, action, jet):
+        """Sprint for one quiet command if it crosses the chosen cube's pickup radius."""
+        me = obs["self"]
+        rules = self.survival.rules
+        if (plan["mode"] != "loot" or plan["dodge"] or plan["enemy_pressure"] > .05
+                or plan["zone_urgency"] > .10 or jet or not self.nav.loaded
+                or not me.get("grounded") or not me.get("in_zone")
+                or action["boost"] or action["jump"] or any(action.get("fire", ()))
+                or "take" in action or "pick" in action or obs.get("offer")
+                or obs.get("projectiles") or obs.get("beams") or obs.get("sounds")
+                or self.loadout.last_decision.get("target_id") is not None
+                or any(event.get("type") == "damaged" for event in obs.get("events", ()))
+                or any(weapon and weapon.get("charge", 0) for weapon in me.get("weapons", ()))):
+            return False
+        pos = me["pos"]
+        npc_range = rules.get("npc", {}).get("aggro_range", 45.)
+        if any(ent.get("kind") == "mech" or (ent.get("kind") == "npc"
+               and math.dist(pos[:2], ent["pos"][:2]) < npc_range)
+               for ent in obs.get("mechs", ())):
+            return False
+        cube = next((item["pos"] for item in obs.get("cubes", ()) if item["id"] == plan["target_id"]), None)
+        stats = self.loadout.mech | (me.get("stats") or {})
+        dt = self.loadout.step
+        stride = rules.get("match", {}).get("decide_every", 2)
+        cost = dt * stride * stats.get("boost_drain", 17.)
+        if (cube is None or abs(cube[2] - pos[2]) > .45 or stride != 2 or not math.isclose(dt, .05)
+                or me.get("energy", 0.) - cost < .90 * me.get("max_energy", 100.)):
+            return False
+        walk, sprint = stats.get("walk_speed", 11.7), stats.get("boost_speed", 19.5)
+        reach = rules.get("cubes", {}).get("pickup_radius", 3.5)
+        distance = math.dist(pos[:2], cube[:2])
+        ux, uy = action["move"]
+        velocity = me["vel"][:2]
+        if (not reach + walk * dt * stride <= distance <= reach + sprint * dt * stride
+                or math.hypot(ux, uy) < .99
+                or math.dist((ux, uy), tuple((point - p) / distance for point, p in zip(cube[:2], pos))) > .10
+                or math.dist(velocity, (ux * walk, uy * walk)) > .8):
+            return False
+
+        def path(speeds):
+            x, y = pos[:2]
+            vx, vy = velocity
+            acceleration = stats.get("ground_accel", 58.5) * dt
+            for speed in speeds:
+                dx, dy = ux * speed - vx, uy * speed - vy
+                scale = min(1., acceleration / max(.001, math.hypot(dx, dy)))
+                vx += dx * scale
+                vy += dy * scale
+                x += vx * dt
+                y += vy * dt
+                yield x, y
+
+        normal = list(path((walk, walk)))[-1]
+        boosted = list(path((sprint, sprint, walk, walk)))
+        if math.dist(normal, cube[:2]) <= reach + .05 or math.dist(boosted[1], cube[:2]) > reach - .08:
+            return False
+        cubes = rules.get("cubes", {})
+        potential = sum(any(math.dist(item["pos"][:2], step) <= reach + .3 for step in boosted)
+                        and abs(item["pos"][2] - pos[2]) <= 4.25 for item in obs.get("cubes", ()))
+        if potential != 1:
+            return False
+        grown_count = me.get("cubes", 0) + 1
+        if grown_count in cubes.get("upgrade_thresholds", (1, 3, 6, 10)):
+            return False
+        growth = 1. + grown_count * cubes.get("size_per_cube", .05)
+        radius = max(stats.get("radius", 2.5), self.loadout.mech.get("radius", 2.5) * growth)
+        height = max(stats.get("height", 9.), self.loadout.mech.get("height", 9.) * growth)
+        zone = obs["zone"]
+        if (math.dist(boosted[-1], zone["center"]) + radius + 5. >= zone["radius"]
+                or not self.nav.raw_hull_corridor_clear(pos, boosted[-1], radius, height)):
+            return False
+        feet = pos[2]
+        start = pos[:2]
+        clearance, headroom = self.nav._dimensions(radius)
+        for step in boosted:
+            floor = self.nav.surface(*step)
+            if (not feet - .03 <= floor <= feet + .18
+                    or not self.nav._ground_segment(*start, *step, clearance, headroom)):
+                return False
+            feet = max(feet, floor)
+            start = step
+        return True
+
     def quiet_cube_taper(self, obs, plan, action, jet):
         me = obs["self"]
         now = obs["t"]
@@ -756,6 +839,9 @@ class Bot:
         cube_taper = self.quiet_cube_taper(obs, plan, action, jet)
         if cube_taper is not None:
             action["move"] = list(cube_taper)
+        boosted_pickup = self.boost_cube_arrival(obs, plan, action, jet)
+        if boosted_pickup:
+            action["boost"] = True
         rifle_escape = self.survival.avoid_rifle_contact_this_command(obs, plan, action, jet)
         if rifle_escape is not None:
             action["move"] = list(rifle_escape)
@@ -799,6 +885,8 @@ class Bot:
             self.last_decision["airborne_shell"] = shell_id
         if escape_grace:
             self.last_decision["escape_boost_grace"] = True
+        if boosted_pickup:
+            self.last_decision["boosted_cube_arrival"] = True
         if self.trace:
             elapsed = (time.perf_counter() - start) * 1000
             mechfight.log(f'tick={obs["tick"]} hp={me["hp"]} mode={plan["mode"]} '
