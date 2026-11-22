@@ -2098,6 +2098,32 @@
           }
         }
       }
+    },
+    {
+      "commit": "755e3f2331649b0b7fc6318721af927da6a48ba0",
+      "summary": "Combine tapered quiet cube stops with rifle readiness through a same-rival beam release. Each parent focal behavior and the interruption controls are preserved; all 44 new parent-family comparisons match commands and placement. Passed 23 tests and 300 timed sandbox observations.",
+      "created_at": "2026-11-22T06:48:25Z",
+      "parents": [
+        "f82ea28236c9967a2ff9fdc8ea8a1d448d4e19ca",
+        "ac22f6ce5613fb463ca7cb8ff22d5627f4de6cd2"
+      ],
+      "reviews": {
+        "commit": "755e3f2331649b0b7fc6318721af927da6a48ba0",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The respective cube and beam focal replays preserve their parent commands in the staged models. An observed rifle, beam, existing charge and offer each cancel a live taper and preserve the beam parent commands on that and the next observation. The old verified-reference loss exactly matches the shared ancestor. Fresh pairs and exact runtime support practice, without any observed natural joint activation."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The merge retains both real parent effects, reproduces the adverse beam control, and preserves native arbitration in staged taper interruptions. There is no changed command in the new paired panels. The one verified-reference loss belongs to the shared ancestor. Exact 23 unit tests and 300 timed observations pass. This tests coexistence of the already reviewed updates, with no demonstrated new interaction gain."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "Closest-mech pickup replays exactly reproduce both directed parents, and eight fresh faster-closing pairs tie on all commands and placement versus the shared ancestor. Charge and targeting eligibility keep the two changes from competing on one observation. A pickup can still change later combat geometry, and the tests did not observe both activate in one natural match."
+          }
+        }
+      }
     }
   ]
 }
