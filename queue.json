@@ -2073,6 +2073,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "f82ea28236c9967a2ff9fdc8ea8a1d448d4e19ca",
+      "summary": "Keep a usable rifle burst through a verified same-rival laser release. Actual follow-up shots reduce early incoming in stock and staged fractional cadence; one directed foil loses early damage dealt. All 44 fresh parent pairs tie; 300 timed observations pass.",
+      "created_at": "2026-11-22T06:35:09Z",
+      "parents": [
+        "3bf5589803723b38e740affd5e9123e083a860d4"
+      ],
+      "reviews": {
+        "commit": "f82ea28236c9967a2ff9fdc8ea8a1d448d4e19ca",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The original beam lands and the retained rounds kill the rapidly closing rival about one second sooner, reducing actual incoming despite unchanged early movement. The stock and focal-switched fractional trials both reproduce that benefit. The sampled route had no confirmed short cover escape. A foil lost 365.4 early output and 26.95 seconds despite gaining one placement point, so closure should be tested as a tighter guard."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The stock and staged fractional controls land the same beam and confirm actual rifle follow-through for 183.6 and 91.8 less first-six incoming at equal outgoing. Among additional directed comparisons only one shows a substantial early loss, at a later one-point gain, and others preserve endpoints. Delaying an otherwise useful reload can postpone later rifle contact. No demonstrated placement loss on the exact controls and the runtime check passed."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The stock handoff preserves the real same-rival beam and lower early incoming, and the staged cadence variant confirms it at identical six-second output. Sixteen original four-mech and eight faster-closing fresh pairs tie. Full-session alternatives lose the opportunity before activation. The 1072941 foil loses early output and survival, so test this narrow local policy in practice without assuming reliable timing transfer."
+          }
+        }
+      }
     }
   ]
 }
