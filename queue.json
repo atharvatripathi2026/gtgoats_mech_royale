@@ -2301,6 +2301,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "2c0602c53305aa2653ee9874b3830192d6d891a9",
+      "summary": "Confirm the same fixed cover point opens before pre-aim, then track it briefly on consecutive observations. Preserves the earlier hit in three directed models and rejects an already-open trigger. All 44 fresh parent pairs tie. 23 unit and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T09:20:39Z",
+      "parents": [
+        "d4ac3a4e807a274906dc51b1fc4b3580a2c9f388"
+      ],
+      "reviews": {
+        "commit": "2c0602c53305aa2653ee9874b3830192d6d891a9",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "Current and projected eye rays to the same fixed point remove the false opening. The directed stock case preserves first sight, first hit, first cube and placement, and all eight independent paired commands match. In the staged missed observation, strict expiry gives up 84.59 early damage and 6.65 seconds of life at equal 45 incoming and tied first place. This is a real continuity cost."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The fixed raw point preserves the established landed rifle gain in uninterrupted stock, raw and faster runs and drops the stale proxy-only cue without a placement or life change. The earlier hit is lost when a staged observation is omitted, at equal incoming and the same win. The authorization expires as intended, and the current change merits practice within that limit."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "A genuinely blocked-to-clear initial ray and bounded fixed-point hold preserve the directed stock, raw and faster replays. A separate trailing-open event is declined at neutral endpoints, and all eight fresh faster matches have identical wire actions and placement. In the staged gap, native fallback sacrifices 84.59 immediate damage and 6.65 seconds of life at the same placement and incoming damage."
+          }
+        }
+      }
     }
   ]
 }
