@@ -491,6 +491,10 @@ class Bot:
         if shell_steer is not None:
             action["move"], shell_id = shell_steer
             reason = "airborne_mortar_clearance"
+        ground_shell_move = self.survival.grounded_mortar_body_step(obs, action, plan)
+        if ground_shell_move is not None:
+            action["move"] = ground_shell_move
+            reason = "grounded_mortar_body_clearance"
         self.loadout.defer_firing_mortar_swap(obs, action, previous_swap)
         unsafe_tube = self.loadout.mortar_self_blast_on_first_step(obs, action)
         if unsafe_tube is not None:

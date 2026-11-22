@@ -52,6 +52,8 @@ class Survival:
         self.evade_goal = None
         self.evade_until = -1
         self.boosting = False
+        self.ground_shell_hold = None
+        self.last_ground_shell = None
         self.cover_goal = None
         self.cover_until = -1
 
@@ -294,6 +296,108 @@ class Survival:
             if choices:
                 return max(choices)[1]
         return None
+
+    def grounded_mortar_body_step(self, obs, action, plan):
+        """Avoid a confirmed approaching shell that crosses the hull before landing."""
+        me = obs["self"]
+        shots = obs.get("projectiles") or ()
+        active = self.ground_shell_hold
+        self.ground_shell_hold = None
+        if (plan["mode"] != "evade" or plan["dodge"] or plan["zone_urgency"] > .10
+                or not me.get("grounded") or not me.get("in_zone")
+                or not self.nav or not self.nav.loaded or len(shots) != 1 or obs.get("beams")
+                or action["jump"] or action["boost"] or "take" in action or "pick" in action
+                or any(action.get("fire", ()))
+                or any(w and w.get("charge", 0) > 0 for w in me.get("weapons", ()))):
+            return None
+        shell = shots[0]
+        pos = me["pos"]
+        if (shell.get("kind") != "mortar" or shell.get("id") is None
+                or shell["vel"][2] >= 0 or math.dist(shell["pos"], pos) > 32
+                or math.hypot(*action["move"]) < .70):
+            return None
+        ident = shell["id"]
+        tick = obs["tick"]
+        continuing = active is not None and active[0] == ident and tick < active[1]
+        if not continuing and ident == self.last_ground_shell:
+            return None
+
+        match = self.rules.get("match", {})
+        dt = 1 / match.get("tick_hz", 20)
+        stride = match.get("decide_every", 2)
+        if stride != 2:
+            return None
+        stats = self.rules.get("mech", {}) | me.get("stats", {})
+        radius = stats.get("radius", 2.5)
+        height = stats.get("height", 9.)
+        projectile_radius = self.rules.get("projectile", {}).get("mortar_radius", 0.)
+        gravity = self.rules.get("weapons", {}).get("mortar", {}).get("gravity", 22.)
+        zone = obs["zone"]
+        speed = stats.get("walk_speed", 11.7)
+        acceleration = stats.get("ground_accel", 58.5) * dt
+
+        start = tuple(shell["pos"])
+        sx, sy, sz = shell["vel"]
+        segments = []
+        for _ in range(3 * stride + 1):
+            delta = sx * dt, sy * dt, sz * dt
+            end = tuple(p + d for p, d in zip(start, delta))
+            if (self.nav.short_segment_hits_raw_solid(start, end)
+                    or not self.nav.line_clear(start, end)):
+                break
+            segments.append((start, delta))
+            start = end
+            sz -= gravity * dt
+        if not segments:
+            return None
+
+        def hull_margin(move):
+            x, y, z = pos
+            vx, vy = me["vel"][:2]
+            limit = max(1., math.hypot(*move))
+            tx, ty = (value * speed / limit for value in move)
+            minimum = math.inf
+            for (px, py, pz), (dx, dy, dz) in segments:
+                ax, ay = tx - vx, ty - vy
+                ramp = min(1., acceleration / max(.001, math.hypot(ax, ay)))
+                vx, vy = vx + ramp * ax, vy + ramp * ay
+                x, y = x + dt * vx, y + dt * vy
+                floor = self.nav.surface(x, y)
+                end = (x, y)
+                if (abs(floor - z) > .08
+                        or distance(end, zone["center"]) + radius + 4 >= zone["radius"]
+                        or not self.nav.raw_hull_corridor_clear(pos, end, radius, height)):
+                    return None
+                along = clip(((x - px) * dx + (y - py) * dy) / max(.00001, dx * dx + dy * dy))
+                impact_z = pz + along * dz
+                if floor - projectile_radius <= impact_z <= floor + height + projectile_radius:
+                    horizontal = math.hypot(x - px - along * dx, y - py - along * dy)
+                    minimum = min(minimum, horizontal - radius - projectile_radius)
+            return minimum
+
+        if continuing:
+            margin = hull_margin(active[2])
+            if margin is not None and margin >= .10:
+                self.ground_shell_hold = active
+                return active[2]
+            return None
+        native = hull_margin(action["move"])
+        if native is None or native >= -.05:
+            return None
+
+        choices = []
+        for step in range(16):
+            angle = step * math.pi / 8
+            move = math.cos(angle), math.sin(angle)
+            margin = hull_margin(move)
+            if margin is not None and margin >= .10:
+                choices.append((margin, move))
+        if not choices:
+            return None
+        _, move = max(choices)
+        self.last_ground_shell = ident
+        self.ground_shell_hold = ident, tick + 2 * stride, move
+        return move
 
     def airborne_mortar_step(self, obs, action, dodge):
         """Choose one air-steer command when the current shell line hits the rising hull."""
