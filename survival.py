@@ -879,6 +879,42 @@ class Survival:
             return end
         return fallback
 
+    def _keep_evade_from_rifle(self, obs, fallback, radius):
+        """Preserve an outward ground escape when the closing rival just fired."""
+        me = obs["self"]
+        here = me["pos"]
+        stats = me.get("stats", {})
+        rivals = [foe for foe in obs["mechs"] if foe.get("kind") == "mech"]
+        if (not self.nav or len(fallback) != 2 or len(rivals) != 1
+                or math.hypot(*me["vel"][:2]) > .5 * stats.get("walk_speed", 11.7)
+                or any(w and w.get("charge", 0) for w in me.get("weapons", ()))):
+            return False
+        rival = rivals[0]
+        other = rival["pos"]
+        dx, dy = other[0] - here[0], other[1] - here[1]
+        vx, vy = rival.get("vel", (0, 0))[:2]
+        if ("gun" not in rival.get("weapons", ()) or math.hypot(dx, dy) > 45
+                or dx * vx + dy * vy >= 0):
+            return False
+        fx, fy = fallback[0] - here[0], fallback[1] - here[1]
+        travel = math.hypot(fx, fy)
+        if travel < 4 or dx * fx + dy * fy >= 0:
+            return False
+        for shot in obs.get("projectiles", ()):
+            if shot.get("kind") != "gun":
+                continue
+            x, y, z = shot["pos"]
+            sx, sy, sz = shot["vel"]
+            speed2 = sx * sx + sy * sy
+            back = ((x - other[0]) * sx + (y - other[1]) * sy) / max(1., speed2)
+            if (0 < back <= self.rules.get("weapons", {}).get("gun", {}).get("cooldown", .3)
+                    and distance((x - back * sx, y - back * sy), other) <= rival.get("radius", 3.5)
+                    and other[2] <= z - back * sz <= other[2] + rival.get("height", 9)):
+                stride = 4 / travel
+                end = (here[0] + fx * stride, here[1] + fy * stride)
+                return self.nav.raw_hull_corridor_clear(here, end, radius, stats.get("height", 9))
+        return False
+
     def _shelter(self, now, pos, radius, height, final):
         """Wait behind nearby cover facing the crowded side of the circle."""
         center, ring = final
@@ -1032,7 +1068,8 @@ class Survival:
         if (urgency < .35 and mode not in ("loot", "capture") and me.get("grounded", True)
                 and not (dodge and dodge[0] == "blast")):
             flank = self._finish_goal(obs, foes, circle, radius, hp, goal)
-            if flank != goal:
+            if flank != goal and not (mode == "evade" and dodge is None
+                                      and self._keep_evade_from_rifle(obs, goal, radius)):
                 reason = "flank_wounded_opponent"
                 goal = flank
         return {"goal": goal, "mode": mode, "urgency": max(urgency, pressure),
