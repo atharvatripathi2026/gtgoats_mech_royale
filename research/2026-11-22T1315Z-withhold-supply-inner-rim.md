@@ -1,0 +1,7 @@
+# Withhold alternate inner-rim routing for supply drops
+
+The local trial changes survival Git blob `ce5e6d725d8c98271b30ac0f55e77d794e122929` from exact `2d2a7d480f2da4407d5aff0d36307ea7f4e5e68f`. After the native policy selects a nearby landed unclaimed drop, a grounded mech with a blocked direct approach may take a clear path to a point inside the ring. The normal game clock and reward come from a staged extension because the stock evaluator emits no drops.
+
+In eight simulated near approaches (1077960–67, evaluator `c25784ca1ebd8b0bdd13c7f30535d12d2e0132a1`), capture outcomes and times match in every pair. Placement deltas range from −8 to +12, with +1.375 mean and six changed gameplay streams. In eight fresh farther approaches (1078030–37, evaluator `7b553cc897f740816fe5e7565976a55aca3bd64a`), capture counts still match. Two captures advance by 0.1 s and one is 0.1 s later. Four placements fall by two, two, three and seven, and four tie for a −1.75 mean. All 24 fresh ordinary stock and four-mech pairs match commands and placement. All 23 unit tests pass.
+
+The coordinator withheld the local policy before freeze because the route fails to win additional captures and loses placement in the farther panel. Combat source review verified that it preserves capture selection and does not write firing or equipment actions. It identified ranged combat and geometry as residual risks. The next test needs an actual lost capture due to native route geometry and sufficient time to leave the ring safely.
