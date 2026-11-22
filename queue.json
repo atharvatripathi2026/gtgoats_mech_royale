@@ -2226,6 +2226,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "f99e200224f88cdd6c814e0728cdd145c31361d2",
+      "summary": "Allow one quiet post-kill rifle refill after a blocked-shot veto, expiring after a second observed reload. Restores one directed placement point without dropping the earlier wall guard. 40 fresh paired ties, 23 unit tests and 300 sandbox checks.",
+      "created_at": "2026-11-22T08:39:39Z",
+      "parents": [
+        "73dfda1cca7c987a65fc29ffc0f82fc25b563fdf"
+      ],
+      "reviews": {
+        "commit": "f99e200224f88cdd6c814e0728cdd145c31361d2",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The isolated post-kill refill restored two actual later rifle hits, one placement point and 4.15 seconds of survival. Restoring the movement command alone did not recover the point. Eligibility expires at the second observed reload and eight independent fresh pairs tie."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "Stock and independent fractional cadence restore one point from the quiet refill while preserving the earlier wall suppression. The prior 100.8-damage rifle control matches every command. The bounded eligibility and exact sandbox checks pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "All eight fresh raw pairs tie on commands and placement. The phased replay preserves the early 45-damage hit and does not activate the new reload. The stock gain follows a specific refill timing repair, with eligibility limited to one observed intervening reload."
+          }
+        }
+      }
     }
   ]
 }
