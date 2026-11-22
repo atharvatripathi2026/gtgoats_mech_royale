@@ -53,6 +53,7 @@ class Bot:
         self.cube_taper = None
         self.wall_round_refill = None
         self.pending_wall_round = None
+        self.postkill_refill_confirmation = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -522,12 +523,20 @@ class Bot:
                 max(stats.get("height", 0), base.get("height", 9) * scale))
 
     def reload_after_wall_round(self, obs, plan, action):
+        confirmation = self.postkill_refill_confirmation
+        self.postkill_refill_confirmation = None
         if "take" in action or "pick" in action:
             self.wall_round_refill = None
-        pending = self.wall_round_refill
-        if pending is None:
             return
-        slot, reloads, was_reloading = pending
+        if confirmation is None:
+            pending = self.wall_round_refill
+            if pending is None:
+                return
+            slot, reloads, was_reloading = pending
+        else:
+            expected_tick, slot = confirmation
+            if obs["tick"] != expected_tick:
+                return
         me = obs["self"]
         weapons = me["weapons"]
         rifle = weapons[slot]
@@ -535,18 +544,19 @@ class Bot:
             self.wall_round_refill = None
             return
         reloading = bool(rifle.get("reload"))
-        reloads += reloading and not was_reloading
-        if reloads > 1:
+        if confirmation is None:
+            reloads += reloading and not was_reloading
+            if reloads > 1:
+                self.wall_round_refill = None
+                return
+            self.wall_round_refill = slot, reloads, reloading
+            match_size = self.loadout.config.get("match", {}).get("mechs", 16)
+            if not any(
+                event.get("type") == "kill" and type(event.get("target")) is int and 0 <= event["target"] < match_size
+                for event in obs.get("events", ())
+            ):
+                return
             self.wall_round_refill = None
-            return
-        self.wall_round_refill = slot, reloads, reloading
-        match_size = self.loadout.config.get("match", {}).get("mechs", 16)
-        if not any(
-            event.get("type") == "kill" and type(event.get("target")) is int and 0 <= event["target"] < match_size
-            for event in obs.get("events", ())
-        ):
-            return
-        self.wall_round_refill = None
         if (reloading
                 or plan["mode"] not in ("loot", "hold") or plan["dodge"] or plan["zone_urgency"] > .10
                 or not me.get("grounded") or not me.get("in_zone")
@@ -560,7 +570,11 @@ class Bot:
         magazine = stats.get("mag", 12)
         ammo = rifle.get("ammo", magazine)
         if ammo < magazine and ammo - 1 < .80 * magazine <= ammo:
-            action["reload"] = True
+            if confirmation is None:
+                stride = self.loadout.config.get("match", {}).get("decide_every", 2)
+                self.postkill_refill_confirmation = obs["tick"] + stride, slot
+            else:
+                action["reload"] = True
 
     def act(self, obs):
         if self.trace:
