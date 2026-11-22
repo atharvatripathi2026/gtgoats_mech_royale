@@ -51,6 +51,8 @@ class Bot:
         self.first_cube_rest = False
         self.loot_descent = None
         self.cube_taper = None
+        self.wall_round_slot = None
+        self.pending_wall_round = None
 
     def quiet_ground_anchor(self, obs, plan, action, jet, settled):
         me = obs["self"]
@@ -519,6 +521,35 @@ class Bot:
         return (max(stats.get("radius", 0), base.get("radius", 2.5) * scale),
                 max(stats.get("height", 0), base.get("height", 9) * scale))
 
+    def reload_after_wall_round(self, obs, plan, action):
+        if "take" in action or "pick" in action:
+            self.wall_round_slot = None
+        slot = self.wall_round_slot
+        match_size = self.loadout.config.get("match", {}).get("mechs", 16)
+        if slot is None or not any(
+            event.get("type") == "kill" and 0 <= event.get("target", match_size) < match_size
+            for event in obs.get("events", ())
+        ):
+            return
+        self.wall_round_slot = None
+        me = obs["self"]
+        weapons = me["weapons"]
+        rifle = weapons[slot]
+        if (not rifle or rifle.get("kind") != "gun" or rifle.get("reload")
+                or plan["mode"] not in ("loot", "hold") or plan["dodge"] or plan["zone_urgency"] > .10
+                or not me.get("grounded") or not me.get("in_zone")
+                or self.loadout.last_decision.get("intent") != "scan" or action.get("reload")
+                or action["jump"] or action["boost"] or any(action.get("fire", ()))
+                or obs.get("projectiles") or obs.get("beams") or obs.get("sounds")
+                or any(entity.get("kind") == "mech" for entity in obs.get("mechs", ()))
+                or any(weapon and weapon.get("charge", 0) for weapon in weapons)):
+            return
+        stats = self.loadout.weapons.get("gun", {}) | rifle.get("stats", {})
+        magazine = stats.get("mag", 12)
+        ammo = rifle.get("ammo", magazine)
+        if ammo < magazine and ammo - 1 < .80 * magazine <= ammo:
+            action["reload"] = True
+
     def act(self, obs):
         if self.trace:
             start = time.perf_counter()
@@ -615,9 +646,12 @@ class Bot:
         unsafe_tube = self.loadout.mortar_self_blast_on_first_step(obs, action)
         if unsafe_tube is not None:
             action["fire"][unsafe_tube] = False
+        self.reload_after_wall_round(obs, plan, action)
         obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
+        self.pending_wall_round = None
         if obstructed_rifle is not None:
             action["fire"][obstructed_rifle] = False
+            self.pending_wall_round = obs["tick"], obstructed_rifle
         self.last_decision = {
             "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
@@ -642,6 +676,8 @@ class Bot:
 
     def sent(self, tick, action, on_time=True, applied=False):
         self.adaptation.sent(tick, action, on_time=on_time, applied=applied)
+        if on_time and self.pending_wall_round and self.pending_wall_round[0] == tick:
+            self.wall_round_slot = self.pending_wall_round[1]
         if on_time and self.pending_ground_line_boost_tick == tick and action.get("boost"):
             self.ground_line_boost_tick = tick
 
