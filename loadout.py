@@ -1022,6 +1022,108 @@ class Loadout:
         self.last_swap = previous_swap
         self.deferred_mortar_swaps.add(item_id)
 
+    def obstructed_rifle_launch(self, obs, action):
+        """Spare a round when nearby solid cover intercepts its launch."""
+        fire = action.get("fire", ())
+        me = obs["self"]
+        slots = me.get("weapons", ())
+        if (not any(fire) or not me.get("grounded") or action.get("jump") or action.get("boost")
+                or action.get("reload") or "take" in action or "pick" in action
+                or not self.nav or not self.nav.loaded
+                or any(slot and slot.get("charge", 0) > 0 for slot in slots)
+                or self.config.get("match", {}).get("decide_every", 2) != 2):
+            return None
+        dt = self.step
+        index = next((i for i, (slot, held) in enumerate(zip(slots, fire))
+                      if held and slot and slot.get("kind") == "gun" and slot.get("ammo", 0) > 0
+                      and not slot.get("reload", 0) and slot.get("cooldown", 0) <= 2 * dt + 1e-8), None)
+        if index is None:
+            return None
+        gun = slots[index]
+        weapon = self.weapons.get("gun", {}) | gun.get("stats", {})
+        stats = self.mech | me.get("stats", {})
+        offset = stats.get("radius", 2.5) + .5
+        reach = offset + dt * weapon.get("speed", 252.)
+        x, y, z = me["pos"]
+        nearby = [(e, self.dimensions(e)[0] + 1.5)
+                  for e in (*obs.get("mechs", ()), *obs.get("crates", ()))
+                  if math.dist((x, y), e["pos"][:2]) <= reach + self.dimensions(e)[0] + 3.]
+        collect_distance = self.config.get("cubes", {}).get("pickup_radius", 3.5)
+        if any(math.dist((x, y), cube["pos"][:2]) <= collect_distance + 1.5
+               and abs(cube["pos"][2] - z) <= 4.25 for cube in obs.get("cubes", ())):
+            return None
+
+        yaw, pitch = me["aim"]
+        aim_yaw, aim_pitch = action["aim"]
+        aim_pitch = clamp(aim_pitch, stats.get("min_pitch", -.7), stats.get("max_pitch", 1.3))
+        firing_step = 1 if gun.get("cooldown", 0) <= dt + 1e-8 else 2
+        if firing_step == 2 and any(held and slot and slot.get("kind") == "laser"
+                                    for slot, held in zip(slots, fire)):
+            return None
+        vx, vy = me["vel"][:2]
+        mx, my = action["move"]
+        walk = stats.get("walk_speed", 11.7) / max(1., math.hypot(mx, my))
+        for step in range(firing_step):
+            before = (x, y, z, yaw, pitch)
+            yaw += clamp(angle_delta(aim_yaw, yaw), -stats.get("turn_rate", 4.) * dt,
+                         stats.get("turn_rate", 4.) * dt)
+            pitch += clamp(aim_pitch - pitch, -stats.get("pitch_rate", 3.) * dt,
+                           stats.get("pitch_rate", 3.) * dt)
+            ax, ay = mx * walk - vx, my * walk - vy
+            rate = min(1., stats.get("ground_accel", 58.5) * dt / max(.001, math.hypot(ax, ay)))
+            vx, vy = vx + rate * ax, vy + rate * ay
+            nx, ny = x + dt * vx, y + dt * vy
+            hull, height = offset - .5, stats.get("height", 9.)
+            if (not self.nav.walkable(nx, y, hull) or not self.nav.walkable(nx, ny, hull)
+                    or not self.nav.raw_hull_corridor_clear((x, y, z), (nx, y), hull, height)
+                    or not self.nav.raw_hull_corridor_clear((nx, y, z), (nx, ny), hull, height)):
+                return None
+            x, y = nx, ny
+            floor = self.nav.surface(x, y)
+            if floor > z + stats.get("step_up", 1.2):
+                floor = self.nav.ground(x, y)
+            if floor < z - (.03 if step + 1 < firing_step else .25) or floor > z + .08:
+                return None
+            z = max(z - (step + 1) * stats.get("gravity", 22.) * dt * dt, floor)
+        muzzle_height = stats.get("muzzle_height", 7.)
+        spread = math.radians(3 * weapon.get("spread_deg", .6))
+        perturbations = ((0., 0.), (-spread, -spread), (-spread, spread),
+                         (spread, -spread), (spread, spread))
+        # Engines can fire before or after movement. Keep the corresponding
+        # torso angle and test each legal pose with the supported height bracket.
+        after = (x, y, z, yaw, pitch)
+        for px, py, feet, az, el in (before, after, (x, y, before[2], yaw, pitch)):
+            origin = px, py, feet + muzzle_height
+            if self.nav.short_segment_hits_raw_solid(origin, origin):
+                return None
+            for dyaw, dpitch in perturbations:
+                azimuth, elevation = az + dyaw, el + dpitch
+                nx, ny = math.cos(azimuth), math.sin(azimuth)
+                horizontal = math.cos(elevation)
+                length = reach
+                for entity, radius in nearby:
+                    ex, ey = entity["pos"][0] - px, entity["pos"][1] - py
+                    longitudinal = ex * nx + ey * ny
+                    if longitudinal >= -radius and abs(ex * ny - ey * nx) <= radius:
+                        length = min(length, (longitudinal - radius) / max(.01, horizontal))
+                if length <= offset:
+                    return None
+                direction = nx * horizontal, ny * horizontal, math.sin(elevation)
+                muzzle = tuple(p + offset * d for p, d in zip(origin, direction))
+                if (not self.nav.line_clear(origin, muzzle)
+                        or self.nav.short_segment_hits_raw_solid(origin, muzzle)):
+                    return None
+                # Check the near interval separately from the full flight.
+                # Raster sampling changes phase as the segment grows.
+                for extent in (min(length, offset + 5.), length):
+                    end = tuple(p + extent * d for p, d in zip(origin, direction))
+                    if (not self.nav.line_clear(muzzle, end)
+                            and self.nav.short_segment_hits_raw_solid(muzzle, end)):
+                        break
+                else:
+                    return None
+        return index
+
     def mortar_self_blast_on_first_step(self, obs, action):
         """Detect a nearly immediate collision inside our own splash radius."""
         fire = action.get("fire", ())

@@ -499,6 +499,9 @@ class Bot:
         unsafe_tube = self.loadout.mortar_self_blast_on_first_step(obs, action)
         if unsafe_tube is not None:
             action["fire"][unsafe_tube] = False
+        obstructed_rifle = self.loadout.obstructed_rifle_launch(obs, action)
+        if obstructed_rifle is not None:
+            action["fire"][obstructed_rifle] = False
         self.last_decision = {
             "mode": plan["mode"], "reason": reason, "goal": list(goal),
             "base_goal": list(base["goal"]), "item_id": plan["target_id"],
@@ -507,6 +510,8 @@ class Bot:
             "jet_advised": jet, "combat": self.loadout.last_decision,
             "learning": self.adaptation.diagnostics(),
         }
+        if obstructed_rifle is not None:
+            self.last_decision["obstructed_rifle_slot"] = obstructed_rifle
         if rifle_escape is not None:
             self.last_decision["one_command_rifle_escape"] = True
         if shell_steer is not None:
