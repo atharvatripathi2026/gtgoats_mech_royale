@@ -2402,6 +2402,31 @@
           }
         }
       }
+    },
+    {
+      "commit": "da40f96d20e73bd74ce047b81d77c71442e83527",
+      "summary": "Check supported held motion and planar competitor margin for a late arc. Keeps the directed hit and rejects staged ground-loss and accelerating-competitor cases. 52 fresh parent ties, 23 tests and 300 timed sandbox replies.",
+      "created_at": "2026-11-22T10:24:33Z",
+      "parents": [
+        "33375af39503e65411259add3ed012759375d083"
+      ],
+      "reviews": {
+        "commit": "da40f96d20e73bd74ce047b81d77c71442e83527",
+        "votes": {
+          "survival": {
+            "decision": "approve for practice",
+            "reason": "The candidate preserves the exact intended arc and declines both staged false activations, where a nearer actor accelerates into the cone and where the shooter loses support on its second step. All eight independent complete command and placement pairs match. The exact sandbox rerun passed; the test shows a bounded physical check, with no established frequency of these cases."
+          },
+          "combat": {
+            "decision": "approve for practice",
+            "reason": "The planar bearing margin handles the vertical-separation issue and the final command consistency protects the forecast. Independent stock and visible-crate controls retain both known arc hits when the crate stays outside and decline the crossing crate. All eight independent stock pairs have full command and placement parity, and 300 timed replies pass."
+          },
+          "validation": {
+            "decision": "approve for practice",
+            "reason": "The lifted planar bound rejects the exact elevated rival that the earlier 3D angle gate allowed, while the public focus and control both match the parent commands. All eight independent faster-close command and placement pairs tie, including the four repeated after disk exhaustion."
+          }
+        }
+      }
     }
   ]
 }
