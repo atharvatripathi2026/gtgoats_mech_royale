@@ -26,6 +26,7 @@ class Loadout:
         self.last_attacker = None
         self.last_bearing = 0
         self.last_swap = -100
+        self.mortar_group = None
         self.last_gun_capacity = None
         self.dodge_reload_floor = None
         self.arm_evidence_stage = None
@@ -35,6 +36,23 @@ class Loadout:
         self.last_gun_hit = None
         self.used_gun_hit = None
         self.sight = {}
+
+    def keep_cluster_mortar(self, obs, old, item):
+        if old.get("kind") != "mortar" or item.get("kind") != "laser" or self.mortar_group is None:
+            return False
+        time, group = self.mortar_group
+        stats = self.weapons.get("mortar", {}) | old.get("stats", {})
+        if not 0 <= obs["t"] - time <= stats.get("cooldown", 2.6):
+            return False
+        me = obs["self"]
+        radius = stats.get("splash_radius", 7.)
+        speed = stats.get("speed", 72.)
+        reach = speed * speed / stats.get("gravity", 22.)
+        targets = [rival for rival in obs.get("mechs", ()) if rival.get("kind") == "mech"
+                   and rival.get("id") in group
+                   and 2 * radius < math.dist(me["pos"], rival["pos"]) < .90 * reach]
+        return any(sum(math.dist(rival["pos"], other["pos"]) <= radius for other in targets) >= 3
+                   for rival in targets)
 
     def pickup(self, obs, action):
         me = obs["self"]
@@ -71,6 +89,9 @@ class Loadout:
             replace = min(range(len(slots)), key=lambda i: value.get(slots[i].get("kind"), 0))
             old = slots[replace]
             if rating > value.get(old.get("kind"), 0) + .45 and old.get("charge", 0) <= 0:
+                item = next(item for item in obs["pickups"] if item["id"] == item_id)
+                if self.keep_cluster_mortar(obs, old, item):
+                    return
                 action.update(take=item_id, drop=replace)
                 self.last_swap = obs.get("t", 0)
 
@@ -964,6 +985,15 @@ class Loadout:
         if stage != self.arm_evidence_stage:
             self.arm_evidence_stage = stage
             self.arm_damage = {"gun": 0., "laser": 0.}
+        if "mortar" not in armed:
+            self.mortar_group = None
+        else:
+            group = {event["target"] for event in obs.get("events", ())
+                     if event.get("type") == "hit" and event.get("weapon") == "mortar"
+                     and event.get("amount", 0) > 0 and type(event.get("target")) is int
+                     and 0 <= event["target"] < self.config.get("match", {}).get("mechs", 16)}
+            if len(group) >= 3:
+                self.mortar_group = t, group
         for event in obs.get("events", []):
             # Stage and equipment changes invalidate the evidence from the
             # previous interval. NPC and crate work does not count here.
